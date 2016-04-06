@@ -84,7 +84,7 @@ func (s *servicesMap) setData(data map[string][]string) {
 		}
 	}
 }
-func (s *servicesMap) get(name string) (ip string) {
+func (s *servicesMap) Next(name string) (ip string) {
 	s.lk.Lock()
 	defer s.lk.Unlock()
 	ip = ""

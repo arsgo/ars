@@ -47,7 +47,9 @@ func (j *rpcClient) Request(name string, input string) (string, error) {
 func (j *rpcClient) Send(name string, input string, data []byte) (string, error) {
 	return j.client.Send(name, input, data)
 }
-
+func (j *rpcClient) Get(name string, input string) ([]byte, error) {
+	return j.client.Get(name, input)
+}
 func (j *rpcClient) Close() {
 	j.transport.Close()
 }

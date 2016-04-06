@@ -12,15 +12,19 @@ type rcServerRPCHandler struct {
 
 func (r *rcServerRPCHandler) Request(name string, input string) (string, error) {
 	r.Log.Infof("recv request:%s", name)
-	sv := r.server.spServicesMap.get(name)
-	return r.server.spServerPool.Request(sv, input)
+	group := r.server.spServicesMap.Next(name)
+	return r.server.spServerPool.Request(group,name, input)
 
 }
 func (r *rcServerRPCHandler) Send(name string, input string, data []byte) (string, error) {
-	return "", nil
+	r.Log.Infof("recv request:%s", name)
+	group := r.server.spServicesMap.Next(name)
+	return r.server.spServerPool.Send(group,name, input,data)
 }
 func (r *rcServerRPCHandler) Get(name string, input string) ([]byte, error) {
-	return make([]byte, 0), nil
+	r.Log.Infof("recv request:%s", name)
+	group := r.server.spServicesMap.Next(name)
+	return r.server.spServerPool.Get(group,name, input)
 }
 
 func (d *rcServer) StartRPCServer() {
