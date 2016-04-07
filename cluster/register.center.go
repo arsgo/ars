@@ -65,7 +65,7 @@ func NewRCServer() *rcServer {
 	rc.dataMap = utility.NewDataMap()
 	rc.dataMap.Set("domain", zkClient.Domain)
 	rc.dataMap.Set("ip", zkClient.LocalIP)
-	rc.dataMap.Set("type", "salve")
+	rc.dataMap.Set("type", "slave")
 	rc.rcServerRoot = rc.dataMap.Translate(rcServerRoot)
 	rc.servicePublishPath = rc.dataMap.Translate(servicePublishPath)
 	rc.serviceRoot = rc.dataMap.Translate(serviceRoot)

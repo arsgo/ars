@@ -11,7 +11,7 @@ func (d *rcServer) watchMasterChange() {
 		if m := d.isMaster(); m && !d.IsMasterServer {
 			d.setOnlineParams(true)
 			d.resetRCSnap()
-			go d.watchMasterChange()
+			d.watchMasterChange()
 		}
 	})
 }

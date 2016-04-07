@@ -6,6 +6,9 @@ import (
 	"strings"
 	"time"
 )
+func (d *rcServer) Close(){
+    zkClient.ZkCli.Delete(d.Path)
+}
 
 func (d *rcServer) createRCServer(path string, value string) (err error) {
 	d.Path, err = zkClient.ZkCli.CreateSeqNode(path, value)
@@ -48,8 +51,8 @@ func (d *rcServer) setOnlineParams(master bool) {
 		d.dataMap.Set("type", "master")
 		d.Server = "master"
 	} else {
-		d.dataMap.Set("type", "salve")
-		d.Server = "salve"
+		d.dataMap.Set("type", "slave")
+		d.Server = "slave"
 	}
     d.Log.Infof("current server is %s",d.Server)
 }

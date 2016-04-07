@@ -16,6 +16,7 @@ package cluster
 import (
 	"fmt"
 	"log"
+	"strings"
 	"sync"
 
 	"github.com/colinyl/lib4go/logger"
@@ -52,6 +53,30 @@ type spConfig struct {
 	services map[string]*spService
 }
 
+func (s *spConfig) ToString() string {
+	var lst []string
+	for i, _ := range s.services {
+		lst = append(lst, i)
+	}
+	return strings.Join(lst, ",")
+}
+
+const (
+	result_error_format   = `{"code":"%s","msg":"%s"}`
+	result_success_format = `{"code":"100","msg":"success"}`
+	result_data_format    = `{"code":"100","msg":"success","data":"%s"}`
+)
+
+func getErrorResult(code string, msg string) string {
+	return fmt.Sprintf(result_error_format, code, msg)
+}
+func getSuccessResult() string {
+	return result_success_format
+}
+func getDataResult(data string) string {
+	return fmt.Sprintf(result_data_format, data)
+}
+
 type spServer struct {
 	Path          string
 	dataMap       *utility.DataMap
@@ -68,6 +93,7 @@ var (
 	eModeShared = "shared"
 	eModeAlone  = "alone"
 )
+
 func NewServiceMap() *servicesMap {
 	return &servicesMap{data: make(map[string]*serviceGroup)}
 }
@@ -85,19 +111,21 @@ func (s *servicesMap) setData(data map[string][]string) {
 	}
 }
 func (s *servicesMap) Next(name string) (ip string) {
+	ip = ""
+
 	s.lk.Lock()
 	defer s.lk.Unlock()
-	ip = ""
 	group, ok := s.data[name]
 	if !ok {
+		return
+	}
+	if len(group.service) == 0 {
 		return
 	}
 	ip = group.service[group.index%len(group.service)]
 	group.index++
 	return
 }
-
-
 
 func (d *spService) getUNIQ() string {
 	return fmt.Sprintf("%s|%s|%s", d.Name, d.IP, d.Mode)
@@ -128,4 +156,3 @@ func NewSPServer() *spServer {
 	}
 	return sp
 }
-

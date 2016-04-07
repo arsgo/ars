@@ -25,7 +25,7 @@ func (a *appServer) rpcBind(L *l.LState) int {
 func (a *appServer) request(L *l.LState) int {
 	name := L.ToString(1)
 	input := L.ToString(2)
-	result, err := a.rcServerPool.Request(a.rcServicesMap.Next("-"),name, input)
+	result, err := a.rcServerPool.Request(a.rcServicesMap.Next("-"), name, input)
 	L.Push(l.LString(result))
 	if err != nil {
 		L.Push(l.LString(err.Error()))
@@ -38,7 +38,8 @@ func (a *appServer) send(L *l.LState) int {
 	name := L.ToString(1)
 	input := L.ToString(2)
 	buffer := []byte(L.ToString(3))
-	result, err := a.rcServerPool.Send(a.rcServicesMap.Next("-"),name, input, buffer)
+	group := a.rcServicesMap.Next("-")
+	result, err := a.rcServerPool.Send(group, name, input, buffer)
 	L.Push(l.LString(result))
 	if err != nil {
 		L.Push(l.LString(err.Error()))

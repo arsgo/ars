@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 
@@ -22,17 +23,20 @@ func (s *spScriptEngine) Request(cmd string, input string) (string, error) {
 	svs, ok := s.provider.services.services[cmd]
 	s.provider.lk.Unlock()
 	if !ok {
-		return "", errors.New("not suport")
+		return getErrorResult("500", fmt.Sprintf("not support service %s", cmd)),nil
 	}
 	path := svs.Script
 	values, err := s.script.Call(path, input)
-	return strings.Join(values, ","), err
+	if err != nil {
+		return getErrorResult("500", err.Error()), nil
+	}
+    s.Log.Info(values[0])
+	return getDataResult(strings.Join(values, ",")), nil
 }
 func (s *spScriptEngine) Send(cmd string, input string, data []byte) (string, error) {
 	s.provider.lk.Lock()
 	svs, ok := s.provider.services.services[cmd]
 	s.provider.lk.Unlock()
-
 	if !ok {
 		return "", errors.New("not suport")
 	}

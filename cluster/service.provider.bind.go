@@ -9,13 +9,13 @@ import (
 func (d *spServer) WatchServiceConfigChange() {
 	waitZKPathExists(d.serviceConfig, time.Hour*8640, func(exists bool) {
 		if !exists {
-            d.Log.Info("sp server config not exists")
-			
+			d.Log.Info("sp server config not exists")
+
 		} else {
 			d.rebind()
 		}
 	})
-    d.Log.Info("::watch for provider config change")
+	d.Log.Info("::watch for provider config change")
 	watchZKValueChange(d.serviceConfig, func() {
 		d.rebind()
 	})
@@ -24,9 +24,13 @@ func (d *spServer) WatchServiceConfigChange() {
 func (d *spServer) rebind() {
 	d.lk.Lock()
 	defer d.lk.Unlock()
+	defer func() {
+		d.Log.Infof("bind services:%s,%s", d.mode, d.services.ToString())
+	}()
 	aloneService, sharedService := d.groupService()
+	//  d.Log.Infof("alone:%d,shared:%d",len(aloneService),len(sharedService))
 	if strings.EqualFold(d.mode, eModeAlone) {
-		goon, _ := d.checkAloneService(d.services.services, aloneService)
+		goon, _ := d.checkAloneService(aloneService)
 		if !goon {
 			return
 		}
@@ -55,20 +59,19 @@ func (d *spServer) deleteSharedSevices(svs map[string]*spService) {
 	}
 }
 
-func (d *spServer) checkAloneService(current map[string]*spService,
-	configs map[string]*spService) (ct bool, err error) {
+func (d *spServer) checkAloneService(configs map[string]*spService) (ct bool, err error) {
 	ct = true
 	err = nil
-	if len(current) < 1 {
+	if len(d.services.services) < 1 {
 		return
-	} else if len(current) > 1 {
-		for i := range current {
+	} else if len(d.services.services) > 1 {
+		for i := range d.services.services {
 			nmap := d.getNewDataMap(i)
 			d.deleteSPPath(nmap.Translate(serviceProviderPath))
 		}
 		return
 	}
-	for i, v := range current {
+	for i, v := range d.services.services {
 		if cc, ok := configs[i]; ok && (strings.EqualFold(v.getUNIQ(), cc.getUNIQ()) || checkIP(configs[i].IP)) {
 			nmap := d.getNewDataMap(i)
 			path := nmap.Translate(serviceProviderPath)

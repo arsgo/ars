@@ -5,9 +5,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/colinyl/lib4go/utility"
-	zk "github.com/colinyl/lib4go/zkClient"
 	"github.com/colinyl/ars/config"
+	"github.com/colinyl/lib4go/utility"
+	zk "github.com/colinyl/lib4go/zkclient"
 )
 
 type zkClientObj struct {
@@ -20,10 +20,9 @@ type zkClientObj struct {
 func waitZKPathExists(path string, timeout time.Duration, callback func(exists bool)) {
 	if zkClient.ZkCli.Exists(path) {
 		callback(true)
-        return
-	} else {
-		callback(false)
+		return
 	}
+	callback(false)
 	timePiker := time.NewTicker(time.Second * 2)
 	timeoutPiker := time.NewTicker(timeout)
 CHECKER:
@@ -88,10 +87,10 @@ func getRCServer(dataMap *utility.DataMap) (servers []*RCServerConfig, err error
 		rcmap := dataMap.Copy()
 		rcmap.Set("name", v)
 		rcPath := rcmap.Translate(rcServerNodePath)
-        config,err:=getRCServerValue(rcPath)
-        if err!=nil{
-            continue
-        }
+		config, err := getRCServerValue(rcPath)
+		if err != nil {
+			continue
+		}
 		servers = append(servers, config)
 	}
 	return

@@ -47,7 +47,7 @@ func (d *spServer) groupService() (aloneService map[string]*spService,
 	sharedService map[string]*spService) {
 	aloneService = make(map[string]*spService)
 	sharedService = make(map[string]*spService)
-	svs, _ := getSPConfig(d.Path)
+	svs, _ := getSPConfig(d.serviceConfig)
 	for _, v := range svs {
 		if strings.EqualFold(v.Mode, eModeAlone) {
 			aloneService[v.Name] = v
