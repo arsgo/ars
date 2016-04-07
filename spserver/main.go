@@ -10,8 +10,9 @@ import (
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	spserver := cluster.NewSPServer()
-	spserver.WatchServiceConfigChange()
 	spserver.StartRPC()
+	spserver.WatchServiceConfigChange()
+
 	time.Sleep(time.Hour)
 
 }
