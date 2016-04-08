@@ -23,7 +23,7 @@ func NewForever(name string, desc string) *forever {
 	return &forever{dm: dm, name: name, desc: desc}
 }
 
-func (f *forever) Manage(start func()(interface{}), close func(o interface{})) (string, error) {
+func (f *forever) Manage(start func(), close func()) (string, error) {
 
 	usage := fmt.Sprintf("Usage: %s install | remove | start | stop | status", f.name)
 	// if received any kind of command, do it
@@ -45,7 +45,7 @@ func (f *forever) Manage(start func()(interface{}), close func(o interface{})) (
 		}
 	}
 
-	obj:=start()
+	start()
 
 	// Do something, call your goroutines, etc
 
@@ -60,7 +60,7 @@ func (f *forever) Manage(start func()(interface{}), close func(o interface{})) (
 	for {
 		select {
 		case <-interrupt:
-			close(obj)
+			close()
 			return fmt.Sprintf("%s was killed",f.name), nil
 		}
 	}

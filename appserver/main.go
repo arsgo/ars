@@ -12,7 +12,7 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	appServer := cluster.NewAPPServer()
 	fv := forever.NewForever("appserver", "appserver")
-	result, err := fv.Manage(func() interface{} {
+	result, err := fv.Manage(func() {
 		appServer.WatchRCServerChange(func(config []*cluster.RCServerConfig, err error) {
 			appServer.BindRCServer(config, err)
 		})
@@ -20,8 +20,7 @@ func main() {
 		appServer.WatchConfigChange(func(config *cluster.AppConfig, err error) error {
 			return appServer.BindTask(config, err)
 		})
-		return appServer
-	}, func(o interface{}) {
+	}, func() {
 
 	})
 	if err != nil {

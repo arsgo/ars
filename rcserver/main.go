@@ -11,7 +11,7 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	rcServer := cluster.NewRCServer()
 	fv := forever.NewForever("rcserver", "rcserver")
-	result, err := fv.Manage(func() interface{} {
+	result, err := fv.Manage(func(){
 		rcServer.Bind()
 		rcServer.StartRPCServer()
 		rcServer.WatchJobChange(func(config *cluster.JobConfigs, err error) {
@@ -21,8 +21,7 @@ func main() {
 			rcServer.BindSPServer(services)
 		})
 		rcServer.StartSnapValue()
-		return rcServer
-	}, func(o interface{}) {
+	}, func() {
 
 	})
 

@@ -11,12 +11,10 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	spserver := cluster.NewSPServer()
 	fv := forever.NewForever("spserver", "spserver")
-	result, err := fv.Manage(func() interface{} {
+	result, err := fv.Manage(func() {
 		spserver.StartRPC()
 		spserver.WatchServiceConfigChange()
-		return spserver
-
-	}, func(o interface{}) {
+	}, func() {
 
 	})
 	if err != nil {
