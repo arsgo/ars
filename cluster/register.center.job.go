@@ -20,7 +20,7 @@ func (d *rcServer) WatchJobChange(callback func(config *JobConfigs, err error)) 
 	})
 	d.Log.Info("::watch job config changes")
 	watchZKValueChange(d.jobConfigPath, func() {
-        d.Log.Info("job config has changed")
+		d.Log.Info("job config has changed")
 		callback(getJobConfigs(d.jobConfigPath))
 	})
 }

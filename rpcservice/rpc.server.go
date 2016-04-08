@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"git.apache.org/thrift.git/lib/go/thrift"
+	"github.com/colinyl/ars/rpcservice/rpc"
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/net"
-	"github.com/colinyl/ars/rpcservice/rpc"
 )
 
 func (r *RPCServer) Serve() (er error) {
@@ -21,18 +21,23 @@ func (r *RPCServer) Serve() (er error) {
 	}
 
 	processor := rpc.NewServiceProviderProcessor(r.Handler)
-	server := thrift.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)
+	r.server = thrift.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)
 
 	r.log.Infof("::start rpc server %s", r.Address)
 	go func() {
-		er = server.Serve()
+		er = r.server.Serve()
 		if er != nil {
 			r.log.Error(er)
 		}
 	}()
 	return
 }
+func (r *RPCServer) Stop() {
+	if r.server != nil {
+		r.server.Stop()
+	}
 
+}
 func NewRPCServer(address string, handler rpcHandler) *RPCServer {
 	var err error
 	rpcs := &RPCServer{Address: address, Handler: handler}

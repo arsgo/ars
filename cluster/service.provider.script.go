@@ -6,7 +6,6 @@ import (
 	"log"
 	"strings"
 
-	"github.com/colinyl/ars/rpcservice"
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/lua"
 )
@@ -23,14 +22,14 @@ func (s *spScriptEngine) Request(cmd string, input string) (string, error) {
 	svs, ok := s.provider.services.services[cmd]
 	s.provider.lk.Unlock()
 	if !ok {
-		return getErrorResult("500", fmt.Sprintf("not support service %s", cmd)),nil
+		return getErrorResult("500", fmt.Sprintf("not support service %s", cmd)), nil
 	}
 	path := svs.Script
 	values, err := s.script.Call(path, input)
 	if err != nil {
 		return getErrorResult("500", err.Error()), nil
 	}
-    s.Log.Info(values[0])
+	s.Log.Info(values[0])
 	return getDataResult(strings.Join(values, ",")), nil
 }
 func (s *spScriptEngine) Send(cmd string, input string, data []byte) (string, error) {
@@ -65,12 +64,4 @@ func NewScript(p *spServer) *spScriptEngine {
 		log.Println(err)
 	}
 	return en
-}
-
-func (d *spServer) StartRPC() {
-	address := rpcservice.GetLocalRandomAddress()
-	d.Port = address
-	d.dataMap.Set("port", d.Port)
-	rpcServer := rpcservice.NewRPCServer(address, NewScript(d))
-	rpcServer.Serve()
 }

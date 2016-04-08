@@ -15,7 +15,7 @@ func main() {
 		spserver.StartRPC()
 		spserver.WatchServiceConfigChange()
 	}, func() {
-
+        spserver.Close()
 	})
 	if err != nil {
 		spserver.Log.Error(err)

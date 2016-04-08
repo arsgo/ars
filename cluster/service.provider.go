@@ -19,6 +19,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/colinyl/ars/rpcservice"
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/utility"
 )
@@ -87,6 +88,7 @@ type spServer struct {
 	lk            sync.Mutex
 	mode          string
 	serviceConfig string
+	rpcServer     *rpcservice.RPCServer
 }
 
 var (
@@ -155,4 +157,12 @@ func NewSPServer() *spServer {
 		log.Println(err)
 	}
 	return sp
+}
+func (r *spServer) Close() {
+      r.Log.Info("::sp server closed")
+	zkClient.ZkCli.Close()
+    if r.rpcServer!=nil{
+        r.rpcServer.Stop()
+    }
+
 }

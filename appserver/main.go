@@ -21,7 +21,7 @@ func main() {
 			return appServer.BindTask(config, err)
 		})
 	}, func() {
-
+		appServer.Close()
 	})
 	if err != nil {
 		appServer.Log.Error(err)

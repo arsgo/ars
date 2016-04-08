@@ -6,9 +6,7 @@ import (
 	"strings"
 	"time"
 )
-func (d *rcServer) Close(){
-    zkClient.ZkCli.Delete(d.Path)
-}
+
 
 func (d *rcServer) createRCServer(path string, value string) (err error) {
 	d.Path, err = zkClient.ZkCli.CreateSeqNode(path, value)

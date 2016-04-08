@@ -60,3 +60,9 @@ func NewAPPServer() *appServer {
 	}
 	return app
 }
+
+func (r *appServer) Close() {
+    r.Log.Info("::app server closed")
+	zkClient.ZkCli.Close()
+}
+

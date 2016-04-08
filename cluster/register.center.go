@@ -78,3 +78,10 @@ func NewRCServer() *rcServer {
 	}
 	return rc
 }
+func (r *rcServer) Close() {
+      r.Log.Info("::rc server closed")
+	zkClient.ZkCli.Close()
+	if r.rpcServer != nil {
+		r.rpcServer.Stop()
+	}
+}
