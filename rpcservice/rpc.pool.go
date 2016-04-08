@@ -38,7 +38,7 @@ func (p *RPCServerPool) Request(group string, svName string, input string) (resu
 		return "", errors.New("not find available rpc server")
 	}
 	defer p.pool.Recycle(group, o)
-	obj := o.(*rpcClient)
+	obj := o.(*RPCClient)
 	defer func() {
 		if ex := recover(); ex != nil {
 			err = ex.(error)
@@ -72,7 +72,7 @@ func (p *RPCServerPool) Send(group string, svName string, input string, data []b
 		return "", errors.New("not find available rpc server")
 	}
 	defer p.pool.Recycle(group, o)
-	obj := o.(*rpcClient)
+	obj := o.(*RPCClient)
 	return obj.Send(svName, input, data)
 }
 
@@ -92,7 +92,7 @@ func (p *RPCServerPool) Get(group string, svName string, input string) (result [
 		return make([]byte, 0), errors.New("not find available rpc server")
 	}
 	defer p.pool.Recycle(group, o)
-	obj := o.(*rpcClient)
+	obj := o.(*RPCClient)
 	return obj.Get(svName, input)
 }
 func (p *RPCServerPool) clearUp() {

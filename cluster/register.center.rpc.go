@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/colinyl/ars/rpcservice"
 	"github.com/colinyl/lib4go/logger"
@@ -13,9 +14,11 @@ type rcServerRPCHandler struct {
 }
 
 func (r *rcServerRPCHandler) Request(name string, input string) (result string, err error) {
-	r.Log.Infof("recv request:%s", name)
+	if strings.EqualFold(name, "test_request") {
+		return "success", nil
+	}
+    r.Log.Infof("recv request:%s", name)
 	group := r.server.spServicesMap.Next(name)
-	r.Log.Infof("recv group:%s", group)
 	//  return group,nil
 	result, err = r.server.spServerPool.Request(group, name, input)
 	if err != nil {
@@ -26,6 +29,7 @@ func (r *rcServerRPCHandler) Request(name string, input string) (result string, 
 
 }
 func (r *rcServerRPCHandler) Send(name string, input string, data []byte) (string, error) {
+	
 	r.Log.Infof("recv request:%s", name)
 	group := r.server.spServicesMap.Next(name)
 	return r.server.spServerPool.Send(group, name, input, data)

@@ -7,7 +7,7 @@ import (
 	"github.com/colinyl/ars/rpcservice/rpc"
 )
 
-type rpcClient struct {
+type RPCClient struct {
 	Address   string
 	transport thrift.TTransport
 	client    *rpc.ServiceProviderClient
@@ -15,15 +15,15 @@ type rpcClient struct {
 }
 
 
-func NewRPCClient(address string) *rpcClient {
+func NewRPCClient(address string) *RPCClient {
 	addr := address
 	if !strings.Contains(address, ":") {
 		addr = net.JoinHostPort(address, "1016")
 	}
-	return &rpcClient{Address: addr}
+	return &RPCClient{Address: addr}
 }
 
-func (client *rpcClient) Open() (err error) {
+func (client *RPCClient) Open() (err error) {
 	client.transport, err = thrift.NewTSocket(client.Address)
 	if err != nil {
 		return err
@@ -40,23 +40,23 @@ func (client *rpcClient) Open() (err error) {
 	return nil
 }
 
-func (j *rpcClient) Request(name string, input string) (string, error) {
+func (j *RPCClient) Request(name string, input string) (string, error) {
 	return j.client.Request(name, input)
 }
 
-func (j *rpcClient) Send(name string, input string, data []byte) (string, error) {
+func (j *RPCClient) Send(name string, input string, data []byte) (string, error) {
 	return j.client.Send(name, input, data)
 }
-func (j *rpcClient) Get(name string, input string) ([]byte, error) {
+func (j *RPCClient) Get(name string, input string) ([]byte, error) {
 	return j.client.Get(name, input)
 }
-func (j *rpcClient) Close() {
+func (j *RPCClient) Close() {
 	j.transport.Close()
 }
 
-func (j *rpcClient) Check() bool {
+func (j *RPCClient) Check() bool {
 	return !j.isFatal && j.transport != nil
 }
-func (j *rpcClient) Fatal() {
+func (j *RPCClient) Fatal() {
 	j.isFatal = true
 }
