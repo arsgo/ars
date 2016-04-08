@@ -147,7 +147,7 @@ func NewSPServer() *spServer {
 	sp.dataMap = utility.NewDataMap()
 	sp.dataMap.Set("domain", zkClient.Domain)
 	sp.dataMap.Set("ip", zkClient.LocalIP)
-	sp.Log, err = logger.New("service provider", true)
+	sp.Log, err = logger.New("sp server", true)
 	sp.services = &spConfig{}
 	sp.services.services = make(map[string]*spService, 0)
 	sp.serviceConfig = sp.dataMap.Translate(serviceConfig)

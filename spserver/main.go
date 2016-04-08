@@ -2,17 +2,27 @@ package main
 
 import (
 	"runtime"
-	"time"
 
 	"github.com/colinyl/ars/cluster"
+	"github.com/colinyl/ars/forever"
 )
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	spserver := cluster.NewSPServer()
-	spserver.StartRPC()
-	spserver.WatchServiceConfigChange()
+	fv := forever.NewForever("spserver", "spserver")
+	result, err := fv.Manage(func() interface{} {
+		spserver.StartRPC()
+		spserver.WatchServiceConfigChange()
+		return spserver
 
-	time.Sleep(time.Hour)
+	}, func(o interface{}) {
+
+	})
+	if err != nil {
+		spserver.Log.Error(err)
+		return
+	}
+	spserver.Log.Info(result)
 
 }

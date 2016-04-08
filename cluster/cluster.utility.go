@@ -2,10 +2,10 @@ package cluster
 
 import (
 	"encoding/json"
-	"log"
 	"time"
 
 	"github.com/colinyl/ars/config"
+	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/utility"
 	zk "github.com/colinyl/lib4go/zkclient"
 )
@@ -15,6 +15,7 @@ type zkClientObj struct {
 	LocalIP string
 	Domain  string
 	Err     error
+	Log     *logger.Logger
 }
 
 func waitZKPathExists(path string, timeout time.Duration, callback func(exists bool)) {
@@ -111,10 +112,11 @@ var zkClient *zkClientObj
 func init() {
 	var err error
 	zkClient = &zkClientObj{}
+	zkClient.Log, err = logger.New("zk client", true)
 	zkClient.Domain = config.Get().Domain
 	zkClient.LocalIP = utility.GetLocalIP("192.168")
 	zkClient.ZkCli, err = zk.New(config.Get().ZKServers, time.Second)
-	if err != nil {
-		log.Println(err)
+	if err != nil && zkClient.Log != nil {
+		zkClient.Log.Error(err)
 	}
 }

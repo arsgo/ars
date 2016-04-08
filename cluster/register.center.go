@@ -61,7 +61,7 @@ type JobConfigs struct {
 func NewRCServer() *rcServer {
 	var err error
 	rc := &rcServer{}
-	rc.Log, err = logger.New("register center", true)
+	rc.Log, err = logger.New("rc server", true)
 	rc.dataMap = utility.NewDataMap()
 	rc.dataMap.Set("domain", zkClient.Domain)
 	rc.dataMap.Set("ip", zkClient.LocalIP)
