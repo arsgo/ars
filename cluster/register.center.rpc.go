@@ -14,7 +14,9 @@ type rcServerRPCHandler struct {
 }
 
 func (r *rcServerRPCHandler) Request(name string, input string) (result string, err error) {
-	if strings.EqualFold(name, "test_request") {
+	
+    if strings.EqualFold(name, "test_request") {
+        r.Log.Info("recv test_request")
 		return "success", nil
 	}
     r.Log.Infof("recv request:%s", name)
