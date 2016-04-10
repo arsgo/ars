@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"os"
+    "github.com/colinyl/gopsutil/mem"
 )
 
 var Log *log.Logger
@@ -22,6 +23,14 @@ func main() {
 		address      string
 		sleep        int
 	)
+
+     v, _ := mem.VirtualMemory()
+
+    // almost every return value is a struct
+    fmt.Printf("Total: %v, Free:%v, UsedPercent:%f%%\n", v.Total, v.Free, v.UsedPercent)
+
+    // convert to JSON. String() is also implemented
+    fmt.Println(v)
 
 	flag.IntVar(&totalRequest, "n", 0, "总请求个数")
 	flag.IntVar(&concurrent, "c", 1, "并发处理数")

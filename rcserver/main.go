@@ -14,13 +14,13 @@ func main() {
 	result, err := fv.Manage(func() {
 		rcServer.Bind()
 		rcServer.StartRPCServer()
-		/*rcServer.WatchJobChange(func(config *cluster.JobConfigs, err error) {
+		rcServer.WatchJobChange(func(config *cluster.JobConfigs, err error) {
 
 		})
 		rcServer.WatchServiceChange(func(services map[string][]string, err error) {
 			rcServer.BindSPServer(services)
 		})
-		rcServer.StartSnapValue()*/
+		rcServer.StartSnapValue()
 	}, func() {
 		rcServer.Close()
 	})
