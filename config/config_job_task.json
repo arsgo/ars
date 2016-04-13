@@ -1,0 +1,8 @@
+{
+    "auto_build_bill": {
+        "name": "auto_build_bill",
+        "trigger": "0/10 * * * * ?",
+        "script": "auto_build_bill.luac",
+        "concurrency": 1
+    }
+}

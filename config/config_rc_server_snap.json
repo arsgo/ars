@@ -1,0 +1,10 @@
+{
+    "domain": "/grs/pay",
+    "path": "/grs/pay/dsbcenter/servers/dsb_0000000114",
+    "ip": "192.168.0.245",
+    "port":"",
+    "server": "master",
+    "online": "1459415453",
+    "lastPublish": "1459415453",
+    "last": ""
+}

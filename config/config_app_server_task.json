@@ -1,0 +1,14 @@
+{
+    "status": "run",
+    "jobs":[],
+    "tasks": [
+        {
+            "trigger": "0/30 * * * * ?",
+            "script": "./scripts/get_pay_order.luac"
+        },
+        {
+            "trigger": "0/30 * * * * ?",
+            "script": "./scripts/save_pay_order.luac"
+        }
+    ]
+}

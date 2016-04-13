@@ -1,0 +1,14 @@
+[
+    {
+        "name": "get_pay_order",
+        "ip": "192.168.0.245,192.168.101.182",
+        "mode": "share",
+        "script": "./scripts/md5.lua"
+    },
+    {
+        "name": "save_pay_order",
+        "ip": "192.168.0.245,192.168.101.182",
+        "mode": "share",
+        "script": "./scripts/md5.lua"
+    }
+]
