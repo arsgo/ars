@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"runtime"
 
 	"github.com/colinyl/ars/cluster"
@@ -9,26 +10,27 @@ import (
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	rcServer := cluster.NewRCServer()
+
 	fv := forever.NewForever("rcserver", "rcserver")
-	result, err := fv.Manage(func() {
+	result, err := fv.Manage(func() forever.IClose {
+		rcServer := cluster.NewRCServer()
 		rcServer.Bind()
 		rcServer.StartRPCServer()
 		rcServer.WatchJobChange(func(config *cluster.JobConfigs, err error) {
-
+			rcServer.BindScheduler(config, err)
 		})
 		rcServer.WatchServiceChange(func(services map[string][]string, err error) {
 			rcServer.BindSPServer(services)
 		})
 		rcServer.StartSnapValue()
-	}, func() {
-		rcServer.Close()
+		return rcServer
+	}, func(o forever.IClose) {
+		o.Close()
 	})
-
 	if err != nil {
-		rcServer.Log.Error(err)
+		log.Println(err)
 		return
 	}
-	rcServer.Log.Info(result)
+	log.Println(result)
 
 }

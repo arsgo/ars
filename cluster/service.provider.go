@@ -14,6 +14,7 @@
 package cluster
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -62,11 +63,25 @@ func (s *spConfig) ToString() string {
 	return strings.Join(lst, ",")
 }
 
+type ResultEntity struct {
+	Code string
+	Msg  string
+}
+
 const (
 	result_error_format   = `{"code":"%s","msg":"%s"}`
 	result_success_format = `{"code":"100","msg":"success"}`
 	result_data_format    = `{"code":"100","msg":"success","data":"%s"}`
 )
+
+func ResultIsSuccess(content string)(bool) {
+	entity := &ResultEntity{}
+	err := json.Unmarshal([]byte(content), &entity)
+    if err!=nil{
+        return false
+    }
+    return strings.EqualFold(entity.Msg,"success")
+}
 
 func getErrorResult(code string, msg string) string {
 	return fmt.Sprintf(result_error_format, code, msg)
@@ -89,10 +104,11 @@ type spServer struct {
 	mode          string
 	serviceConfig string
 	rpcServer     *rpcservice.RPCServer
+    zkClient    *zkClientObj
 }
 
 var (
-	eModeShared = "shared"
+	eModeShared = "share"
 	eModeAlone  = "alone"
 )
 
@@ -147,8 +163,9 @@ func NewSPServer() *spServer {
 	var err error
 	sp := &spServer{}
 	sp.dataMap = utility.NewDataMap()
-	sp.dataMap.Set("domain", zkClient.Domain)
-	sp.dataMap.Set("ip", zkClient.LocalIP)
+    sp.zkClient=NewZKClient()
+	sp.dataMap.Set("domain", sp.zkClient.Domain)
+	sp.dataMap.Set("ip", sp.zkClient.LocalIP)
 	sp.Log, err = logger.New("sp server", true)
 	sp.services = &spConfig{}
 	sp.services.services = make(map[string]*spService, 0)
@@ -159,10 +176,10 @@ func NewSPServer() *spServer {
 	return sp
 }
 func (r *spServer) Close() {
-      r.Log.Info("::sp server closed")
-	zkClient.ZkCli.Close()
-    if r.rpcServer!=nil{
-        r.rpcServer.Stop()
-    }
+	r.Log.Info("::sp server closed")
+	r.zkClient.ZkCli.Close()
+	if r.rpcServer != nil {
+		r.rpcServer.Stop()
+	}
 
 }

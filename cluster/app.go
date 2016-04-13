@@ -23,6 +23,7 @@ type AutoConfig struct {
 type AppConfig struct {
 	Status string
 	Auto   []*AutoConfig
+    Jobs   []string
 }
 type RCServerConfig struct {
 	Domain string
@@ -36,6 +37,7 @@ type appServer struct {
 	dataMap         *utility.DataMap
 	Last            int64
 	Log             *logger.Logger
+    zkClient     *zkClientObj
 	appServerConfig string
 	rcServerRoot    string
 	rcServerPool    *rpcservice.RPCServerPool
@@ -46,15 +48,17 @@ type appServer struct {
 func NewAPPServer() *appServer {
 	var err error
 	app := &appServer{}
+    app.zkClient=NewZKClient()
 	app.dataMap = utility.NewDataMap()
-	app.dataMap.Set("domain", zkClient.Domain)
-	app.dataMap.Set("ip", zkClient.LocalIP)
+	app.dataMap.Set("domain", app.zkClient.Domain)
+	app.dataMap.Set("ip", app.zkClient.LocalIP)
 	app.Log, err = logger.New("app server", true)
 	app.appServerConfig = app.dataMap.Translate(appServerConfig)
 	app.rcServerRoot = app.dataMap.Translate(rcServerRoot)
 	app.rcServerPool = rpcservice.NewRPCServerPool()
 	app.scriptEngine = NewScriptEngine(app)
 	app.rcServicesMap = NewServiceMap()
+   
 	if err != nil {
 		log.Print(err)
 	}
@@ -63,6 +67,6 @@ func NewAPPServer() *appServer {
 
 func (r *appServer) Close() {
     r.Log.Info("::app server closed")
-	zkClient.ZkCli.Close()
+	r.zkClient.ZkCli.Close()
 }
 

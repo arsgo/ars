@@ -6,7 +6,7 @@ import (
 )
 
 func (d *rcServer) WatchServiceChange(callback func(services map[string][]string, err error)){
-    waitZKPathExists(d.servicePublishPath,time.Hour*8640,func(exists bool){
+    d.zkClient.waitZKPathExists(d.servicePublishPath,time.Hour*8640,func(exists bool){
         if !exists {
 			d.Log.Info("service publish config not exists")
 		} else {          
@@ -14,7 +14,7 @@ func (d *rcServer) WatchServiceChange(callback func(services map[string][]string
 		}
     })
     d.Log.Info("::watch for service config changes ")
-    watchZKValueChange(d.servicePublishPath,func(){
+    d.zkClient.watchZKValueChange(d.servicePublishPath,func(){
         d.Log.Info("serivce has changed")
         callback(d.getSPServices())
     })
@@ -27,20 +27,20 @@ func (d *rcServer) watchServiceProviderChange() (err error) {
 		return
 	}
 	d.Log.Info("::watch for service providers changes")
-	waitZKPathExists(d.serviceRoot, time.Hour*8640, func(exists bool) {
+	d.zkClient.waitZKPathExists(d.serviceRoot, time.Hour*8640, func(exists bool) {
 		if !exists {
 			d.Log.Info("service provider node not exists")
 		} else {
 			err = d.serviceChange()
 		}
 	})
-	watchZKChildrenPathChange(d.serviceRoot, func() {
+	d.zkClient.watchZKChildrenPathChange(d.serviceRoot, func() {
 		d.serviceChange()
 	})
 	sproots, err := d.getServiceProviderRoot()
 	for _, v := range sproots {
 		for _, p := range v {        
-			watchZKChildrenPathChange(p, func() {
+			d.zkClient.watchZKChildrenPathChange(p, func() {
 				err = d.serviceChange()
 			})
 		}
@@ -51,7 +51,7 @@ func (d *rcServer) watchServiceProviderChange() (err error) {
 
 func (d *rcServer) getServiceProviderRoot() (map[string][]string, error) {
 	var spList ServiceProviderList = make(map[string][]string)
-	serviceList, err := zkClient.ZkCli.GetChildren(d.dataMap.Translate(serviceRoot))
+	serviceList, err :=d.zkClient.ZkCli.GetChildren(d.dataMap.Translate(serviceRoot))
 	if err != nil {
 		return spList, err
 	}
@@ -67,7 +67,7 @@ func (d *rcServer) getServiceProviderRoot() (map[string][]string, error) {
 
 func (d *rcServer) getSPServices() (ServiceProviderList, error) {
 	var spList ServiceProviderList = make(map[string][]string)
-	serviceList, err := zkClient.ZkCli.GetChildren(d.dataMap.Translate(serviceRoot))
+	serviceList, err := d.zkClient.ZkCli.GetChildren(d.dataMap.Translate(serviceRoot))
 	if err != nil {
 		return spList, err
 	}
@@ -75,7 +75,7 @@ func (d *rcServer) getSPServices() (ServiceProviderList, error) {
 	for _, v := range serviceList {
 		nmap := d.dataMap.Copy()
 		nmap.Set("serviceName", v)
-		providerList, er := zkClient.ZkCli.GetChildren(nmap.Translate(serviceProviderRoot))
+		providerList, er := d.zkClient.ZkCli.GetChildren(nmap.Translate(serviceProviderRoot))
 		if er != nil {
 			return spList, er
 		}
@@ -107,10 +107,10 @@ func (d *rcServer) publishServices() (err error) {
 	}
 	serviceValue := string(buffer)
 	path := d.dataMap.Translate(d.servicePublishPath)
-	if zkClient.ZkCli.Exists(path) {
-		err = zkClient.ZkCli.UpdateValue(path, serviceValue)
+	if d.zkClient.ZkCli.Exists(path) {
+		err = d.zkClient.ZkCli.UpdateValue(path, serviceValue)
 	} else {
-		err = zkClient.ZkCli.CreatePath(path, serviceValue)
+		err = d.zkClient.ZkCli.CreatePath(path, serviceValue)
 	}
 	return
 }

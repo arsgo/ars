@@ -11,27 +11,55 @@ func (d *rcServer) WatchJobChange(callback func(config *JobConfigs, err error)) 
 		return
 	}
 	d.jobCallback = callback
-	waitZKPathExists(d.jobConfigPath, time.Hour*8640, func(exists bool) {
+	d.zkClient.waitZKPathExists(d.jobConfigPath, time.Hour*8640, func(exists bool) {
 		if exists {
-			callback(getJobConfigs(d.jobConfigPath))
+			callback(d.getJobConfigs(d.jobConfigPath))
 		} else {
 			d.Log.Info("job config path not exists")
 		}
 	})
 	d.Log.Info("::watch job config changes")
-	watchZKValueChange(d.jobConfigPath, func() {
+	d.zkClient.watchZKValueChange(d.jobConfigPath, func() {
 		d.Log.Info("job config has changed")
-		callback(getJobConfigs(d.jobConfigPath))
+		callback(d.getJobConfigs(d.jobConfigPath))
 	})
 }
-
-func getJobConfigs(path string) (defConfigs *JobConfigs, err error) {
-	defConfigs = &JobConfigs{}
-	defConfigs.Jobs = make(map[string]JobConfigItem)
-	if !zkClient.ZkCli.Exists(path) {
+func (d *rcServer) getJobConsumers(jobName string) (jobIPCollection []string) {
+	dmap := d.dataMap.Copy()
+	dmap.Set("jobName", jobName)
+	path := dmap.Translate(jobConsumerRoot)
+	children, err := d.zkClient.ZkCli.GetChildren(path)
+	if err != nil {
+		d.Log.Error(err)
 		return
 	}
-	value, err := zkClient.ZkCli.GetValue(path)
+
+	for _, v := range children {
+		dmap.Set("path", v)
+		values, err := d.zkClient.ZkCli.GetValue(dmap.Translate(jobConsumerPath))
+		if err != nil {
+			d.Log.Error(err)
+			continue
+		}
+		consumer := &JobConsumerValue{}
+		err = json.Unmarshal([]byte(values), &consumer)
+		if err != nil {
+			d.Log.Error(err)
+			continue
+		}
+		jobIPCollection = append(jobIPCollection, consumer.IP)
+	}
+	return
+
+}
+
+func (d *rcServer) getJobConfigs(path string) (defConfigs *JobConfigs, err error) {
+	defConfigs = &JobConfigs{}
+	defConfigs.Jobs = make(map[string]JobConfigItem)
+	if !d.zkClient.ZkCli.Exists(path) {
+		return
+	}
+	value, err := d.zkClient.ZkCli.GetValue(path)
 	if err != nil {
 		return
 	}

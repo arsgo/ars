@@ -7,7 +7,7 @@ import (
 )
 
 func (d *spServer) WatchServiceConfigChange() {
-	waitZKPathExists(d.serviceConfig, time.Hour*8640, func(exists bool) {
+	d.zkClient.waitZKPathExists(d.serviceConfig, time.Hour*8640, func(exists bool) {
 		if !exists {
 			d.Log.Info("sp server config not exists")
 
@@ -16,7 +16,7 @@ func (d *spServer) WatchServiceConfigChange() {
 		}
 	})
 	d.Log.Info("::watch for provider config change")
-	watchZKValueChange(d.serviceConfig, func() {
+	d.zkClient.watchZKValueChange(d.serviceConfig, func() {
 		d.rebind()
 	})
 }
@@ -55,7 +55,7 @@ func (d *spServer) deleteSharedSevices(svs map[string]*spService) {
 			continue
 		}
 		nmap := d.getNewDataMap(i)
-		zkClient.ZkCli.Delete(nmap.Translate(serviceProviderPath))
+		d.zkClient.ZkCli.Delete(nmap.Translate(serviceProviderPath))
 	}
 }
 
@@ -72,10 +72,10 @@ func (d *spServer) checkAloneService(configs map[string]*spService) (ct bool, er
 		return
 	}
 	for i, v := range d.services.services {
-		if cc, ok := configs[i]; ok && (strings.EqualFold(v.getUNIQ(), cc.getUNIQ()) || checkIP(configs[i].IP)) {
+		if cc, ok := configs[i]; ok && (strings.EqualFold(v.getUNIQ(), cc.getUNIQ()) || d.zkClient.checkIP(configs[i].IP)) {
 			nmap := d.getNewDataMap(i)
 			path := nmap.Translate(serviceProviderPath)
-			if zkClient.ZkCli.Exists(path) {
+			if d.zkClient.ZkCli.Exists(path) {
 				ct = false
 				return
 			}
@@ -105,7 +105,7 @@ func (d *spServer) bindServices(services map[string]*spService) (psconfig *spCon
 func (d *spServer) bindService(serviceName string, config *spService) (err error) {
 	nmap := d.getNewDataMap(serviceName)
 	path := nmap.Translate(serviceProviderPath)
-	if !checkIP(config.IP) {
+	if !d.zkClient.checkIP(config.IP) {
 		d.deleteSPPath(path)
 		return errors.New("ip not match")
 	}

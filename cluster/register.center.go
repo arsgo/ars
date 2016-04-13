@@ -17,8 +17,8 @@ const (
 
 	jobRoot          = "@domain/job"
 	jobConfigPath    = "@domain/configs/job/config"
-	jobConsumerRoot  = "@domain/job/@jobName"
-	jobConsumerPath  = "@domain/job/@jobName/job"
+	jobConsumerRoot  = "@domain/job/@jobName/consumers"
+	jobConsumerPath  = "@domain/job/@jobName/consumers/@name"    
 	jobConsumerValue = `{"ip":"@ip",last":@now}`
 )
 
@@ -43,6 +43,7 @@ type rcServer struct {
 	jobConfigPath      string
 	spServerPool       *rpcservice.RPCServerPool
 	spServicesMap      *servicesMap
+    zkClient        *zkClientObj
 }
 
 //JobConfigItem job config item
@@ -51,6 +52,9 @@ type JobConfigItem struct {
 	Script      string
 	Trigger     string
 	Concurrency int
+}
+type JobConsumerValue struct{
+    IP string
 }
 
 //JobConfigs job configs
@@ -63,8 +67,9 @@ func NewRCServer() *rcServer {
 	rc := &rcServer{}
 	rc.Log, err = logger.New("rc server", true)
 	rc.dataMap = utility.NewDataMap()
-	rc.dataMap.Set("domain", zkClient.Domain)
-	rc.dataMap.Set("ip", zkClient.LocalIP)
+     rc.zkClient=NewZKClient()
+	rc.dataMap.Set("domain", rc.zkClient.Domain)
+	rc.dataMap.Set("ip", rc.zkClient.LocalIP)
 	rc.dataMap.Set("type", "slave")
 	rc.rcServerRoot = rc.dataMap.Translate(rcServerRoot)
 	rc.servicePublishPath = rc.dataMap.Translate(servicePublishPath)
@@ -80,7 +85,7 @@ func NewRCServer() *rcServer {
 }
 func (r *rcServer) Close() {
       r.Log.Info("::rc server closed")
-	zkClient.ZkCli.Close()
+	r.zkClient.ZkCli.Close()
 	if r.rpcServer != nil {
 		r.rpcServer.Stop()
 	}

@@ -2,6 +2,8 @@ package cluster
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/colinyl/ars/config"
@@ -18,7 +20,7 @@ type zkClientObj struct {
 	Log     *logger.Logger
 }
 
-func waitZKPathExists(path string, timeout time.Duration, callback func(exists bool)) {
+func (zkClient *zkClientObj) waitZKPathExists(path string, timeout time.Duration, callback func(exists bool)) {
 	if zkClient.ZkCli.Exists(path) {
 		callback(true)
 		return
@@ -40,7 +42,7 @@ CHECKER:
 	callback(zkClient.ZkCli.Exists(path))
 }
 
-func watchZKValueChange(path string, callback func()) {
+func (zkClient *zkClientObj) watchZKValueChange(path string, callback func()) {
 	changes := make(chan string, 10)
 	go zkClient.ZkCli.WatchValue(path, changes)
 	go func() {
@@ -55,7 +57,7 @@ func watchZKValueChange(path string, callback func()) {
 	}()
 }
 
-func watchZKChildrenPathChange(path string, callback func()) {
+func (zkClient *zkClientObj) watchZKChildrenPathChange(path string, callback func()) {
 	changes := make(chan []string, 10)
 	go func() {
 		go zkClient.ZkCli.WatchChildren(path, changes)
@@ -70,7 +72,7 @@ func watchZKChildrenPathChange(path string, callback func()) {
 	}()
 }
 
-func getRCServerValue(path string) (value *RCServerConfig, err error) {
+func (zkClient *zkClientObj) getRCServerValue(path string) (value *RCServerConfig, err error) {
 	content, err := zkClient.ZkCli.GetValue(path)
 	if err != nil {
 		return
@@ -80,7 +82,7 @@ func getRCServerValue(path string) (value *RCServerConfig, err error) {
 	return
 }
 
-func getRCServer(dataMap *utility.DataMap) (servers []*RCServerConfig, err error) {
+func (zkClient *zkClientObj) getRCServer(dataMap *utility.DataMap) (servers []*RCServerConfig, err error) {
 	path := dataMap.Translate(rcServerRoot)
 	rcs, _ := zkClient.ZkCli.GetChildren(path)
 	servers = []*RCServerConfig{}
@@ -88,7 +90,7 @@ func getRCServer(dataMap *utility.DataMap) (servers []*RCServerConfig, err error
 		rcmap := dataMap.Copy()
 		rcmap.Set("name", v)
 		rcPath := rcmap.Translate(rcServerNodePath)
-		config, err := getRCServerValue(rcPath)
+		config, err := zkClient.getRCServerValue(rcPath)
 		if err != nil {
 			continue
 		}
@@ -97,7 +99,7 @@ func getRCServer(dataMap *utility.DataMap) (servers []*RCServerConfig, err error
 	return
 }
 
-func getAppConfig(path string) (config *AppConfig, err error) {
+func (zkClient *zkClientObj) getAppConfig(path string) (config *AppConfig, err error) {
 	config = &AppConfig{}
 	values, err := zkClient.ZkCli.GetValue(path)
 	if err != nil {
@@ -106,17 +108,30 @@ func getAppConfig(path string) (config *AppConfig, err error) {
 	err = json.Unmarshal([]byte(values), &config)
 	return
 }
+func (zkClient *zkClientObj) checkIP(origin string) bool {
+	ips := fmt.Sprintf(",%s,", origin)
+	llocal := fmt.Sprintf(",%s,", zkClient.LocalIP)
+	return strings.Contains(ips, llocal)
+}
 
-var zkClient *zkClientObj
-
-func init() {
-	var err error
-	zkClient = &zkClientObj{}
-	zkClient.Log, err = logger.New("zk client", true)
-	zkClient.Domain = config.Get().Domain
-	zkClient.LocalIP = utility.GetLocalIP("192.168")
-	zkClient.ZkCli, err = zk.New(config.Get().ZKServers, time.Second)
-	if err != nil && zkClient.Log != nil {
-		zkClient.Log.Error(err)
+func (zkClient *zkClientObj) getSPConfig(path string) (svs []*spService, err error) {
+	values, err := zkClient.ZkCli.GetValue(path)
+	if err != nil {
+		return
 	}
+	err = json.Unmarshal([]byte(values), &svs)
+	return
+}
+
+func NewZKClient() *zkClientObj {
+	var err error
+	client := &zkClientObj{}
+	client.Log, err = logger.New("zk client", true)
+	client.Domain = config.Get().Domain
+	client.LocalIP = utility.GetLocalIP("192.168")
+	client.ZkCli, err = zk.New(config.Get().ZKServers, time.Second)
+	if err != nil && client.Log != nil {
+		client.Log.Error(err)
+	}
+	return client
 }

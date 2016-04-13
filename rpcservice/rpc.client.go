@@ -51,7 +51,13 @@ func (j *RPCClient) Get(name string, input string) ([]byte, error) {
 	return j.client.Get(name, input)
 }
 func (j *RPCClient) Close() {
-	j.transport.Close()
+    defer func(){
+        recover()
+    }()
+    if j.transport!=nil{
+        j.transport.Close()
+    }
+	
 }
 
 func (j *RPCClient) Check() bool {

@@ -13,9 +13,12 @@ type forever struct {
 	name string
 	desc string
 }
+type IClose interface{
+    Close()
+}
 
 func NewForever(name string, desc string) *forever {
-	dm, err := daemon.New(name, desc,"log","github.com/colinyl/lib4go/logger")
+	dm, err := daemon.New(name, desc)
 	if err != nil {
 		fmt.Println(err)
 		return nil
@@ -23,7 +26,7 @@ func NewForever(name string, desc string) *forever {
 	return &forever{dm: dm, name: name, desc: desc}
 }
 
-func (f *forever) Manage(start func(), close func()) (string, error) {
+func (f *forever) Manage(start func()(o IClose), close func(o IClose)) (string, error) {
 
 	usage := fmt.Sprintf("Usage: %s install | remove | start | stop | status", f.name)
 	// if received any kind of command, do it
@@ -45,7 +48,7 @@ func (f *forever) Manage(start func(), close func()) (string, error) {
 		}
 	}
 
-	start()
+	closer:=start()
 
 	// Do something, call your goroutines, etc
 
@@ -60,7 +63,7 @@ func (f *forever) Manage(start func(), close func()) (string, error) {
 	for {
 		select {
 		case <-interrupt:
-			close()
+			close(closer)
 			return fmt.Sprintf("%s was killed",f.name), nil
 		}
 	}

@@ -9,7 +9,7 @@ import (
 
 
 func (d *rcServer) createRCServer(path string, value string) (err error) {
-	d.Path, err = zkClient.ZkCli.CreateSeqNode(path, value)
+	d.Path, err = d.zkClient.ZkCli.CreateSeqNode(path, value)
 	if err != nil {
 		return
 	}
@@ -19,12 +19,12 @@ func (d *rcServer) createRCServer(path string, value string) (err error) {
 }
 
 func (d *rcServer) resetRCSnap() (err error) {
-	err = zkClient.ZkCli.UpdateValue(d.Path, d.dataMap.Translate(rcServerValue))
+	err = d.zkClient.ZkCli.UpdateValue(d.Path, d.dataMap.Translate(rcServerValue))
 	return
 }
 
 func (d *rcServer) isMaster() bool {
-	servers, _ := zkClient.ZkCli.GetChildren(d.rcServerRoot)
+	servers, _ := d.zkClient.ZkCli.GetChildren(d.rcServerRoot)
 	sort.Sort(sort.StringSlice(servers))
 	return len(servers) == 0 || strings.HasSuffix(d.Path, servers[0])
 }
