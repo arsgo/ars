@@ -20,7 +20,7 @@ func (a *appServer) BindTask(config *AppConfig, err error) error {
 		}))
 	}
     if len(config.Jobs)>0{
-       a.StartJobConsumer(config.Jobs)
+      // a.StartJobConsumer(config.Jobs)
     }
     if len(config.Tasks)>0{
         scheduler.Start()
