@@ -7,11 +7,8 @@ import (
 )
 
 func (a *appServer) BindTask(config *AppConfig, err error) error {
-	scheduler.Stop()
-	if len(config.Auto) == 0 {
-		return nil
-	}
-	for _, v := range config.Auto {		
+	scheduler.Stop()	
+	for _, v := range config.Tasks {		
 		scheduler.AddTask(v.Trigger, scheduler.NewTask(v.Script, func(name string) {
 			a.Log.Infof("start:%s", name)
 			rtvalues, err := a.scriptEngine.pool.Call(name, v.Input)
@@ -22,6 +19,12 @@ func (a *appServer) BindTask(config *AppConfig, err error) error {
 			}
 		}))
 	}
-	scheduler.Start()
+    if len(config.Jobs)>0{
+       a.StartJobConsumer(config.Jobs)
+    }
+    if len(config.Tasks)>0{
+        scheduler.Start()
+    }
+	
 	return nil
 }

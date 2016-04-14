@@ -74,13 +74,13 @@ const (
 	result_data_format    = `{"code":"100","msg":"success","data":"%s"}`
 )
 
-func ResultIsSuccess(content string)(bool) {
+func ResultIsSuccess(content string) bool {
 	entity := &ResultEntity{}
 	err := json.Unmarshal([]byte(content), &entity)
-    if err!=nil{
-        return false
-    }
-    return strings.EqualFold(entity.Msg,"success")
+	if err != nil {
+		return false
+	}
+	return strings.EqualFold(entity.Msg, "success")
 }
 
 func getErrorResult(code string, msg string) string {
@@ -104,7 +104,7 @@ type spServer struct {
 	mode          string
 	serviceConfig string
 	rpcServer     *rpcservice.RPCServer
-    zkClient    *zkClientObj
+	zkClient      *zkClientObj
 }
 
 var (
@@ -130,7 +130,6 @@ func (s *servicesMap) setData(data map[string][]string) {
 }
 func (s *servicesMap) Next(name string) (ip string) {
 	ip = ""
-
 	s.lk.Lock()
 	defer s.lk.Unlock()
 	group, ok := s.data[name]
@@ -163,7 +162,7 @@ func NewSPServer() *spServer {
 	var err error
 	sp := &spServer{}
 	sp.dataMap = utility.NewDataMap()
-    sp.zkClient=NewZKClient()
+	sp.zkClient = NewZKClient()
 	sp.dataMap.Set("domain", sp.zkClient.Domain)
 	sp.dataMap.Set("ip", sp.zkClient.LocalIP)
 	sp.Log, err = logger.New("sp server", true)
@@ -176,10 +175,12 @@ func NewSPServer() *spServer {
 	return sp
 }
 func (r *spServer) Close() {
-	r.Log.Info("::sp server closed")
+	defer func() {
+		recover()
+	}()
 	r.zkClient.ZkCli.Close()
 	if r.rpcServer != nil {
 		r.rpcServer.Stop()
 	}
-
+	r.Log.Info("::sp server closed")
 }

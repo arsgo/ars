@@ -25,7 +25,7 @@ func (r *rcServer) BindScheduler(config *JobConfigs, err error) {
 			}
 			total := config.Jobs[name].Concurrency
 			index := 0
-			for i := 0; i <= len(consumers); i++ {
+			for i := 0; i < len(consumers); i++ {
 				client := rpcservice.NewRPCClient(consumers[i])
 				if client.Open() != nil {
 					r.Log.Infof("open rpc port(%s) error ", consumers[i])
@@ -34,22 +34,21 @@ func (r *rcServer) BindScheduler(config *JobConfigs, err error) {
 				result, err := client.Request(name, "{}")
 				client.Close()
 				if err != nil {
+					r.Log.Error(err)
 					continue
 				}
 				if !ResultIsSuccess(result) {
-					r.Log.Infof("job(%s) rpc (%s) error ", name, consumers[i])
+					r.Log.Infof("call job(%s - %s) failed ", name, consumers[i])
 					continue
+				} else {
+					r.Log.Infof("call job(%s - %s) success", name, consumers[i])
 				}
 				index++
 				if index >= total {
 					continue
 				}
 			}
-			if index >= total {
-				r.Log.Infof("job %s executing success", name)
-			} else {
-				r.Log.Infof("job %s executing failed(%d/%d)", name, index, total)
-			}
+			r.Log.Infof("job(%s) has executed (%d/%d),consumers:%d", name, index, total, len(consumers))
 
 		}))
 	}

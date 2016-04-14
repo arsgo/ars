@@ -1,7 +1,9 @@
 package cluster
 
 import (
+	"fmt"
 	"log"
+	"time"
 
 	"github.com/colinyl/ars/rpcservice"
 	"github.com/colinyl/lib4go/logger"
@@ -15,11 +17,10 @@ const (
 	rcServerValue    = `{"domain":"@domain","path":"@path","ip":"@ip","port":"@port","server":"@type","online":"@online","lastPublish":"@pst","last":"@last"}`
 	rcServerConfig   = "@domain/configs/rc/config"
 
-	jobRoot          = "@domain/job"
-	jobConfigPath    = "@domain/configs/job/config"
-	jobConsumerRoot  = "@domain/job/@jobName/consumers"
-	jobConsumerPath  = "@domain/job/@jobName/consumers/@name"    
-	jobConsumerValue = `{"ip":"@ip",last":@now}`
+	jobRoot             = "@domain/job"
+	jobConfigPath       = "@domain/configs/job/config"
+	jobConsumerRoot     = "@domain/job/@jobName/consumers"
+	jobConsumerRealPath = "@domain/job/@jobName/consumers/@path"
 )
 
 //-------------------------register center----------------------------
@@ -43,7 +44,7 @@ type rcServer struct {
 	jobConfigPath      string
 	spServerPool       *rpcservice.RPCServerPool
 	spServicesMap      *servicesMap
-    zkClient        *zkClientObj
+	zkClient           *zkClientObj
 }
 
 //JobConfigItem job config item
@@ -53,8 +54,8 @@ type JobConfigItem struct {
 	Trigger     string
 	Concurrency int
 }
-type JobConsumerValue struct{
-    IP string
+type JobConsumerValue struct {
+	IP string
 }
 
 //JobConfigs job configs
@@ -67,10 +68,11 @@ func NewRCServer() *rcServer {
 	rc := &rcServer{}
 	rc.Log, err = logger.New("rc server", true)
 	rc.dataMap = utility.NewDataMap()
-     rc.zkClient=NewZKClient()
+	rc.zkClient = NewZKClient()
 	rc.dataMap.Set("domain", rc.zkClient.Domain)
 	rc.dataMap.Set("ip", rc.zkClient.LocalIP)
 	rc.dataMap.Set("type", "slave")
+	rc.dataMap.Set("last", fmt.Sprintf("%d", time.Now().Unix()))
 	rc.rcServerRoot = rc.dataMap.Translate(rcServerRoot)
 	rc.servicePublishPath = rc.dataMap.Translate(servicePublishPath)
 	rc.serviceRoot = rc.dataMap.Translate(serviceRoot)
@@ -84,9 +86,12 @@ func NewRCServer() *rcServer {
 	return rc
 }
 func (r *rcServer) Close() {
-      r.Log.Info("::rc server closed")
+	defer func() {
+		recover()
+	}()
 	r.zkClient.ZkCli.Close()
 	if r.rpcServer != nil {
 		r.rpcServer.Stop()
 	}
+	r.Log.Info("::rc server closed")
 }

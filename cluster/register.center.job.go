@@ -35,8 +35,8 @@ func (d *rcServer) getJobConsumers(jobName string) (jobIPCollection []string) {
 	}
 
 	for _, v := range children {
-		dmap.Set("path", v)
-		values, err := d.zkClient.ZkCli.GetValue(dmap.Translate(jobConsumerPath))
+		dmap.Set("path", v)     
+		values, err := d.zkClient.ZkCli.GetValue(dmap.Translate(jobConsumerRealPath))
 		if err != nil {
 			d.Log.Error(err)
 			continue

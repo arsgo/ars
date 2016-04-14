@@ -13,7 +13,5 @@ func (a *appServer) BindRCServer(configs []*RCServerConfig, err error) error {
 	}
 	a.rcServicesMap.setData(services)
 	a.rcServerPool.Register(servers)
-    a.Log.Infof("app.script.send.group:%s\r\n",a.rcServicesMap.Next("-"))
-    
 	return nil
 }
