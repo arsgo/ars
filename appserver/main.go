@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"runtime"
-
 	"github.com/colinyl/ars/cluster"
 	"github.com/colinyl/ars/forever"
 )
@@ -19,9 +18,9 @@ func main() {
 			appServer.BindRCServer(config, err)
 		})
 
-	/*	appServer.WatchConfigChange(func(config *cluster.AppConfig, err error) error {
+		appServer.WatchConfigChange(func(config *cluster.AppConfig, err error) error {
 			return appServer.BindTask(config, err)
-		})*/
+		})
 		return appServer
 	}, func(o forever.IClose) {
 		o.Close()
