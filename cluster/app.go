@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/colinyl/ars/rpcservice"
+	"github.com/colinyl/ars/webservice"
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/utility"
 )
@@ -24,11 +25,16 @@ type AutoConfig struct {
 	Script  string
 	Input   string
 }
-
+type apiSvs struct {
+	Path   string
+	Method string
+	Script string
+}
 type AppConfig struct {
-	Status string
-	Tasks  []*AutoConfig
-	Jobs   []string
+	Status       string
+	Tasks        []*AutoConfig
+	Jobs         []string
+	ScriptServer []*apiSvs
 }
 type RCServerConfig struct {
 	Domain string
@@ -36,6 +42,10 @@ type RCServerConfig struct {
 	Port   string
 	Server string
 	Online string
+}
+type scriptHandler struct {
+	data *apiSvs
+	server *appServer
 }
 
 type appServer struct {
@@ -53,6 +63,10 @@ type appServer struct {
 	jobServerAdress   string
 	lk                sync.Mutex
 	jobNames          map[string]string
+	apiServer         *webservice.WebService
+	apiServerAddress  string
+	scriptServer      []*apiSvs
+	scriptHandlers         map[string]*scriptHandler
 }
 
 func NewAPPServer() *appServer {
@@ -70,6 +84,7 @@ func NewAPPServer() *appServer {
 	app.scriptEngine = NewScriptEngine(app)
 	app.rcServicesMap = NewServiceMap()
 	app.jobNames = make(map[string]string)
+	app.scriptHandlers = make(map[string]*scriptHandler)
 
 	if err != nil {
 		log.Print(err)

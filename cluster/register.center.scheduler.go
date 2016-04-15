@@ -28,7 +28,7 @@ func (r *rcServer) BindScheduler(config *JobConfigs, err error) {
 			for i := 0; i < len(consumers); i++ {
 				client := rpcservice.NewRPCClient(consumers[i])
 				if client.Open() != nil {
-					r.Log.Infof("open rpc port(%s) error ", consumers[i])
+					r.Log.Infof("open rpc server(%s) error ", consumers[i])
 					continue
 				}
 				result, err := client.Request(name, "{}")

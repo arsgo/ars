@@ -1,6 +1,9 @@
 package cluster
 
 import (
+	"errors"
+	"strings"
+
 	"github.com/colinyl/ars/rpcservice"
 	"github.com/colinyl/lib4go/lua"
 	l "github.com/yuin/gopher-lua"
@@ -8,6 +11,18 @@ import (
 
 type scriptEngine struct {
 	pool *lua.LuaPool
+}
+
+func (e *scriptEngine) Call(name string, input string) ([]string, error) {
+	if strings.EqualFold(name, "") {
+		return nil, errors.New("script is nil")
+	}	
+	script := strings.Replace(name, ".", "/", -1)
+	script = strings.Replace(script, "\\", "/", -1)
+	if !strings.HasPrefix(script, "./") {
+		script = "./" + strings.TrimLeft(name,"/")
+	}
+	return e.pool.Call(script, input)
 }
 
 func (a *appServer) rpcBind(L *l.LState) int {

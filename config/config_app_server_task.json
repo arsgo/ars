@@ -1,6 +1,15 @@
 {
     "status": "run",
-    "jobs":["auto_build_bill"],
+    "jobs": [
+        "auto_build_bill"
+    ],
+    "scriptServer": [
+        {
+            "path": "/system/base/inf",
+            "method": "get",
+            "script": "/scripts/system.base.info"
+        }
+    ],
     "tasks": [
         {
             "trigger": "0/5 * * * * ?",

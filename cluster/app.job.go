@@ -4,7 +4,11 @@ import (
 	"github.com/colinyl/ars/rpcservice"
 	"github.com/colinyl/lib4go/logger"
 )
-
+func (a *appServer)StopJobServer(){
+	if a.jobServer!=nil{
+		a.jobServer.Stop()
+	}
+}
 func (a *appServer) StartJobConsumer(jobNames []string) {
 	a.lk.Lock()
 	defer a.lk.Unlock()
