@@ -3,6 +3,7 @@ package cluster
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/colinyl/ars/rpcservice"
 	"github.com/colinyl/lib4go/logger"
@@ -14,24 +15,24 @@ type rcServerRPCHandler struct {
 }
 
 func (r *rcServerRPCHandler) Request(name string, input string) (result string, err error) {
-	
-    if strings.EqualFold(name, "test_request") {
-        r.Log.Info("recv test_request")
+
+	if strings.EqualFold(name, "test_request") {
+		r.Log.Info("recv test_request")
 		return "success", nil
 	}
-    r.Log.Infof("recv request:%s", name)
+	r.Log.Infof("recv request:%s", name)
 	group := r.server.spServicesMap.Next(name)
 	//  return group,nil
 	result, err = r.server.spServerPool.Request(group, name, input)
 	if err != nil {
-		result = fmt.Sprintf("rc server:%s", err.Error())
+		result = fmt.Sprintf("%s(rc server)", err.Error())
 		err = nil
 	}
 	return
 
 }
 func (r *rcServerRPCHandler) Send(name string, input string, data []byte) (string, error) {
-	
+
 	r.Log.Infof("recv request:%s", name)
 	group := r.server.spServicesMap.Next(name)
 	return r.server.spServerPool.Send(group, name, input, data)
@@ -48,6 +49,7 @@ func (d *rcServer) StartRPCServer() {
 	d.dataMap.Set("port", d.Port)
 	d.rpcServer = rpcservice.NewRPCServer(address, &rcServerRPCHandler{server: d, Log: d.Log})
 	d.rpcServer.Serve()
+	time.Sleep(time.Second*2)
 	d.resetRCSnap()
 }
 

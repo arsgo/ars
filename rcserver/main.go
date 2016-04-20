@@ -14,8 +14,8 @@ func main() {
 	fv := forever.NewForever("rcserver", "rcserver")
 	result, err := fv.Manage(func() forever.IClose {
 		rcServer := cluster.NewRCServer()
-		rcServer.Bind()
 		rcServer.StartRPCServer()
+		rcServer.Bind()	
 		rcServer.WatchJobChange(func(config *cluster.JobConfigs, err error) {
 			rcServer.BindScheduler(config, err)
 		})

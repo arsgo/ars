@@ -1,10 +1,8 @@
 package cluster
 
 import (
-	"fmt"
 	"log"
 	"sync"
-	"time"
 
 	"github.com/colinyl/ars/rpcservice"
 	"github.com/colinyl/ars/webservice"
@@ -13,17 +11,17 @@ import (
 )
 
 const (
-	appServerConfig   = "@domain/configs/app/@ip"
-	appServerRoot     = "@domain/app/servers"
-	appServerRootPath = "@domain/app/servers/@ip"
-	jobConsumerPath   = "@domain/job/@jobName/consumers/job_"
-	jobConsumerValue  = `{"ip":"@ip@jobPort","last":@now}`
+	appServerConfig = "@domain/app/config/@ip"
+	//	appServerRoot     = "@domain/app/servers"
+	appServerPath    = "@domain/app/servers/@ip"
+	jobConsumerPath  = "@domain/job/servers/@jobName/job_"
+	jobConsumerValue = `{"ip":"@ip@jobPort","last":@now}`
 )
 
 type AutoConfig struct {
 	Trigger string
 	Script  string
-	Input   string
+	MQ      string
 }
 type apiSvs struct {
 	Path   string
@@ -44,7 +42,7 @@ type RCServerConfig struct {
 	Online string
 }
 type scriptHandler struct {
-	data *apiSvs
+	data   *apiSvs
 	server *appServer
 }
 
@@ -61,31 +59,29 @@ type appServer struct {
 	jobServer         *rpcservice.RPCServer
 	hasStartJobServer bool
 	jobServerAdress   string
+	appServerAddress  string
 	lk                sync.Mutex
 	jobNames          map[string]string
 	apiServer         *webservice.WebService
 	apiServerAddress  string
 	scriptServer      []*apiSvs
-	scriptHandlers         map[string]*scriptHandler
+	scriptHandlers    map[string]*scriptHandler
 }
 
 func NewAPPServer() *appServer {
 	var err error
 	app := &appServer{}
-	app.zkClient = NewZKClient()
-	app.dataMap = utility.NewDataMap()
-	app.dataMap.Set("domain", app.zkClient.Domain)
-	app.dataMap.Set("ip", app.zkClient.LocalIP)
-	app.dataMap.Set("now", fmt.Sprintf("%d", time.Now().Unix()))
 	app.Log, err = logger.New("app server", true)
+	app.zkClient = NewZKClient()
+	app.dataMap = app.zkClient.dataMap.Copy()	
 	app.appServerConfig = app.dataMap.Translate(appServerConfig)
 	app.rcServerRoot = app.dataMap.Translate(rcServerRoot)
+	app.appServerAddress = app.dataMap.Translate(appServerPath)
 	app.rcServerPool = rpcservice.NewRPCServerPool()
 	app.scriptEngine = NewScriptEngine(app)
 	app.rcServicesMap = NewServiceMap()
 	app.jobNames = make(map[string]string)
 	app.scriptHandlers = make(map[string]*scriptHandler)
-
 	if err != nil {
 		log.Print(err)
 	}

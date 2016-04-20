@@ -8,6 +8,8 @@ import (
 
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/lua"
+
+	l "github.com/yuin/gopher-lua"
 )
 
 type spScriptEngine struct {
@@ -64,4 +66,15 @@ func NewScript(p *spServer) *spScriptEngine {
 		log.Println(err)
 	}
 	return en
+}
+func (a *spServer) rpcBind(L *l.LState) int {
+
+	var exports = map[string]l.LGFunction{
+	//"request": a.request,
+	//"send":    a.send,
+	}
+
+	mod := L.SetFuncs(L.NewTable(), exports)
+	L.Push(mod)
+	return 1
 }

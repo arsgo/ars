@@ -26,14 +26,14 @@ import (
 )
 
 const (
-	serviceRoot          = "@domain/sp"
-	serviceConfig        = "@domain/configs/sp/config"
-	serviceProviderRoot  = "@domain/sp/@serviceName/providers"
-	serviceProviderPath  = "@domain/sp/@serviceName/providers/@ip@port"
+	serviceRoot          = "@domain/sp/servers"
+	serviceConfig        = "@domain/sp/config"
+	serviceProviderRoot  = "@domain/sp/servers/@serviceName"
+	serviceProviderPath  = "@domain/sp/servers/@serviceName/@ip@port"
 	serviceProviderValue = `{"last":@last}`
 
-	servicePublishPath    = "@domain/configs/sp/publish"
-	serviceProviderConfig = "@domain/configs/sp/config"
+	servicePublishPath = "@domain/sp/publish"
+	//serviceProviderConfig = "@domain/sp/config"
 )
 
 type serviceGroup struct {
@@ -163,8 +163,7 @@ func NewSPServer() *spServer {
 	sp := &spServer{}
 	sp.dataMap = utility.NewDataMap()
 	sp.zkClient = NewZKClient()
-	sp.dataMap.Set("domain", sp.zkClient.Domain)
-	sp.dataMap.Set("ip", sp.zkClient.LocalIP)
+	sp.dataMap=sp.zkClient.dataMap.Copy()
 	sp.Log, err = logger.New("sp server", true)
 	sp.services = &spConfig{}
 	sp.services.services = make(map[string]*spService, 0)

@@ -12,12 +12,17 @@ import (
 	zk "github.com/colinyl/lib4go/zkclient"
 )
 
+const (
+	varConfigPath = "@domain/var/@type/@name"
+)
+
 type zkClientObj struct {
 	ZkCli   *zk.ZKCli
 	LocalIP string
 	Domain  string
 	Err     error
 	Log     *logger.Logger
+	dataMap *utility.DataMap
 }
 
 func (zkClient *zkClientObj) waitZKPathExists(path string, timeout time.Duration, callback func(exists bool)) {
@@ -62,7 +67,7 @@ func (zkClient *zkClientObj) watchZKChildrenPathChange(path string, callback fun
 	go func() {
 		go zkClient.ZkCli.WatchChildren(path, changes)
 		for {
-			select {
+			select {			
 			case <-changes:
 				{
 					callback()
@@ -113,7 +118,17 @@ func (zkClient *zkClientObj) checkIP(origin string) bool {
 	llocal := fmt.Sprintf(",%s,", zkClient.LocalIP)
 	return strings.Contains(ips, llocal)
 }
-
+func (zkClient *zkClientObj) getVarConfig(typeName string, name string) (config string, err error) {
+	dataMap := zkClient.dataMap.Copy()
+	dataMap.Set("type", typeName)
+	dataMap.Set("name", name)
+	values, err := zkClient.ZkCli.GetValue(dataMap.Translate(varConfigPath))
+	if err != nil {
+		return
+	}
+	config = string(values)
+	return
+}
 func (zkClient *zkClientObj) getSPConfig(path string) (svs []*spService, err error) {
 	values, err := zkClient.ZkCli.GetValue(path)
 	if err != nil {
@@ -130,6 +145,10 @@ func NewZKClient() *zkClientObj {
 	client.Domain = config.Get().Domain
 	client.LocalIP = utility.GetLocalIP("192.168")
 	client.ZkCli, err = zk.New(config.Get().ZKServers, time.Second)
+	client.dataMap = utility.NewDataMap()
+	client.dataMap.Set("ip", client.LocalIP)
+	client.dataMap.Set("domain", client.Domain)
+	client.dataMap.Set("now", fmt.Sprintf("%d", time.Now().Unix()))
 	if err != nil && client.Log != nil {
 		client.Log.Error(err)
 	}

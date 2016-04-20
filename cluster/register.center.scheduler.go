@@ -15,7 +15,12 @@ func (r *rcServer) BindScheduler(config *JobConfigs, err error) {
 	if len(config.Jobs) == 0 {
 		return
 	}
+	var jobCount int
 	for _, v := range config.Jobs {
+		if v.Concurrency<=0{
+			continue
+		}
+		jobCount++
 		scheduler.AddTask(v.Trigger, scheduler.NewTask(v.Name, func(name string) {
 			consumers := r.getJobConsumers(name)
 			if err != nil {
@@ -52,6 +57,8 @@ func (r *rcServer) BindScheduler(config *JobConfigs, err error) {
 
 		}))
 	}
-	scheduler.Start()
+	if jobCount>0{
+		scheduler.Start()
+	}
 
 }

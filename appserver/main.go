@@ -15,6 +15,11 @@ func main() {
 	result, err := fv.Manage(func() forever.IClose {
 		appServer := cluster.NewAPPServer()
 		appServer.WatchRCServerChange(func(config []*cluster.RCServerConfig, err error) {
+			
+			for _,v:=range config{
+				appServer.Log.Infof("@@@--->rc_change_server:%s:%s",v.IP,v.Port)
+			}
+			
 			appServer.BindRCServer(config, err)
 		})
 

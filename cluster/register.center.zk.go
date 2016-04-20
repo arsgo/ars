@@ -8,13 +8,12 @@ import (
 )
 
 
-func (d *rcServer) createRCServer(path string, value string) (err error) {
+func (d *rcServer) createRCServer(path string, value string) (err error) {	
 	d.Path, err = d.zkClient.ZkCli.CreateSeqNode(path, value)
 	if err != nil {
 		return
 	}
 	d.setOnlineParams(d.isMaster())
-	d.resetRCSnap()
 	return
 }
 

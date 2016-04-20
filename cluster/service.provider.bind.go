@@ -28,7 +28,6 @@ func (d *spServer) rebind() {
 		d.Log.Infof("bind services:%s,%s", d.mode, d.services.ToString())
 	}()
 	aloneService, sharedService := d.groupService()
-	//  d.Log.Infof("alone:%d,shared:%d",len(aloneService),len(sharedService))
 	if strings.EqualFold(d.mode, eModeAlone) {
 		goon, _ := d.checkAloneService(aloneService)
 		if !goon {
@@ -54,8 +53,10 @@ func (d *spServer) deleteSharedSevices(svs map[string]*spService) {
 		if _, ok := svs[i]; ok {
 			continue
 		}
+
 		nmap := d.getNewDataMap(i)
-		d.zkClient.ZkCli.Delete(nmap.Translate(serviceProviderPath))
+		path := nmap.Translate(serviceProviderPath)
+		d.zkClient.ZkCli.Delete(path)
 	}
 }
 
@@ -87,6 +88,7 @@ func (d *spServer) checkAloneService(configs map[string]*spService) (ct bool, er
 func (d *spServer) bindServices(services map[string]*spService) (psconfig *spConfig, err error) {
 	psconfig = &spConfig{services: make(map[string]*spService, 0)}
 	for sv, config := range services {
+		err = nil
 		if v, ok := d.services.services[sv]; !ok {
 			err = d.bindService(sv, config)
 		} else if !strings.EqualFold(config.getUNIQ(), v.getUNIQ()) {

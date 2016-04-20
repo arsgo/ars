@@ -1,9 +1,7 @@
 package cluster
 
 import (
-	"fmt"
 	"log"
-	"time"
 
 	"github.com/colinyl/ars/rpcservice"
 	"github.com/colinyl/lib4go/logger"
@@ -15,12 +13,12 @@ const (
 	rcServerPath     = "@domain/rc/servers/rc_"
 	rcServerNodePath = "@domain/rc/servers/@name"
 	rcServerValue    = `{"domain":"@domain","path":"@path","ip":"@ip","port":"@port","server":"@type","online":"@online","lastPublish":"@pst","last":"@last"}`
-	rcServerConfig   = "@domain/configs/rc/config"
+	rcServerConfig   = "@domain/rc/config"
 
-	jobRoot             = "@domain/job"
-	jobConfigPath       = "@domain/configs/job/config"
-	jobConsumerRoot     = "@domain/job/@jobName/consumers"
-	jobConsumerRealPath = "@domain/job/@jobName/consumers/@path"
+	//jobRoot             = "@domain/job"
+	jobConfigPath       = "@domain/job/config"
+	jobConsumerRoot     = "@domain/job/servers/@jobName"
+	jobConsumerRealPath = "@domain/job/servers/@jobName/@path"
 )
 
 //-------------------------register center----------------------------
@@ -67,12 +65,9 @@ func NewRCServer() *rcServer {
 	var err error
 	rc := &rcServer{}
 	rc.Log, err = logger.New("rc server", true)
-	rc.dataMap = utility.NewDataMap()
 	rc.zkClient = NewZKClient()
-	rc.dataMap.Set("domain", rc.zkClient.Domain)
-	rc.dataMap.Set("ip", rc.zkClient.LocalIP)
+	rc.dataMap = rc.zkClient.dataMap.Copy()
 	rc.dataMap.Set("type", "slave")
-	rc.dataMap.Set("last", fmt.Sprintf("%d", time.Now().Unix()))
 	rc.rcServerRoot = rc.dataMap.Translate(rcServerRoot)
 	rc.servicePublishPath = rc.dataMap.Translate(servicePublishPath)
 	rc.serviceRoot = rc.dataMap.Translate(serviceRoot)

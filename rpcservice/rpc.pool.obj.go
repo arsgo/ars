@@ -1,6 +1,7 @@
 package rpcservice
 
 import (
+	"fmt"
 	"log"
 	"sync"
 
@@ -22,7 +23,6 @@ type RPCServerPool struct {
 	Log     *logger.Logger
 }
 
-
 func newRPCClientFactory(ip string) *rpcClientFactory {
 	log.Println(ip)
 	return &rpcClientFactory{ip: ip}
@@ -31,6 +31,8 @@ func newRPCClientFactory(ip string) *rpcClientFactory {
 func (j *rpcClientFactory) Create() (pool.Object, error) {
 	o := NewRPCClient(j.ip)
 	if err := o.Open(); err != nil {
+	
+		fmt.Println(err.Error())
 		return nil, err
 	}
 	return o, nil

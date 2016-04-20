@@ -26,7 +26,7 @@ func (r *appServer) getAPIServerHandler() (handlers []webservice.WebHandler) {
 	for _, v := range r.scriptServer {
 		handler := &scriptHandler{data: v, server: r}
 		r.scriptHandlers[v.Path] = handler
-		handlers = append(handlers, webservice.WebHandler{v.Path, v.Method, handler.ExecuteScript})
+		handlers = append(handlers,webservice.WebHandler{v.Path, v.Method, handler.ExecuteScript})
 	}
 	return
 }

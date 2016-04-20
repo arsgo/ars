@@ -39,16 +39,19 @@ func (p *RPCServerPool) Request(group string, svName string, input string) (resu
 	}
 	defer p.pool.Recycle(group, o)
 	obj := o.(*RPCClient)
-	defer func() {
+	defer func(o *RPCClient) {
 		if ex := recover(); ex != nil {
 			err = ex.(error)
-			if obj != nil {
-				obj.Fatal()
+			if o != nil {
+				o.Fatal()
 			}
 		}
-	}()
+	}(obj)
+p.Log.Infof("call rpc server %s,%s,%s",obj.Address,svName,input)
 	result,err=obj.Request(svName, input)
     if err!=nil{
+		p.Log.Info("rpc call error")
+		p.Log.Error(err)
         obj.Fatal()
     }
     return
