@@ -1,7 +1,6 @@
 package cluster
 
 import (
-	"log"
 	"sync"
 
 	"github.com/colinyl/ars/rpcservice"
@@ -69,11 +68,13 @@ type appServer struct {
 }
 
 func NewAPPServer() *appServer {
-	var err error
-	app := &appServer{}
-	app.Log, err = logger.New("app server", true)
+	app:=&appServer{}
+	app.Log, _= logger.New("app server", true)
+	return app
+}
+func (app *appServer) init() (err error) {
 	app.zkClient = NewZKClient()
-	app.dataMap = app.zkClient.dataMap.Copy()	
+	app.dataMap = app.zkClient.dataMap.Copy()
 	app.appServerConfig = app.dataMap.Translate(appServerConfig)
 	app.rcServerRoot = app.dataMap.Translate(rcServerRoot)
 	app.appServerAddress = app.dataMap.Translate(appServerPath)
@@ -82,13 +83,24 @@ func NewAPPServer() *appServer {
 	app.rcServicesMap = NewServiceMap()
 	app.jobNames = make(map[string]string)
 	app.scriptHandlers = make(map[string]*scriptHandler)
-	if err != nil {
-		log.Print(err)
-	}
-	return app
+	return
 }
 
-func (r *appServer) Close() {
+func (r *appServer) Start() (err error) {
+	if err = r.init(); err != nil {
+		return
+	}
+	r.WatchRCServerChange(func(config []*RCServerConfig, err error) {
+		r.BindRCServer(config, err)
+	})
+
+	r.WatchConfigChange(func(config *AppConfig, err error) error {
+		return r.BindTask(config, err)
+	})
+	return nil
+}
+
+func (r *appServer) Stop() error {
 	defer func() {
 		recover()
 	}()
@@ -98,4 +110,5 @@ func (r *appServer) Close() {
 		r.jobServer.Stop()
 	}
 	r.Log.Info("::app server closed")
+	return nil
 }

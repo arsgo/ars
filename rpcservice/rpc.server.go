@@ -54,7 +54,7 @@ func GetLocalRandomAddress() string {
 
 func getPort() int {
 	for i := 0; i < 100; i++ {
-		port := 1016 + i*8
+		port := 10160 + i*8
 		if net.IsTCPPortAvailable(port) {
 			return port
 		}

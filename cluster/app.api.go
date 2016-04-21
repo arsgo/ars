@@ -22,7 +22,6 @@ func (r *appServer) StartAPIServer() {
 	r.Log.Infof("::start api server%s", r.apiServerAddress)
 }
 func (r *appServer) getAPIServerHandler() (handlers []webservice.WebHandler) {
-	r.Log.Info("getAPIServerHandler")
 	for _, v := range r.scriptServer {
 		handler := &scriptHandler{data: v, server: r}
 		r.scriptHandlers[v.Path] = handler

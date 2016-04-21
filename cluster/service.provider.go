@@ -16,7 +16,6 @@ package cluster
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"strings"
 	"sync"
 
@@ -159,21 +158,30 @@ func (s ServiceProviderList) Add(serviceName string, server string) {
 }
 
 func NewSPServer() *spServer {
-	var err error
 	sp := &spServer{}
+	sp.Log, _ = logger.New("sp server", true)
+	return sp
+}
+func (sp *spServer) init() error {
 	sp.dataMap = utility.NewDataMap()
 	sp.zkClient = NewZKClient()
-	sp.dataMap=sp.zkClient.dataMap.Copy()
-	sp.Log, err = logger.New("sp server", true)
+	sp.dataMap = sp.zkClient.dataMap.Copy()
 	sp.services = &spConfig{}
 	sp.services.services = make(map[string]*spService, 0)
 	sp.serviceConfig = sp.dataMap.Translate(serviceConfig)
-	if err != nil {
-		log.Println(err)
-	}
-	return sp
+	return nil
 }
-func (r *spServer) Close() {
+
+func (r *spServer) Start() (err error) {
+	if err = r.init(); err != nil {
+		return
+	}
+
+	r.StartRPC()
+	r.WatchServiceConfigChange()
+	return nil
+}
+func (r *spServer) Stop() error {
 	defer func() {
 		recover()
 	}()
@@ -182,4 +190,5 @@ func (r *spServer) Close() {
 		r.rpcServer.Stop()
 	}
 	r.Log.Info("::sp server closed")
+	return nil
 }

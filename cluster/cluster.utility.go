@@ -67,7 +67,7 @@ func (zkClient *zkClientObj) watchZKChildrenPathChange(path string, callback fun
 	go func() {
 		go zkClient.ZkCli.WatchChildren(path, changes)
 		for {
-			select {			
+			select {
 			case <-changes:
 				{
 					callback()
@@ -136,6 +136,9 @@ func (zkClient *zkClientObj) getSPConfig(path string) (svs []*spService, err err
 	}
 	err = json.Unmarshal([]byte(values), &svs)
 	return
+}
+func (zkClient *zkClientObj) GetMQConfig(name string) (string, error) {
+	return zkClient.getVarConfig("mq", name)
 }
 
 func NewZKClient() *zkClientObj {

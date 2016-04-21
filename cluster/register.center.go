@@ -1,8 +1,6 @@
 package cluster
 
 import (
-	"log"
-
 	"github.com/colinyl/ars/rpcservice"
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/utility"
@@ -62,9 +60,11 @@ type JobConfigs struct {
 }
 
 func NewRCServer() *rcServer {
-	var err error
 	rc := &rcServer{}
-	rc.Log, err = logger.New("rc server", true)
+	rc.Log, _ = logger.New("rc server", true)
+	return rc
+}
+func (rc *rcServer) init() error {
 	rc.zkClient = NewZKClient()
 	rc.dataMap = rc.zkClient.dataMap.Copy()
 	rc.dataMap.Set("type", "slave")
@@ -75,12 +75,29 @@ func NewRCServer() *rcServer {
 	rc.rcServerPath = rc.dataMap.Translate(rcServerPath)
 	rc.spServerPool = rpcservice.NewRPCServerPool()
 	rc.spServicesMap = NewServiceMap()
-	if err != nil {
-		log.Print(err)
-	}
-	return rc
+	return nil
 }
-func (r *rcServer) Close() {
+
+func (r *rcServer) Start() (err error) {
+	if err = r.init(); err != nil {
+		return
+	}
+	r.StartRPCServer()
+	err = r.Bind()
+	if err != nil {
+		return
+	}
+	r.WatchJobChange(func(config *JobConfigs, err error) {
+		r.BindScheduler(config, err)
+	})
+	r.WatchServiceChange(func(services map[string][]string, err error) {
+		r.BindSPServer(services)
+	})
+	r.StartSnapValue()
+	return nil
+}
+
+func (r *rcServer) Stop()error {
 	defer func() {
 		recover()
 	}()
@@ -89,4 +106,5 @@ func (r *rcServer) Close() {
 		r.rpcServer.Stop()
 	}
 	r.Log.Info("::rc server closed")
+	return nil
 }

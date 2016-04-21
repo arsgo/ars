@@ -56,7 +56,7 @@ type appServerJobHandler struct {
 }
 
 func (r *appServerJobHandler) Request(name string, input string) (result string, err error) {
-    r.Log.Info("execute job server request")
+    r.Log.Info("recv job server request")
 	return getSuccessResult(), nil
 }
 func (r *appServerJobHandler) Send(name string, input string, data []byte) (string, error) {

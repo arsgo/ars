@@ -5,12 +5,22 @@ import (
 	"github.com/yuin/gopher-lua"
 )
 
-func BindMQService(L *lua.LState) {
-	scriptservice.Bind(L, &scriptservice.ScriptBindClass{ClassName: "MQ",
-		ObjectFuncs: map[string]func(*lua.LState) interface{}{
-			"NewPublisher": func(L *lua.LState) interface{} {
-				return NewMQService(L.CheckString(1)).NewConsumer()
-			},
+type ConfigHandler interface {
+	GetMQConfig(string) (string, error)
+}
+type MQBinder struct {
+	handler ConfigHandler
+}
+
+func NewMQBinder(c ConfigHandler) *MQBinder {
+	return &MQBinder{handler: c}
+}
+func (c *MQBinder) BindMQConsumerService(L *lua.LState) {
+	scriptservice.Bind(L, &scriptservice.ScriptBindClass{ClassName: "mqc",
+		ConstructorName: "new",
+		ConstructorFunc: func(L *lua.LState) interface{} {
+			config, _ := c.handler.GetMQConfig(L.CheckString(1))
+			return NewMQService(config).NewConsumer()
 		}, ObjectMethods: map[string]scriptservice.ScriptBindFunc{
 			"consume": func(L *lua.LState) (result []string) {
 				if L.GetTop() != 2 {
@@ -32,6 +42,16 @@ func BindMQService(L *lua.LState) {
 				})
 				return result
 			},
+		}})
+}
+
+func (c *MQBinder) BindMQPublisherService(L *lua.LState) {
+	scriptservice.Bind(L, &scriptservice.ScriptBindClass{ClassName: "mqp",
+		ConstructorName: "new",
+		ConstructorFunc: func(L *lua.LState) interface{} {
+			config, _ := c.handler.GetMQConfig(L.CheckString(1))
+			return NewMQService(config).NewPublisher()
+		}, ObjectMethods: map[string]scriptservice.ScriptBindFunc{
 			"publish": func(L *lua.LState) (result []string) {
 				if L.GetTop() != 2 {
 					result = append(result, "input args error")

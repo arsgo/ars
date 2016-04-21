@@ -6,24 +6,24 @@ type ScriptBindFunc func(*lua.LState) []string
 type ScriptBinderFuncs map[string]ScriptBindFunc
 
 type ScriptBindClass struct {
-	ClassName     string
-	ObjectFuncs   map[string]func(*lua.LState) interface{}
-	Funcs         ScriptBinderFuncs
-	ObjectMethods ScriptBinderFuncs
+	ClassName       string
+	ConstructorName string
+	ConstructorFunc func(*lua.LState) interface{}
+	Funcs           ScriptBinderFuncs
+	ObjectMethods   ScriptBinderFuncs
 }
 
 func Bind(L *lua.LState, pk *ScriptBindClass) {
 	mt := L.NewTypeMetatable(pk.ClassName)
 	L.SetGlobal(pk.ClassName, mt)
-	for oName, oFunc := range pk.ObjectFuncs {
-		L.SetField(mt, oName, L.NewFunction(func(ls *lua.LState) int {
-			ud := ls.NewUserData()
-			ud.Value = oFunc(ls)
-			ls.SetMetatable(ud, ls.GetTypeMetatable(pk.ClassName))
-			ls.Push(ud)
-			return 1
-		}))
-	}
+	L.SetField(mt, pk.ConstructorName, L.NewFunction(func(ls *lua.LState) int {
+		ud := ls.NewUserData()
+		ud.Value = pk.ConstructorFunc(ls)
+		ls.SetMetatable(ud, ls.GetTypeMetatable(pk.ClassName))
+		ls.Push(ud)
+		return 1
+	}))
+
 	for cName, cFunc := range pk.Funcs {
 		L.SetField(mt, cName, L.NewFunction(getFunc(L, cFunc)))
 	}

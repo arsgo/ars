@@ -5,28 +5,41 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
 	"github.com/colinyl/daemon"
+	"github.com/colinyl/lib4go/logger"
 )
 
 type forever struct {
 	dm   daemon.Daemon
+	log  *logger.Logger
+	svs  service
 	name string
 	desc string
 }
-type IClose interface{
-    Close()
+type service interface {
+	Start() error
+	Stop() error
 }
 
-func NewForever(name string, desc string) *forever {
+func NewForever(svs service, log *logger.Logger, name string, desc string) *forever {
 	dm, err := daemon.New(name, desc)
 	if err != nil {
 		fmt.Println(err)
 		return nil
 	}
-	return &forever{dm: dm, name: name, desc: desc}
+	return &forever{dm: dm, name: name, desc: desc, svs: svs, log: log}
+}
+func (f *forever) Start() {
+	result, err := f.run()
+	if err != nil {
+		f.log.Error(err)
+		return
+	}
+	f.log.Info(result)
 }
 
-func (f *forever) Manage(start func()(o IClose), close func(o IClose)) (string, error) {
+func (f *forever) run() (string, error) {
 
 	usage := fmt.Sprintf("Usage: %s install | remove | start | stop | status", f.name)
 	// if received any kind of command, do it
@@ -47,8 +60,9 @@ func (f *forever) Manage(start func()(o IClose), close func(o IClose)) (string, 
 			return usage, nil
 		}
 	}
-
-	closer:=start()
+	if err := f.svs.Start(); err != nil {
+		return "", err
+	}
 
 	// Do something, call your goroutines, etc
 
@@ -63,8 +77,8 @@ func (f *forever) Manage(start func()(o IClose), close func(o IClose)) (string, 
 	for {
 		select {
 		case <-interrupt:
-			close(closer)
-			return fmt.Sprintf("%s was killed",f.name), nil
+			f.svs.Stop()
+			return fmt.Sprintf("%s was killed", f.name), nil
 		}
 	}
 	// never happen, but need to complete code

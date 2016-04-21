@@ -47,10 +47,8 @@ func (p *RPCServerPool) Request(group string, svName string, input string) (resu
 			}
 		}
 	}(obj)
-p.Log.Infof("call rpc server %s,%s,%s",obj.Address,svName,input)
 	result,err=obj.Request(svName, input)
-    if err!=nil{
-		p.Log.Info("rpc call error")
+    if err!=nil{		
 		p.Log.Error(err)
         obj.Fatal()
     }
