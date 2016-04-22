@@ -42,7 +42,6 @@ func (f *forever) Start() {
 func (f *forever) run() (string, error) {
 
 	usage := fmt.Sprintf("Usage: %s install | remove | start | stop | status", f.name)
-	// if received any kind of command, do it
 	if len(os.Args) > 1 {
 		command := os.Args[1]
 		switch command {
@@ -64,16 +63,11 @@ func (f *forever) run() (string, error) {
 		return "", err
 	}
 
-	// Do something, call your goroutines, etc
-
 	// Set up channel on which to send signal notifications.
 	// We must use a buffered channel or risk missing the signal
 	// if we're not ready to receive when the signal is sent.
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, os.Kill, syscall.SIGTERM)
-
-	// loop work cycle with accept connections or interrupt
-	// by system signal
 	for {
 		select {
 		case <-interrupt:
