@@ -1,5 +1,5 @@
 package mqservice
-
+/*
 import (
 	"fmt"
 	"strings"
@@ -55,3 +55,4 @@ LOOP:
 		}
 	}
 }
+*/
