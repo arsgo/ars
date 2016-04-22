@@ -1,7 +1,8 @@
 package mqservice
 
 import (
-	"encoding/json"
+	"fmt"
+	"strings"
 
 	"github.com/jdamick/kafka"
 )
@@ -23,6 +24,12 @@ type KafkaConsumer struct {
 }
 
 func NewKafkaPublisher(config *kafkaConfig) (p *KafkaPublisher) {
+	if strings.EqualFold(config.Address, "") ||
+		strings.EqualFold(config.Topic, "") {
+		fmt.Println("address or topic not allowed nil")
+		return nil
+	}
+	p = &KafkaPublisher{}
 	p.broker = kafka.NewBrokerPublisher(config.Address, config.Topic, 0)
 	return
 }
@@ -47,25 +54,4 @@ LOOP:
 			callback(msg.PayloadString())
 		}
 	}
-}
-
-//--------------------------kafkaservice-------------------------------------
-
-type KafkaService struct {
-	config *kafkaConfig
-}
-
-func NewKafkaService(sconfig string) IMQService {
-	p := &KafkaService{}
-	err := json.Unmarshal([]byte(sconfig), &p.config)
-	if err != nil {
-		return nil
-	}
-	return p
-}
-func (s *KafkaService) NewPublisher() IMQPublisher {
-	return NewKafkaPublisher(s.config)
-}
-func (s *KafkaService) NewConsumer() IMQConsumer {
-	return NewKafkaConsumer(s.config)
 }

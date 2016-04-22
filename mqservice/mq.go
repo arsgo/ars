@@ -1,13 +1,9 @@
 package mqservice
 
-type IMQPublisher interface {
-	Publish(string) error
-}
-type IMQConsumer interface {
-	Consume(func(string))
-}
+import "github.com/colinyl/stomp"
 
 type IMQService interface {
-	NewPublisher() IMQPublisher
-	NewConsumer() IMQConsumer
+	Consume(string, func(stomp.MsgHandler)) error
+	Send(string, string) error
+	Close()
 }

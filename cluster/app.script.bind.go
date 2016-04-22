@@ -64,13 +64,31 @@ func (a *appServer) bindRPCSendService(L *l.LState) {
 			"get": handerGet,
 		}})
 }
+func (a *appServer) bindLogger() (fn []lua.Luafunc) {
+	fn = append(fn, lua.Luafunc{
+		Name: "print",
+		Function: func(L *l.LState) int {
+			msg := L.CheckString(1)
+			a.Log.Info(msg)
+			return 0
+		},
+	})
+	fn = append(fn, lua.Luafunc{
+		Name: "error",
+		Function: func(L *l.LState) int {
+			msg := L.CheckString(1)
+			a.Log.Error(msg)
+			return 0
+		},
+	})
+	return
+}
 
 func NewScriptEngine(app *appServer) *scriptEngine {
-	pool := lua.NewLuaPool()
+	pool := lua.NewLuaPool(app.bindLogger()...)
 	pool.AddUserData(app.bindRPCRequestService)
 	pool.AddUserData(app.bindRPCSendService)
 	mqBinder := mqservice.NewMQBinder(app.zkClient)
-	pool.AddUserData(mqBinder.BindMQConsumerService)
-	pool.AddUserData(mqBinder.BindMQPublisherService)
+	pool.AddUserData(mqBinder.BindMQService)
 	return &scriptEngine{pool: pool}
 }

@@ -1,9 +1,12 @@
 package mqservice
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 const (
-	KafkaMQName = "kafka"
+	stompMQ = "stomp"
 )
 
 type MQConfig struct {
@@ -14,11 +17,12 @@ func NewMQService(config string) IMQService {
 	p := &MQConfig{}
 	err := json.Unmarshal([]byte(config), &p)
 	if err != nil {
+		fmt.Println(err)
 		return nil
 	}
 	switch p.Type {
-	case KafkaMQName:
-		return NewKafkaService(config)
+	case stompMQ:	
+		return NewStompService(config)
 	}
 
 	return nil

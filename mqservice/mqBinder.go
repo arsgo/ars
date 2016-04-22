@@ -1,7 +1,10 @@
 package mqservice
 
 import (
+	"fmt"
+
 	"github.com/colinyl/ars/scriptservice"
+	"github.com/colinyl/stomp"
 	"github.com/yuin/gopher-lua"
 )
 
@@ -15,58 +18,64 @@ type MQBinder struct {
 func NewMQBinder(c ConfigHandler) *MQBinder {
 	return &MQBinder{handler: c}
 }
-func (c *MQBinder) BindMQConsumerService(L *lua.LState) {
-	scriptservice.Bind(L, &scriptservice.ScriptBindClass{ClassName: "mqc",
+func (c *MQBinder) BindMQService(L *lua.LState) {
+	scriptservice.Bind(L, &scriptservice.ScriptBindClass{ClassName: "mq",
 		ConstructorName: "new",
 		ConstructorFunc: func(L *lua.LState) interface{} {
 			config, _ := c.handler.GetMQConfig(L.CheckString(1))
-			return NewMQService(config).NewConsumer()
+			return NewMQService(config)
 		}, ObjectMethods: map[string]scriptservice.ScriptBindFunc{
-			"consume": func(L *lua.LState) (result []string) {
-				if L.GetTop() != 2 {
+			"close": func(L *lua.LState) (result []string) {
+				if L.GetTop() != 1 {
 					result = append(result, "input args error")
 					return
 				}
 				ud := L.CheckUserData(1)
-				if _, ok := ud.Value.(IMQConsumer); !ok {
-					result = append(result, "MQConsumer expected")
+				if _, ok := ud.Value.(IMQService); !ok {
+					result = append(result, "MQService expected")
 					return
 				}
-				p := ud.Value.(IMQConsumer)
-				p.Consume(func(msg string) {
-					L.CallByParam(lua.P{
-						Fn:      L.CheckFunction(2),
-						NRet:    0,
-						Protect: true},
-						lua.LString(msg))
-				})
-				return result
+				p := ud.Value.(IMQService)
+				p.Close()
+				return
 			},
-		}})
-}
-
-func (c *MQBinder) BindMQPublisherService(L *lua.LState) {
-	scriptservice.Bind(L, &scriptservice.ScriptBindClass{ClassName: "mqp",
-		ConstructorName: "new",
-		ConstructorFunc: func(L *lua.LState) interface{} {
-			config, _ := c.handler.GetMQConfig(L.CheckString(1))
-			return NewMQService(config).NewPublisher()
-		}, ObjectMethods: map[string]scriptservice.ScriptBindFunc{
-			"publish": func(L *lua.LState) (result []string) {
-				if L.GetTop() != 2 {
+			"send": func(L *lua.LState) (result []string) {
+				if L.GetTop() != 3 {
 					result = append(result, "input args error")
 					return
 				}
 				ud := L.CheckUserData(1)
-				if _, ok := ud.Value.(IMQPublisher); !ok {
-					result = append(result, "MQPublisher expected")
-					return result
+				if _, ok := ud.Value.(IMQService); !ok {
+					result = append(result, "MQService expected")
+					return
 				}
-				p := ud.Value.(IMQPublisher)
-				err := p.Publish(L.CheckString(2))
+				p := ud.Value.(IMQService)
+				err := p.Send(L.CheckString(2), L.CheckString(3))
 				if err != nil {
 					result = append(result, err.Error())
 				}
+				return result
+			},
+			"consume": func(L *lua.LState) (result []string) {
+				if L.GetTop() != 3 {
+					result = append(result, "input args error")
+					return
+				}
+				ud := L.CheckUserData(1)
+				if _, ok := ud.Value.(IMQService); !ok {
+					result = append(result, "MQConsumer expected")
+					return
+				}
+				p := ud.Value.(IMQService)
+				fmt.Println("call func")
+				p.Consume(L.CheckString(2), func(msg stomp.MsgHandler) {
+					L.CallByParam(lua.P{
+						Fn:      L.CheckFunction(3),
+						NRet:    0,
+						Protect: true},
+						lua.LString(msg.GetMessage()))
+					msg.Ack()
+				})
 				return result
 			},
 		}})
