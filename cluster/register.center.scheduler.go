@@ -21,7 +21,8 @@ func (r *rcServer) BindScheduler(config *JobConfigs, err error) {
 			continue
 		}
 		jobCount++
-		scheduler.AddTask(v.Trigger, scheduler.NewTask(v.Name, func(name string) {
+		scheduler.AddTask(v.Trigger, scheduler.NewTask(v.Name, func(v interface{}) {
+			name:=v.(string)
 			consumers := r.getJobConsumers(name)
 			if err != nil {
 				r.Log.Infof("job [%s] download consumer error", name)

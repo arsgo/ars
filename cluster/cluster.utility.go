@@ -118,12 +118,13 @@ func (zkClient *zkClientObj) checkIP(origin string) bool {
 	llocal := fmt.Sprintf(",%s,", zkClient.LocalIP)
 	return strings.Contains(ips, llocal)
 }
-func (zkClient *zkClientObj) getVarConfig(typeName string, name string) (config string, err error) {
+func (zkClient *zkClientObj) GetSourceConfig(typeName string, name string) (config string, err error) {
 	dataMap := zkClient.dataMap.Copy()
 	dataMap.Set("type", typeName)
 	dataMap.Set("name", name)
 	values, err := zkClient.ZkCli.GetValue(dataMap.Translate(varConfigPath))
 	if err != nil {
+		fmt.Println(dataMap.Translate(varConfigPath))
 		return
 	}
 	config = string(values)
@@ -138,7 +139,7 @@ func (zkClient *zkClientObj) getSPConfig(path string) (svs []*spService, err err
 	return
 }
 func (zkClient *zkClientObj) GetMQConfig(name string) (string, error) {
-	return zkClient.getVarConfig("mq", name)
+	return zkClient.GetSourceConfig("mq", name)
 }
 
 func NewZKClient() *zkClientObj {

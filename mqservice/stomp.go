@@ -24,8 +24,7 @@ func NewStompService(sconfig string) IMQService {
 		fmt.Println(err)
 		return nil
 	}
-	if strings.EqualFold(p.config.Address, "") {
-		fmt.Println("address not allowed nil")
+	if strings.EqualFold(p.config.Address, "") {		
 		return nil
 	}
 	p.broker, err = stomp.NewStomp(p.config.Address)
@@ -39,9 +38,9 @@ func (k *StompService) Send(queue string, msg string) (err error) {
 }
 
 func (k *StompService) Consume(queue string, callback func(stomp.MsgHandler)) (err error) {
-	return k.broker.Consume(queue,callback)
+	return k.broker.Consume(queue, callback)
 }
 
-func (k *StompService) Close(){
+func (k *StompService) Close() {
 	k.broker.Close()
 }

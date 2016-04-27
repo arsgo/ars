@@ -8,12 +8,12 @@ import (
 	"github.com/colinyl/web"
 )
 
-func (r *appServer) StopAPIServer() {
+func (r *appServer) StopHttpAPIServer() {
 	if r.apiServer != nil {
 		r.apiServer.Stop()
 	}
 }
-func (r *appServer) StartAPIServer() {
+func (r *appServer) StartHttpAPIServer() {
 	 r.scriptHandlers=nil
 	 r.scriptHandlers=make(map[string]*scriptHandler)
 	r.apiServerAddress = rpcservice.GetLocalRandomAddress()
@@ -22,7 +22,7 @@ func (r *appServer) StartAPIServer() {
 	r.Log.Infof("::start api server%s", r.apiServerAddress)
 }
 func (r *appServer) getAPIServerHandler() (handlers []webservice.WebHandler) {
-	for _, v := range r.scriptServer {
+	for _, v := range r.appRoutes {
 		handler := &scriptHandler{data: v, server: r}
 		r.scriptHandlers[v.Path] = handler
 		handlers = append(handlers,webservice.WebHandler{v.Path, v.Method, handler.ExecuteScript})

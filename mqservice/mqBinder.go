@@ -1,9 +1,8 @@
 package mqservice
 
 import (
-	"fmt"
-
 	"github.com/colinyl/ars/scriptservice"
+	lp "github.com/colinyl/lib4go/lua"
 	"github.com/colinyl/stomp"
 	"github.com/yuin/gopher-lua"
 )
@@ -13,10 +12,11 @@ type ConfigHandler interface {
 }
 type MQBinder struct {
 	handler ConfigHandler
+	pool    *lp.LuaPool
 }
 
-func NewMQBinder(c ConfigHandler) *MQBinder {
-	return &MQBinder{handler: c}
+func NewMQBinder(c ConfigHandler, pool *lp.LuaPool) *MQBinder {
+	return &MQBinder{handler: c, pool: pool}
 }
 func (c *MQBinder) BindMQService(L *lua.LState) {
 	scriptservice.Bind(L, &scriptservice.ScriptBindClass{ClassName: "mq",
@@ -67,13 +67,8 @@ func (c *MQBinder) BindMQService(L *lua.LState) {
 					return
 				}
 				p := ud.Value.(IMQService)
-				fmt.Println("call func")
 				p.Consume(L.CheckString(2), func(msg stomp.MsgHandler) {
-					L.CallByParam(lua.P{
-						Fn:      L.CheckFunction(3),
-						NRet:    0,
-						Protect: true},
-						lua.LString(msg.GetMessage()))
+					c.pool.Call(L.CheckString(3), msg.GetMessage())
 					msg.Ack()
 				})
 				return result
