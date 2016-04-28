@@ -14,7 +14,7 @@ type StompService struct {
 }
 
 type StompConfig struct {
-	Address string
+	Address string `json:"address"`
 }
 
 func NewStompService(sconfig string) IMQService {
@@ -24,7 +24,8 @@ func NewStompService(sconfig string) IMQService {
 		fmt.Println(err)
 		return nil
 	}
-	if strings.EqualFold(p.config.Address, "") {		
+	if strings.EqualFold(p.config.Address, "") {
+		fmt.Println("address is nil")		
 		return nil
 	}
 	p.broker, err = stomp.NewStomp(p.config.Address)
