@@ -18,6 +18,9 @@ type StompConfig struct {
 }
 var stomps map[string]*StompService
 var mutex sync.Mutex
+func init(){
+	stomps=make(map[string]*StompService)
+}
 func NewStompService(sconfig string) IMQService {
 	mutex.Lock()
 	defer mutex.Unlock()
