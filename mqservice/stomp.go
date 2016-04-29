@@ -30,6 +30,7 @@ func NewStompService(sconfig string) IMQService {
 	}
 	p.broker, err = stomp.NewStomp(p.config.Address)
 	if err != nil {
+	    fmt.Println(err)
 		return nil
 	}
 	return p

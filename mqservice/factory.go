@@ -10,7 +10,7 @@ const (
 )
 
 type MQConfig struct {
-	Type string
+	Type string  `json:"type"`
 }
 
 func NewMQService(config string) IMQService {
@@ -20,6 +20,7 @@ func NewMQService(config string) IMQService {
 		fmt.Println(err)
 		return nil
 	}
+	fmt.Println(p.Type)
 	switch p.Type {
 	case stompMQ:	
 		return NewStompService(config)
