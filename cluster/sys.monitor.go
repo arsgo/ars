@@ -57,7 +57,8 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 				cpu := obj.(*monitorItemConfig)
 				handler, err := getMonitorHandler(cpu.Source.TypeName, cpu.content)
 				if err == nil {
-					s.Log.Info(">send cpu info")
+					fmt.Println(">send cpu info")
+				//	s.Log.Info(">send cpu info")
 					err = handler.Send(cpu.Source.Param, sys.GetCPU())
 					if err != nil {
 						s.Log.Error(err)
