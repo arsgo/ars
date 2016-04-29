@@ -15,6 +15,9 @@ type logHandler interface {
 	Error(content interface{})
 	Info(content string)
 }
+type requestHandler interface {
+	request(string, string) []string
+}
 
 type SourceHandler interface {
 	GetSourceConfig(string, string) (string, error)
@@ -40,10 +43,11 @@ type serverMonitor struct {
 	sch    *scheduler.Scheduler
 	hander SourceHandler
 	Log    logHandler
+	r      requestHandler
 }
 
-func NewMonitor(h SourceHandler, log logHandler) *serverMonitor {
-	return &serverMonitor{sch: scheduler.NewScheduler(), hander: h, Log: log}
+func NewMonitor(h SourceHandler, log logHandler, r requestHandler) *serverMonitor {
+	return &serverMonitor{sch: scheduler.NewScheduler(), hander: h, Log: log, r: r}
 }
 
 func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
@@ -58,7 +62,8 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 			s.sch.AddTask(c.Cpu.Trigger, scheduler.NewTask(c.Cpu, func(obj interface{}) {
 				cpu := obj.(*monitorItemConfig)
 				fmt.Println(cpu.Source.Param)
-				mqservice.StaticSend(cpu.Source.Param, sys.GetCPU())
+				s.r.request("get_pay_order",cpu.Source.Param)
+				//mqservice.StaticSend(cpu.Source.Param, sys.GetCPU())
 				/*handler, err := getMonitorHandler(cpu.Source.TypeName, cpu.content)
 				if err == nil {
 					fmt.Println(">send cpu info")
@@ -83,7 +88,8 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 			s.sch.AddTask(c.Mem.Trigger, scheduler.NewTask(c.Mem, func(obj interface{}) {
 				mem := obj.(*monitorItemConfig)
 				fmt.Println(mem.Source.Param)
-				mqservice.StaticSend(mem.Source.Param, sys.GetMemory())
+				s.r.request("get_pay_order",cpu.Source.Param)
+				//mqservice.StaticSend(mem.Source.Param, sys.GetMemory())
 				/*mem := obj.(*monitorItemConfig)
 				handler, err := getMonitorHandler(mem.Source.TypeName, mem.content)
 				if err == nil {
@@ -109,7 +115,8 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 			s.sch.AddTask(c.Disk.Trigger, scheduler.NewTask(c.Disk, func(obj interface{}) {
 				disk := obj.(*monitorItemConfig)
 				fmt.Println(disk.Source.Param)
-				mqservice.StaticSend(disk.Source.Param, sys.GetDisk())
+				s.r.request("get_pay_order",cpu.Source.Param)
+				//mqservice.StaticSend(disk.Source.Param, sys.GetDisk())
 				/*handler, err := getMonitorHandler(disk.Source.TypeName, disk.content)
 				if err == nil {
 					s.Log.Info(">send disk info")

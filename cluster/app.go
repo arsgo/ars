@@ -89,7 +89,7 @@ func (app *appServer) init() (err error) {
 	app.rcServicesMap = NewServiceMap()
 	app.jobNames = make(map[string]string)
 	app.scriptHandlers = make(map[string]*scriptHandler)
-	app.monitor = NewMonitor(app.zkClient, app.Log)
+	app.monitor = NewMonitor(app.zkClient, app.Log,app)
 	return
 }
 
