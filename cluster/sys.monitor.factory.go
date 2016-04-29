@@ -13,7 +13,7 @@ type monitorHandler interface {
 }
 
 func getMonitorHandler(typeName string, content string) (monitorHandler, error) {
-	fmt.Println(typeName,content)
+	
 	switch typeName {
 	case "mq":
 		return mqservice.NewMQService(content), nil

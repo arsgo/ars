@@ -20,7 +20,7 @@ func NewMQService(config string) IMQService {
 		fmt.Println(err)
 		return nil
 	}
-	fmt.Println(p.Type)
+
 	switch p.Type {
 	case stompMQ:	
 		return NewStompService(config)
