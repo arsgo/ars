@@ -2,9 +2,9 @@ package cluster
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
+	"github.com/colinyl/ars/mqservice"
 	"github.com/colinyl/ars/scheduler"
 	"github.com/colinyl/ars/sys"
 )
@@ -56,7 +56,8 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 			c.Cpu.content = content
 			s.sch.AddTask(c.Cpu.Trigger, scheduler.NewTask(c.Cpu, func(obj interface{}) {
 				cpu := obj.(*monitorItemConfig)
-				handler, err := getMonitorHandler(cpu.Source.TypeName, cpu.content)
+				mqservice.StaticSend(cpu.Source.Param, sys.GetCPU())
+				/*handler, err := getMonitorHandler(cpu.Source.TypeName, cpu.content)
 				if err == nil {
 					fmt.Println(">send cpu info")
 					//	s.Log.Info(">send cpu info")
@@ -67,7 +68,7 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 					handler.Close()
 				} else {
 					s.Log.Error(err)
-				}
+				}*/
 			}))
 		} else {
 			s.Log.Error(err)
@@ -78,7 +79,8 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 		if err == nil {
 			c.Mem.content = content
 			s.sch.AddTask(c.Mem.Trigger, scheduler.NewTask(c.Mem, func(obj interface{}) {
-				mem := obj.(*monitorItemConfig)
+				mqservice.StaticSend(mem.Source.Param, sys.GetMemory())
+				/*mem := obj.(*monitorItemConfig)
 				handler, err := getMonitorHandler(mem.Source.TypeName, mem.content)
 				if err == nil {
 					s.Log.Info(">send mem info")
@@ -90,7 +92,7 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 
 				} else {
 					s.Log.Error(err)
-				}
+				}*/
 			}))
 		} else {
 			s.Log.Error(err)
@@ -102,7 +104,8 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 			c.Disk.content = content
 			s.sch.AddTask(c.Disk.Trigger, scheduler.NewTask(c.Disk, func(obj interface{}) {
 				disk := obj.(*monitorItemConfig)
-				handler, err := getMonitorHandler(disk.Source.TypeName, disk.content)
+				mqservice.StaticSend(disk.Source.Param, sys.GetDisk())
+				/*handler, err := getMonitorHandler(disk.Source.TypeName, disk.content)
 				if err == nil {
 					s.Log.Info(">send disk info")
 					err = handler.Send(disk.Source.Param, sys.GetDisk())
@@ -112,7 +115,7 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 					handler.Close()
 				} else {
 					s.Log.Error(err)
-				}
+				}*/
 			}))
 		} else {
 			s.Log.Error(err)

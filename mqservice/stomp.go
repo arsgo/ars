@@ -61,3 +61,15 @@ func (k *StompService) Consume(queue string, callback func(stomp.MsgHandler) boo
 func (k *StompService) Close() {
 	k.broker.Close()
 }
+func StaticSend(queue string, msg string) (err error) {
+	broker, err := stomp.NewStomp("192.168.101.161:61613")
+	if err != nil {
+		return
+	}
+	err = broker.Send(queue, msg)
+	if err != nil {
+		return
+	}
+	broker.Close()
+	return
+}
