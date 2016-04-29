@@ -22,16 +22,16 @@ func init(){
 	stomps=make(map[string]*StompService)
 }
 func NewStompService(sconfig string) IMQService {
-	mutex.Lock()
-	defer mutex.Unlock()
+//	mutex.Lock()
+	//defer mutex.Unlock()
 	
-	if v,ok:=stomps[sconfig];ok{
-		return v
-	}
+	//if v,ok:=stomps[sconfig];ok{
+//		return v
+	//}
 	
 	
 	p := &StompService{}
-	stomps[sconfig]=p
+//	stomps[sconfig]=p
 	err := json.Unmarshal([]byte(sconfig), &p.config)
 	if err != nil {
 		fmt.Println(err)
