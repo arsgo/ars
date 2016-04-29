@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/colinyl/ars/scheduler"
@@ -58,7 +59,7 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 				handler, err := getMonitorHandler(cpu.Source.TypeName, cpu.content)
 				if err == nil {
 					fmt.Println(">send cpu info")
-				//	s.Log.Info(">send cpu info")
+					//	s.Log.Info(">send cpu info")
 					err = handler.Send(cpu.Source.Param, sys.GetCPU())
 					if err != nil {
 						s.Log.Error(err)
@@ -86,7 +87,7 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 						s.Log.Error(err)
 					}
 					handler.Close()
-					
+
 				} else {
 					s.Log.Error(err)
 				}
