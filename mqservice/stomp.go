@@ -38,8 +38,8 @@ func (k *StompService) Send(queue string, msg string) (err error) {
 	return k.broker.Send(queue, msg)
 }
 
-func (k *StompService) Consume(queue string, callback func(stomp.MsgHandler)) (err error) {
-	return k.broker.Consume(queue, callback)
+func (k *StompService) Consume(queue string, callback func(stomp.MsgHandler)bool) (err error) {
+	return k.broker.Consume(queue, 10,callback)
 }
 
 func (k *StompService) Close() {

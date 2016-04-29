@@ -102,8 +102,10 @@ func (r *appServer) Start() (err error) {
 	})
 
 	r.WatchConfigChange(func(config *AppConfig, err error) error {
-		return r.BindTask(config, err)
+		go r.BindTask(config, err)
+		return nil
 	})
+
 	return nil
 }
 

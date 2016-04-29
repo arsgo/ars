@@ -17,5 +17,5 @@ func (j *TaskDetail) Run() {
 			fmt.Println(err)
 		}
 	}()
-	j.fun(j.obj)
+	go j.fun(j.obj)
 }
