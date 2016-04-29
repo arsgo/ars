@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-
+"sync"
 	"github.com/colinyl/stomp"
 )
 
@@ -16,9 +16,19 @@ type StompService struct {
 type StompConfig struct {
 	Address string `json:"address"`
 }
-
+var stomps map[string]*StompService
+var mutex sync.Mutex
 func NewStompService(sconfig string) IMQService {
+	mutex.Lock()
+	defer mutex.Unlock()
+	
+	if v,ok:=stomps[sconfig];ok{
+		return v
+	}
+	
+	
 	p := &StompService{}
+	stomps[sconfig]=p
 	err := json.Unmarshal([]byte(sconfig), &p.config)
 	if err != nil {
 		fmt.Println(err)
