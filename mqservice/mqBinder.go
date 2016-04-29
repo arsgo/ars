@@ -67,9 +67,9 @@ func (c *MQBinder) BindMQService(L *lua.LState) {
 					return
 				}
 				p := ud.Value.(IMQService)
-				p.Consume(L.CheckString(2), func(msg stomp.MsgHandler) {
+				p.Consume(L.CheckString(2), func(msg stomp.MsgHandler)bool {
 					c.pool.Call(L.CheckString(3), msg.GetMessage())
-					msg.Ack()
+					return true
 				})
 				return result
 			},
