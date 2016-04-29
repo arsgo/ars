@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/colinyl/ars/mqservice"
