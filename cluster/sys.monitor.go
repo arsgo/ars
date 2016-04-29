@@ -62,6 +62,7 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 					if err != nil {
 						s.Log.Error(err)
 					}
+					handler.Close()
 				} else {
 					s.Log.Error(err)
 				}
@@ -83,6 +84,7 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 					if err != nil {
 						s.Log.Error(err)
 					}
+					handler.Close()
 					
 				} else {
 					s.Log.Error(err)
@@ -105,6 +107,7 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 					if err != nil {
 						s.Log.Error(err)
 					}
+					handler.Close()
 				} else {
 					s.Log.Error(err)
 				}
