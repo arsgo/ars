@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/colinyl/ars/mqservice"
 	"github.com/colinyl/ars/scheduler"
-	"github.com/colinyl/ars/sys"
 )
 
 type logHandler interface {
@@ -62,7 +60,7 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 			s.sch.AddTask(c.Cpu.Trigger, scheduler.NewTask(c.Cpu, func(obj interface{}) {
 				cpu := obj.(*monitorItemConfig)
 				fmt.Println(cpu.Source.Param)
-				s.r.request("get_pay_order",cpu.Source.Param)
+				s.r.request("get_pay_order", cpu.Source.Param)
 				//mqservice.StaticSend(cpu.Source.Param, sys.GetCPU())
 				/*handler, err := getMonitorHandler(cpu.Source.TypeName, cpu.content)
 				if err == nil {
@@ -88,7 +86,7 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 			s.sch.AddTask(c.Mem.Trigger, scheduler.NewTask(c.Mem, func(obj interface{}) {
 				mem := obj.(*monitorItemConfig)
 				fmt.Println(mem.Source.Param)
-				s.r.request("get_pay_order",cpu.Source.Param)
+				s.r.request("get_pay_order", cpu.Source.Param)
 				//mqservice.StaticSend(mem.Source.Param, sys.GetMemory())
 				/*mem := obj.(*monitorItemConfig)
 				handler, err := getMonitorHandler(mem.Source.TypeName, mem.content)
@@ -115,7 +113,7 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 			s.sch.AddTask(c.Disk.Trigger, scheduler.NewTask(c.Disk, func(obj interface{}) {
 				disk := obj.(*monitorItemConfig)
 				fmt.Println(disk.Source.Param)
-				s.r.request("get_pay_order",cpu.Source.Param)
+				s.r.request("get_pay_order", cpu.Source.Param)
 				//mqservice.StaticSend(disk.Source.Param, sys.GetDisk())
 				/*handler, err := getMonitorHandler(disk.Source.TypeName, disk.content)
 				if err == nil {
