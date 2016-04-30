@@ -3,6 +3,7 @@ package mqservice
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/colinyl/stomp"
@@ -35,6 +36,7 @@ func NewStompService(sconfig string) (ps IMQService, err error) {
 	return
 }
 func (k *StompService) Send(queue string, msg string) (err error) {
+	fmt.Printf("send:%s-%s", queue, msg)
 	return k.broker.Send(queue, msg)
 }
 
