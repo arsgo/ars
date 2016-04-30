@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/colinyl/ars/scheduler"
@@ -63,6 +64,7 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 				//fmt.Println("->send cpu")
 				err := StaticSendMonitor(cpu.Source.TypeName, cpu.content, cpu.Source.Param, sys.GetCPU())
 				//err := mqservice.StaticSend(cpu.Source.Param, sys.GetCPU())
+				fmt.Println(err)
 				if err != nil {
 					s.Log.Error(err)
 				}
