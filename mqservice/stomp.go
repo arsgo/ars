@@ -2,7 +2,7 @@ package mqservice
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"strings"
 
 	"github.com/colinyl/stomp"
@@ -17,23 +17,22 @@ type StompConfig struct {
 	Address string `json:"address"`
 }
 
-func NewStompService(sconfig string) IMQService {
+func NewStompService(sconfig string) (ps IMQService, err error) {
 	p := &StompService{}
-	err := json.Unmarshal([]byte(sconfig), &p.config)
+	ps = p
+	err = json.Unmarshal([]byte(sconfig), &p.config)
 	if err != nil {
-		fmt.Println(err)
-		return nil
+		return
 	}
 	if strings.EqualFold(p.config.Address, "") {
-		fmt.Println("address is nil")
-		return nil
+		err = errors.New("address is nil")
+		return
 	}
 	p.broker, err = stomp.NewStomp(p.config.Address)
 	if err != nil {
-		fmt.Println(err)
-		return nil
+		return
 	}
-	return p
+	return
 }
 func (k *StompService) Send(queue string, msg string) (err error) {
 	return k.broker.Send(queue, msg)

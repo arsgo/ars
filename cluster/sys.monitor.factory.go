@@ -26,7 +26,7 @@ func StaticSendMonitor(typeName string, config string, queue string, content str
 func getMonitorHandler(typeName string, content string) (monitorHandler, error) {
 	switch typeName {
 	case "mq":
-		return mqservice.NewMQService(content), nil
+		return mqservice.NewMQService(content)
 	}
 	return nil, errors.New(fmt.Sprintf("not support: %s", typeName))
 }

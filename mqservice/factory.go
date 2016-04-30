@@ -2,6 +2,7 @@ package mqservice
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 )
 
@@ -10,21 +11,23 @@ const (
 )
 
 type MQConfig struct {
-	Type string  `json:"type"`
+	Type string `json:"type"`
 }
 
-func NewMQService(config string) IMQService {
+func NewMQService(config string) (svs IMQService, err error) {
 	p := &MQConfig{}
-	err := json.Unmarshal([]byte(config), &p)
+	err = json.Unmarshal([]byte(config), &p)
 	if err != nil {
 		fmt.Println(err)
-		return nil
+		return
 	}
 
 	switch p.Type {
-	case stompMQ:	
-		return NewStompService(config)
+	case stompMQ:
+		svs,err = NewStompService(config)
+		return
 	}
+	err = errors.New("not support mq type")
+	return
 
-	return nil
 }

@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/colinyl/ars/scheduler"
@@ -60,8 +59,8 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 			c.CPU.content = content
 			s.sch.AddTask(c.CPU.Trigger, scheduler.NewTask(c.CPU, func(obj interface{}) {
 				cpu := obj.(*monitorItemConfig)
-				//s.Log.Info("->send cpu")
-				fmt.Println("->send cpu")
+				s.Log.Info("->send cpu")
+				//fmt.Println("->send cpu")
 				err := StaticSendMonitor(cpu.Source.TypeName, cpu.content, cpu.Source.Param, sys.GetCPU())
 				//err := mqservice.StaticSend(cpu.Source.Param, sys.GetCPU())
 				if err != nil {
@@ -78,8 +77,8 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 			c.Mem.content = content
 			s.sch.AddTask(c.Mem.Trigger, scheduler.NewTask(c.Mem, func(obj interface{}) {
 				mem := obj.(*monitorItemConfig)
-				fmt.Println("->send mem")
-				//s.Log.Info("->send mem")
+				//	fmt.Println("->send mem")
+				s.Log.Info("->send mem")
 				err := StaticSendMonitor(mem.Source.TypeName, mem.content, mem.Source.Param, sys.GetMemory())
 				//err := mqservice.StaticSend(mem.Source.Param, sys.GetMemory())
 				if err != nil {
@@ -96,8 +95,8 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 			c.Disk.content = content
 			s.sch.AddTask(c.Disk.Trigger, scheduler.NewTask(c.Disk, func(obj interface{}) {
 				disk := obj.(*monitorItemConfig)
-				fmt.Println("->send disk")
-				//s.Log.Info("->send disk")
+				//fmt.Println("->send disk")
+				s.Log.Info("->send disk")
 				err := StaticSendMonitor(disk.Source.TypeName, disk.content, disk.Source.Param, sys.GetDisk())
 				//err := mqservice.StaticSend(disk.Source.Param, sys.GetDisk())
 				if err != nil {

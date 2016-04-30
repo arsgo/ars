@@ -23,7 +23,8 @@ func (c *MQBinder) BindMQService(L *lua.LState) {
 		ConstructorName: "new",
 		ConstructorFunc: func(L *lua.LState) interface{} {
 			config, _ := c.handler.GetMQConfig(L.CheckString(1))
-			return NewMQService(config)
+			s, _ := NewMQService(config)
+			return s
 		}, ObjectMethods: map[string]scriptservice.ScriptBindFunc{
 			"close": func(L *lua.LState) (result []string) {
 				if L.GetTop() != 1 {
@@ -67,7 +68,7 @@ func (c *MQBinder) BindMQService(L *lua.LState) {
 					return
 				}
 				p := ud.Value.(IMQService)
-				p.Consume(L.CheckString(2), func(msg stomp.MsgHandler)bool {
+				p.Consume(L.CheckString(2), func(msg stomp.MsgHandler) bool {
 					c.pool.Call(L.CheckString(3), msg.GetMessage())
 					return true
 				})
