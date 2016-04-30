@@ -102,7 +102,7 @@ func (r *appServer) Start() (err error) {
 	})
 
 	r.WatchConfigChange(func(config *AppConfig, err error) error {
-		go r.BindTask(config, err)
+		r.BindTask(config, err)
 		return nil
 	})
 

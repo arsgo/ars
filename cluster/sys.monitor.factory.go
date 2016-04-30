@@ -12,8 +12,18 @@ type monitorHandler interface {
 	Close()
 }
 
+func StaticSendMonitor(typeName string, config string, queue string, content string) (err error) {
+	handler, err := getMonitorHandler(typeName, config)
+	if err != nil {
+		return
+	}
+	err = handler.Send(queue, content)
+	handler.Close()
+	return
+
+}
+
 func getMonitorHandler(typeName string, content string) (monitorHandler, error) {
-	
 	switch typeName {
 	case "mq":
 		return mqservice.NewMQService(content), nil

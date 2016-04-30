@@ -20,7 +20,6 @@ func (a *appServer) BindTask(config *AppConfig, err error) error {
 			}
 		}))
 	}
-	a.Log.Infof("task:%d,job:%d,script:%d", len(config.Tasks), len(config.Jobs), len(config.Server.Routes))
 	if len(config.Jobs) > 0 {
 		a.StartJobConsumer(config.Jobs)
 	} else {
@@ -31,7 +30,7 @@ func (a *appServer) BindTask(config *AppConfig, err error) error {
 	} else {
 		scheduler.Stop()
 	}
-	if len(config.Server.Routes) > 0 && strings.EqualFold(config.Server.ServerType, "http") {
+	if config.Server != nil && len(config.Server.Routes) > 0 && strings.EqualFold(config.Server.ServerType, "http") {
 		a.appRoutes = config.Server.Routes
 		a.StopHttpAPIServer()
 		a.StartHttpAPIServer()

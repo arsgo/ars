@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/colinyl/ars/scheduler"
+	"github.com/colinyl/ars/sys"
 )
 
 type logHandler interface {
@@ -32,7 +33,7 @@ type monitorItemConfig struct {
 }
 
 type monitorConfig struct {
-	Cpu  *monitorItemConfig `json:"cpu"`
+	CPU  *monitorItemConfig `json:"cpu"`
 	Mem  *monitorItemConfig `json:"mem"`
 	Disk *monitorItemConfig `json:"disk"`
 }
@@ -53,27 +54,19 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 	if c == nil {
 		return nil
 	}
-	if c.Cpu != nil && !strings.EqualFold(c.Cpu.Trigger, "") {
-		content, err := s.checkParams(c.Cpu)
+	if c.CPU != nil && !strings.EqualFold(c.CPU.Trigger, "") {
+		content, err := s.checkParams(c.CPU)
 		if err == nil {
-			c.Cpu.content = content
-			s.sch.AddTask(c.Cpu.Trigger, scheduler.NewTask(c.Cpu, func(obj interface{}) {
+			c.CPU.content = content
+			s.sch.AddTask(c.CPU.Trigger, scheduler.NewTask(c.CPU, func(obj interface{}) {
 				cpu := obj.(*monitorItemConfig)
-				fmt.Println(cpu.Source.Param)
-				s.r.request("get_pay_order", cpu.Source.Param)
-				//mqservice.StaticSend(cpu.Source.Param, sys.GetCPU())
-				/*handler, err := getMonitorHandler(cpu.Source.TypeName, cpu.content)
-				if err == nil {
-					fmt.Println(">send cpu info")
-					//	s.Log.Info(">send cpu info")
-					err = handler.Send(cpu.Source.Param, sys.GetCPU())
-					if err != nil {
-						s.Log.Error(err)
-					}
-					handler.Close()
-				} else {
+				//s.Log.Info("->send cpu")
+				fmt.Println("->send cpu")
+				err := StaticSendMonitor(cpu.Source.TypeName, cpu.content, cpu.Source.Param, sys.GetCPU())
+				//err := mqservice.StaticSend(cpu.Source.Param, sys.GetCPU())
+				if err != nil {
 					s.Log.Error(err)
-				}*/
+				}
 			}))
 		} else {
 			s.Log.Error(err)
@@ -85,22 +78,13 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 			c.Mem.content = content
 			s.sch.AddTask(c.Mem.Trigger, scheduler.NewTask(c.Mem, func(obj interface{}) {
 				mem := obj.(*monitorItemConfig)
-				fmt.Println(mem.Source.Param)
-				s.r.request("get_pay_order", mem.Source.Param)
-				//mqservice.StaticSend(mem.Source.Param, sys.GetMemory())
-				/*mem := obj.(*monitorItemConfig)
-				handler, err := getMonitorHandler(mem.Source.TypeName, mem.content)
-				if err == nil {
-					s.Log.Info(">send mem info")
-					err = handler.Send(mem.Source.Param, sys.GetMemory())
-					if err != nil {
-						s.Log.Error(err)
-					}
-					handler.Close()
-
-				} else {
+				fmt.Println("->send mem")
+				//s.Log.Info("->send mem")
+				err := StaticSendMonitor(mem.Source.TypeName, mem.content, mem.Source.Param, sys.GetMemory())
+				//err := mqservice.StaticSend(mem.Source.Param, sys.GetMemory())
+				if err != nil {
 					s.Log.Error(err)
-				}*/
+				}
 			}))
 		} else {
 			s.Log.Error(err)
@@ -112,20 +96,13 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 			c.Disk.content = content
 			s.sch.AddTask(c.Disk.Trigger, scheduler.NewTask(c.Disk, func(obj interface{}) {
 				disk := obj.(*monitorItemConfig)
-				fmt.Println(disk.Source.Param)
-				s.r.request("get_pay_order", disk.Source.Param)
-				//mqservice.StaticSend(disk.Source.Param, sys.GetDisk())
-				/*handler, err := getMonitorHandler(disk.Source.TypeName, disk.content)
-				if err == nil {
-					s.Log.Info(">send disk info")
-					err = handler.Send(disk.Source.Param, sys.GetDisk())
-					if err != nil {
-						s.Log.Error(err)
-					}
-					handler.Close()
-				} else {
+				fmt.Println("->send disk")
+				//s.Log.Info("->send disk")
+				err := StaticSendMonitor(disk.Source.TypeName, disk.content, disk.Source.Param, sys.GetDisk())
+				//err := mqservice.StaticSend(disk.Source.Param, sys.GetDisk())
+				if err != nil {
 					s.Log.Error(err)
-				}*/
+				}
 			}))
 		} else {
 			s.Log.Error(err)

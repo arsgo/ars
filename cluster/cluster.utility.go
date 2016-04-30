@@ -33,6 +33,9 @@ func (zkClient *zkClientObj) waitZKPathExists(path string, timeout time.Duration
 	callback(false)
 	timePiker := time.NewTicker(time.Second * 2)
 	timeoutPiker := time.NewTicker(timeout)
+	defer func() {
+		timeoutPiker.Stop()
+	}()
 CHECKER:
 	for {
 		select {

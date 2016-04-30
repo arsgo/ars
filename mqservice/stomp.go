@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/colinyl/stomp"
 )
@@ -18,22 +17,8 @@ type StompConfig struct {
 	Address string `json:"address"`
 }
 
-var stomps map[string]*StompService
-var mutex sync.Mutex
-
-func init() {
-	stomps = make(map[string]*StompService)
-}
 func NewStompService(sconfig string) IMQService {
-	mutex.Lock()
-	defer mutex.Unlock()
-
-	if v, ok := stomps[sconfig]; ok {
-		return v
-	}
-
 	p := &StompService{}
-	stomps[sconfig] = p
 	err := json.Unmarshal([]byte(sconfig), &p.config)
 	if err != nil {
 		fmt.Println(err)
@@ -55,7 +40,8 @@ func (k *StompService) Send(queue string, msg string) (err error) {
 }
 
 func (k *StompService) Consume(queue string, callback func(stomp.MsgHandler) bool) (err error) {
-	return k.broker.Consume(queue, 10, callback)
+	return nil
+	//return k.broker.Consume(queue, 10, callback)
 }
 
 func (k *StompService) Close() {
@@ -70,6 +56,7 @@ func StaticSend(queue string, msg string) (err error) {
 	if err != nil {
 		return
 	}
+	//	time.Sleep(time.Second)
 	broker.Close()
 	return
 }
