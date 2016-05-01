@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/colinyl/ars/mqservice"
+	"github.com/colinyl/lib4go/mq"
 )
 
 type monitorHandler interface {
@@ -26,7 +26,7 @@ func StaticSendMonitor(typeName string, config string, queue string, content str
 func getMonitorHandler(typeName string, content string) (monitorHandler, error) {
 	switch typeName {
 	case "mq":
-		return mqservice.NewMQService(content)
+		return mq.NewMQService(content)
 	}
 	return nil, errors.New(fmt.Sprintf("not support: %s", typeName))
 }

@@ -3,7 +3,7 @@ package cluster
 import (
 	"strings"
 
-	"github.com/colinyl/ars/scheduler"
+	"github.com/colinyl/lib4go/scheduler"
 )
 
 func (a *appServer) BindTask(config *AppConfig, err error) error {

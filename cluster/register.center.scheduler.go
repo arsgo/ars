@@ -2,7 +2,7 @@ package cluster
 
 import (
 	"github.com/colinyl/ars/rpcservice"
-	"github.com/colinyl/ars/scheduler"
+	"github.com/colinyl/lib4go/scheduler"
 )
 
 func (r *rcServer) BindScheduler(config *JobConfigs, err error) {
@@ -17,12 +17,12 @@ func (r *rcServer) BindScheduler(config *JobConfigs, err error) {
 	}
 	var jobCount int
 	for _, v := range config.Jobs {
-		if v.Concurrency<=0{
+		if v.Concurrency <= 0 {
 			continue
 		}
 		jobCount++
 		scheduler.AddTask(v.Trigger, scheduler.NewTask(v.Name, func(v interface{}) {
-			name:=v.(string)
+			name := v.(string)
 			consumers := r.getJobConsumers(name)
 			if err != nil {
 				r.Log.Infof("job [%s] download consumer error", name)
@@ -58,7 +58,7 @@ func (r *rcServer) BindScheduler(config *JobConfigs, err error) {
 
 		}))
 	}
-	if jobCount>0{
+	if jobCount > 0 {
 		scheduler.Start()
 	}
 

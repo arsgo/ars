@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/colinyl/ars/rpcservice"
-	"github.com/colinyl/ars/webservice"
+	"github.com/colinyl/lib4go/webserver"
 	"github.com/colinyl/web"
 )
 
@@ -14,18 +14,18 @@ func (r *appServer) StopHttpAPIServer() {
 	}
 }
 func (r *appServer) StartHttpAPIServer() {
-	 r.scriptHandlers=nil
-	 r.scriptHandlers=make(map[string]*scriptHandler)
+	r.scriptHandlers = nil
+	r.scriptHandlers = make(map[string]*scriptHandler)
 	r.apiServerAddress = rpcservice.GetLocalRandomAddress()
-	r.apiServer = webservice.NewWebService(r.apiServerAddress, r.getAPIServerHandler()...)
+	r.apiServer = webserver.NewWebServer(r.apiServerAddress, r.getAPIServerHandler()...)
 	r.apiServer.Serve()
 	r.Log.Infof("::start api server%s", r.apiServerAddress)
 }
-func (r *appServer) getAPIServerHandler() (handlers []webservice.WebHandler) {
+func (r *appServer) getAPIServerHandler() (handlers []webserver.WebHandler) {
 	for _, v := range r.appRoutes {
 		handler := &scriptHandler{data: v, server: r}
 		r.scriptHandlers[v.Path] = handler
-		handlers = append(handlers,webservice.WebHandler{v.Path, v.Method, handler.ExecuteScript})
+		handlers = append(handlers, webserver.WebHandler{v.Path, v.Method, handler.ExecuteScript})
 	}
 	return
 }

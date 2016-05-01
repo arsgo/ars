@@ -4,9 +4,9 @@ import (
 	"sync"
 
 	"github.com/colinyl/ars/rpcservice"
-	"github.com/colinyl/ars/webservice"
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/utility"
+	"github.com/colinyl/lib4go/webserver"
 )
 
 const (
@@ -66,7 +66,7 @@ type appServer struct {
 	appServerAddress  string
 	lk                sync.Mutex
 	jobNames          map[string]string
-	apiServer         *webservice.WebService
+	apiServer         *webserver.WebServer
 	apiServerAddress  string
 	appRoutes         []*taskRouteConfig
 	scriptHandlers    map[string]*scriptHandler
@@ -89,7 +89,7 @@ func (app *appServer) init() (err error) {
 	app.rcServicesMap = NewServiceMap()
 	app.jobNames = make(map[string]string)
 	app.scriptHandlers = make(map[string]*scriptHandler)
-	app.monitor = NewMonitor(app.zkClient, app.Log,app)
+	app.monitor = NewMonitor(app.zkClient, app.Log, app)
 	return
 }
 

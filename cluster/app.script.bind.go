@@ -4,11 +4,11 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/colinyl/ars/mqservice"
 	"github.com/colinyl/ars/scriptservice"
-	"github.com/colinyl/ars/sys"
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/lua"
+	"github.com/colinyl/lib4go/mq"
+	"github.com/colinyl/lib4go/sysinfo"
 	l "github.com/yuin/gopher-lua"
 )
 
@@ -84,7 +84,7 @@ func (a *appServer) bindLogger() (fn []lua.Luafunc) {
 	})
 	fn = append(fn, lua.Luafunc{
 		Name:     "info",
-		Function: sys.SysInfoLoader,
+		Function: sysinfo.SysInfoLoader,
 	})
 
 	return
@@ -94,7 +94,7 @@ func NewScriptEngine(app *appServer) *scriptEngine {
 	pool := lua.NewLuaPool(app.bindLogger()...)
 	pool.AddUserData(app.bindRPCRequestService)
 	pool.AddUserData(app.bindRPCSendService)
-	mqBinder := mqservice.NewMQBinder(app.zkClient, pool)
+	mqBinder := mq.NewMQBinder(app.zkClient, pool)
 	pool.AddUserData(mqBinder.BindMQService)
 	return &scriptEngine{pool: pool}
 }

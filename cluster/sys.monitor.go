@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/colinyl/ars/scheduler"
-	"github.com/colinyl/ars/sys"
+	"github.com/colinyl/lib4go/scheduler"
+	"github.com/colinyl/lib4go/sysinfo"
 )
 
 type logHandler interface {
@@ -62,7 +62,7 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 				cpu := obj.(*monitorItemConfig)
 				s.Log.Info("->send cpu")
 				//fmt.Println("->send cpu")
-				err := StaticSendMonitor(cpu.Source.TypeName, cpu.content, cpu.Source.Param, sys.GetCPU())
+				err := StaticSendMonitor(cpu.Source.TypeName, cpu.content, cpu.Source.Param, sysinfo.GetCPU())
 				//err := mqservice.StaticSend(cpu.Source.Param, sys.GetCPU())
 				fmt.Println(err)
 				if err != nil {
@@ -81,7 +81,7 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 				mem := obj.(*monitorItemConfig)
 				//	fmt.Println("->send mem")
 				s.Log.Info("->send mem")
-				err := StaticSendMonitor(mem.Source.TypeName, mem.content, mem.Source.Param, sys.GetMemory())
+				err := StaticSendMonitor(mem.Source.TypeName, mem.content, mem.Source.Param, sysinfo.GetMemory())
 				//err := mqservice.StaticSend(mem.Source.Param, sys.GetMemory())
 				if err != nil {
 					s.Log.Error(err)
@@ -99,7 +99,7 @@ func (s *serverMonitor) Bind(c *monitorConfig) (err error) {
 				disk := obj.(*monitorItemConfig)
 				//fmt.Println("->send disk")
 				s.Log.Info("->send disk")
-				err := StaticSendMonitor(disk.Source.TypeName, disk.content, disk.Source.Param, sys.GetDisk())
+				err := StaticSendMonitor(disk.Source.TypeName, disk.content, disk.Source.Param, sysinfo.GetDisk())
 				//err := mqservice.StaticSend(disk.Source.Param, sys.GetDisk())
 				if err != nil {
 					s.Log.Error(err)
