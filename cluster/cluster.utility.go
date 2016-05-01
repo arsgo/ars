@@ -151,7 +151,7 @@ func NewZKClient() *zkClientObj {
 	client.Log, err = logger.New("zk client", true)
 	client.Domain = config.Get().Domain
 	client.LocalIP = utility.GetLocalIP("192.168")
-	client.ZkCli, err = zk.New(config.Get().ZKServers, time.Second)
+	client.ZkCli, err = zk.New(config.Get().ZKServers, time.Second*10)
 	client.dataMap = utility.NewDataMap()
 	client.dataMap.Set("ip", client.LocalIP)
 	client.dataMap.Set("domain", client.Domain)
