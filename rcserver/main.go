@@ -4,7 +4,7 @@ import (
 	"runtime"
 
 	"github.com/colinyl/ars/cluster"
-	"github.com/colinyl/ars/forever"
+	"github.com/colinyl/lib4go/forever"
 )
 
 func main() {

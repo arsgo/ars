@@ -1,1 +1,0 @@
-[{"Name":"*","Appender":{"Type":"FileAppender","Level":"All","Path":"./logs/%name/%level/def_%date.log"}}]

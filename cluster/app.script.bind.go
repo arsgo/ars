@@ -4,7 +4,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/colinyl/ars/scriptservice"
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/lua"
 	"github.com/colinyl/lib4go/mq"
@@ -48,20 +47,20 @@ func handerGet(ls *l.LState) (result []string) {
 	return result
 }
 func (a *appServer) bindRPCRequestService(L *l.LState) {
-	scriptservice.Bind(L, &scriptservice.ScriptBindClass{ClassName: "rpcRequest",
+	lua.Bind(L, &lua.ScriptBindClass{ClassName: "rpcRequest",
 		ConstructorName: "async",
 		ConstructorFunc: func(ls *l.LState) interface{} {
 			return a.asyncRequest(ls)
-		}, ObjectMethods: map[string]scriptservice.ScriptBindFunc{
+		}, ObjectMethods: map[string]lua.ScriptBindFunc{
 			"get": handerGet,
 		}})
 }
 func (a *appServer) bindRPCSendService(L *l.LState) {
-	scriptservice.Bind(L, &scriptservice.ScriptBindClass{ClassName: "rpcSend",
+	lua.Bind(L, &lua.ScriptBindClass{ClassName: "rpcSend",
 		ConstructorName: "async",
 		ConstructorFunc: func(L *l.LState) interface{} {
 			return a.asyncSend(L)
-		}, ObjectMethods: map[string]scriptservice.ScriptBindFunc{
+		}, ObjectMethods: map[string]lua.ScriptBindFunc{
 			"get": handerGet,
 		}})
 }
