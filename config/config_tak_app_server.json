@@ -1,0 +1,48 @@
+{
+    "status": "run",
+    "jobs": [
+        "auto_build_bill"
+    ],
+    "monitor": {
+        "cpu": {
+            "source": {
+                "type": "mq",
+                "name": "activeMQ001",
+                "param": "grs:app:cpu"
+            },
+            "trigger": "0 0/1 * * * ?"
+        },
+        "mem": {
+            "source": {
+                "type": "mq",
+                "name": "activeMQ001",
+                "param": "grs:app:mem"
+            },
+            "trigger": "0 0/1 * * * ?"
+        },
+        "disk": {
+            "source": {
+                "type": "mq",
+                "name": "activeMQ001",
+                "param": "grs:app:disk"
+            },
+            "trigger": "0 0/1 * * * ?"
+        }
+    },
+    "server": {
+        "type": "http",
+        "routes": [
+            {
+                "path": "/system/base/inf",
+                "method": "get",
+                "script": "/scripts/system.base.info"
+            }
+        ]
+    },
+    "tasks": [
+        {
+            "trigger": "0/30 * * * * ?",
+            "script": "./scripts/rpc.lua"
+        }
+    ]
+}
