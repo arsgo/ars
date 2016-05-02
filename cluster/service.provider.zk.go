@@ -6,7 +6,7 @@ import (
 	"github.com/colinyl/lib4go/utility"
 )
 
-func (d *spServer) getNewDataMap(serviceName string) *utility.DataMap {
+func (d *spServer) getNewDataMap(serviceName string) utility.DataMap {
 	nmap := d.dataMap.Copy()
 	nmap.Set("serviceName", serviceName)
 	return nmap

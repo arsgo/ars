@@ -66,7 +66,7 @@ type scriptHandler struct {
 }
 
 type appServer struct {
-	dataMap           *utility.DataMap
+	dataMap           utility.DataMap
 	Last              int64
 	Log               *logger.Logger
 	zkClient          *zkClientObj
@@ -85,7 +85,7 @@ type appServer struct {
 	apiServerAddress  string
 	appRoutes         []*taskRouteConfig
 	scriptHandlers    map[string]*scriptHandler
-	snap           appSnap
+	snap              appSnap
 }
 
 func NewAPPServer() *appServer {

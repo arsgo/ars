@@ -47,7 +47,7 @@ type rcServer struct {
 	//IP             string
 	//Port           string
 	Server         string
-	dataMap        *utility.DataMap
+	dataMap        utility.DataMap
 	IsMasterServer bool	
 	jobCallback        func(config *JobConfigs, err error)
 	Log                *logger.Logger

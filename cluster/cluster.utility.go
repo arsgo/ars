@@ -22,7 +22,7 @@ type zkClientObj struct {
 	Domain  string
 	Err     error
 	Log     *logger.Logger
-	dataMap *utility.DataMap
+	dataMap utility.DataMap
 }
 
 func (zkClient *zkClientObj) waitZKPathExists(path string, timeout time.Duration, callback func(exists bool)) {
@@ -90,7 +90,7 @@ func (zkClient *zkClientObj) getRCServerValue(path string) (value *RCServerConfi
 	return
 }
 
-func (zkClient *zkClientObj) getRCServer(dataMap *utility.DataMap) (servers []*RCServerConfig, err error) {
+func (zkClient *zkClientObj) getRCServer(dataMap utility.DataMap) (servers []*RCServerConfig, err error) {
 	path := dataMap.Translate(rcServerRoot)
 	rcs, _ := zkClient.ZkCli.GetChildren(path)
 	servers = []*RCServerConfig{}

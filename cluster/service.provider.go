@@ -111,7 +111,7 @@ func (a spSnap) GetSnap(service string) string {
 
 type spServer struct {
 	Path    string
-	dataMap *utility.DataMap
+	dataMap utility.DataMap
 	//Last          int64
 	Log *logger.Logger
 	//Port          string
