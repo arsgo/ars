@@ -1,8 +1,11 @@
 package cluster
 
 import (
+	"encoding/json"
 	"sync"
+	"time"
 
+	"github.com/colinyl/ars/config"
 	"github.com/colinyl/ars/rpcservice"
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/utility"
@@ -10,11 +13,26 @@ import (
 )
 
 const (
-	appServerConfig  = "@domain/app/config/@ip"
-	appServerPath    = "@domain/app/servers/@ip"
-	jobConsumerPath  = "@domain/job/servers/@jobName/job_"
-	jobConsumerValue = `{"ip":"@ip@jobPort","last":@now}`
+	appServerConfig = "@domain/app/config/@ip"
+	appServerPath   = "@domain/app/servers/@ip"
+	jobConsumerPath = "@domain/job/servers/@jobName/job_"
+
+	//jobConsumerValue = `{"ip":"@ip@jobPort","last":@now}`
 )
+
+type appSnap struct {
+	Address string          `json:"address"`
+	Last    int64           `json:"last"`
+	Sys     *sysMonitorInfo `json:"sys"`
+}
+
+func (a appSnap) GetSnap() string {
+	snap := a
+	snap.Last = time.Now().Unix()
+	snap.Sys, _ = GetSysMonitorInfo()
+	buffer, _ := json.Marshal(&snap)
+	return string(buffer)
+}
 
 type taskConfig struct {
 	Trigger string `json:"trigger"`
@@ -31,19 +49,16 @@ type serverConfig struct {
 	Routes     []*taskRouteConfig `json:"routes"`
 }
 type AppConfig struct {
-	Status  string         `json:"status"`
-	Tasks   []*taskConfig  `json:"tasks"`
-	Jobs    []string       `json:"jobs"`
-	Server  *serverConfig  `json:"server"`
-	Monitor *monitorConfig `json:"monitor"`
+	Status string        `json:"status"`
+	Tasks  []*taskConfig `json:"tasks"`
+	Jobs   []string      `json:"jobs"`
+	Server *serverConfig `json:"server"`
 }
 
 type RCServerConfig struct {
-	Domain string
-	IP     string
-	Port   string
-	Server string
-	Online string
+	Domain  string
+	Address string
+	Server  string
 }
 type scriptHandler struct {
 	data   *taskRouteConfig
@@ -70,7 +85,7 @@ type appServer struct {
 	apiServerAddress  string
 	appRoutes         []*taskRouteConfig
 	scriptHandlers    map[string]*scriptHandler
-	monitor           *serverMonitor
+	snap           appSnap
 }
 
 func NewAPPServer() *appServer {
@@ -89,10 +104,9 @@ func (app *appServer) init() (err error) {
 	app.rcServicesMap = NewServiceMap()
 	app.jobNames = make(map[string]string)
 	app.scriptHandlers = make(map[string]*scriptHandler)
-	app.monitor = NewMonitor(app.zkClient, app.Log, app)
+	app.snap = appSnap{config.Get().IP, 0, nil}
 	return
 }
-
 func (r *appServer) Start() (err error) {
 	if err = r.init(); err != nil {
 		return

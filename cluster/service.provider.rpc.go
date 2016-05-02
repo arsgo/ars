@@ -1,11 +1,15 @@
 package cluster
 
-import "github.com/colinyl/ars/rpcservice"
+import (
+	"fmt"
 
-func (d *spServer) StartRPC()(error) {
-	address :=":2034"// rpcservice.GetLocalRandomAddress()
-	d.Port = address
-	d.dataMap.Set("port", d.Port)
-	d.rpcServer = rpcservice.NewRPCServer(address, NewScript(d))
+	"github.com/colinyl/ars/rpcservice"
+)
+
+func (d *spServer) StartRPC() error {
+	port := rpcservice.GetLocalRandomAddress()
+	d.dataMap.Set("port",port)
+	d.snap.Address = fmt.Sprintf("%s%s", d.zkClient.LocalIP, port)
+	d.rpcServer = rpcservice.NewRPCServer(port, NewScript(d))
 	return d.rpcServer.Serve()
 }

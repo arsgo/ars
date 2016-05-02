@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/colinyl/ars/rpcservice"
 	"github.com/colinyl/lib4go/logger"
@@ -25,11 +26,11 @@ import (
 )
 
 const (
-	serviceRoot          = "@domain/sp/servers"
-	serviceConfig        = "@domain/sp/config"
-	serviceProviderRoot  = "@domain/sp/servers/@serviceName"
-	serviceProviderPath  = "@domain/sp/servers/@serviceName/@ip@port"
-	serviceProviderValue = `{"last":@last}`
+	serviceRoot         = "@domain/sp/servers"
+	serviceConfig       = "@domain/sp/config"
+	serviceProviderRoot = "@domain/sp/servers/@serviceName"
+	serviceProviderPath = "@domain/sp/servers/@serviceName/@ip@port"
+	//serviceProviderValue = `{"last":@last}`
 
 	servicePublishPath = "@domain/sp/publish"
 	//serviceProviderConfig = "@domain/sp/config"
@@ -92,18 +93,35 @@ func getDataResult(data string) string {
 	return fmt.Sprintf(result_data_format, data)
 }
 
+type spSnap struct {
+	Address string          `json:"address"`
+	Service string          `json:"service"`
+	Last    int64           `json:"last"`
+	Sys     *sysMonitorInfo `json:"sys"`
+}
+
+func (a spSnap) GetSnap(service string) string {
+	snap := a
+	snap.Service = service
+	snap.Last = time.Now().Unix()
+	snap.Sys, _ = GetSysMonitorInfo()
+	buffer, _ := json.Marshal(&snap)
+	return string(buffer)
+}
+
 type spServer struct {
-	Path          string
-	dataMap       *utility.DataMap
-	Last          int64
-	Log           *logger.Logger
-	Port          string
+	Path    string
+	dataMap *utility.DataMap
+	//Last          int64
+	Log *logger.Logger
+	//Port          string
 	services      *spConfig
 	lk            sync.Mutex
 	mode          string
 	serviceConfig string
 	rpcServer     *rpcservice.RPCServer
 	zkClient      *zkClientObj
+	snap          spSnap
 }
 
 var (
@@ -169,6 +187,7 @@ func (sp *spServer) init() error {
 	sp.services = &spConfig{}
 	sp.services.services = make(map[string]*spService, 0)
 	sp.serviceConfig = sp.dataMap.Translate(serviceConfig)
+	sp.snap = spSnap{}
 	return nil
 }
 

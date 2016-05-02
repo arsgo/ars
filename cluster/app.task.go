@@ -37,7 +37,6 @@ func (a *appServer) BindTask(config *AppConfig, err error) error {
 	} else {
 		a.StopHttpAPIServer()
 	}
-	a.monitor.Bind(config.Monitor)
 
 	return nil
 }

@@ -8,7 +8,6 @@ func (d *rcServer) StartSnapValue() {
 		for {
 			select {
 			case <-tp.C:
-				d.setLastParams()
 				d.resetRCSnap()
 			}
 		}

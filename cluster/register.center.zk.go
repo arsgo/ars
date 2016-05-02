@@ -1,14 +1,11 @@
 package cluster
 
 import (
-	"fmt"
 	"sort"
 	"strings"
-	"time"
 )
 
-
-func (d *rcServer) createRCServer(path string, value string) (err error) {	
+func (d *rcServer) createRCServer(path string, value string) (err error) {
 	d.Path, err = d.zkClient.ZkCli.CreateSeqNode(path, value)
 	if err != nil {
 		return
@@ -18,7 +15,7 @@ func (d *rcServer) createRCServer(path string, value string) (err error) {
 }
 
 func (d *rcServer) resetRCSnap() (err error) {
-	err = d.zkClient.ZkCli.UpdateValue(d.Path, d.dataMap.Translate(rcServerValue))
+	err = d.zkClient.ZkCli.UpdateValue(d.Path, d.snap.GetSnap())
 	return
 }
 
@@ -27,29 +24,16 @@ func (d *rcServer) isMaster() bool {
 	sort.Sort(sort.StringSlice(servers))
 	return len(servers) == 0 || strings.HasSuffix(d.Path, servers[0])
 }
-func (d *rcServer) setLastParams() {
-	d.LastPublish = time.Now().Unix()
-	d.dataMap.Set("last", fmt.Sprintf("%d", d.LastPublish))
-}
-
-func (d *rcServer) setServiceParams() {
-	d.LastPublish = time.Now().Unix()
-	d.dataMap.Set("last", fmt.Sprintf("%d", d.LastPublish))
-	d.dataMap.Set("pst", fmt.Sprintf("%d", d.LastPublish))
-}
 
 func (d *rcServer) setOnlineParams(master bool) {
 	d.IsMasterServer = master
-	d.OnlineTime = time.Now().Unix()
-	d.dataMap.Set("path", d.Path)
-	d.dataMap.Set("online", fmt.Sprintf("%d", d.OnlineTime))
-	d.dataMap.Set("last", fmt.Sprintf("%d", d.OnlineTime))
+	d.snap.Path = d.Path
 	if d.IsMasterServer {
-		d.dataMap.Set("type", "master")
-		d.Server = "master"
+		d.snap.Server = SERVER_MASTER
+		d.Server = SERVER_MASTER
 	} else {
-		d.dataMap.Set("type", "slave")
-		d.Server = "slave"
+		d.snap.Server = SERVER_SLAVE
+		d.Server = SERVER_SLAVE
 	}
-    d.Log.Infof("current server is %s",d.Server)
+	d.Log.Infof("current server is %s", d.Server)
 }

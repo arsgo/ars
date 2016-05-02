@@ -1,11 +1,14 @@
 package cluster
 
 import (
+	"fmt"
+
 	"github.com/colinyl/ars/rpcservice"
 	"github.com/colinyl/lib4go/logger"
 )
-func (a *appServer)StopJobServer(){
-	if a.jobServer!=nil{
+
+func (a *appServer) StopJobServer() {
+	if a.jobServer != nil {
 		a.jobServer.Stop()
 	}
 }
@@ -16,12 +19,12 @@ func (a *appServer) StartJobConsumer(jobNames []string) {
 		a.Log.Info("start rpc service for job consumer")
 		a.hasStartJobServer = true
 		a.jobServerAdress = rpcservice.GetLocalRandomAddress()
-        a.dataMap.Set("jobPort",a.jobServerAdress)
+		a.snap.Address = fmt.Sprintf("%s%s", a.zkClient.LocalIP, a.jobServerAdress)
 		a.jobServer = rpcservice.NewRPCServer(a.jobServerAdress, &appServerJobHandler{server: a, Log: a.Log})
-        err:=a.jobServer.Serve()
-        if err!=nil{
-            a.Log.Error(err)
-        }
+		err := a.jobServer.Serve()
+		if err != nil {
+			a.Log.Error(err)
+		}
 	}
 	jobMap := make(map[string]string)
 	for _, v := range jobNames {
@@ -38,13 +41,14 @@ func (a *appServer) StartJobConsumer(jobNames []string) {
 	for i := range jobMap {
 		if _, ok := a.jobNames[i]; !ok {
 			dmap.Set("jobName", i)
-			path, err := a.zkClient.ZkCli.CreateSeqNode(dmap.Translate(jobConsumerPath), dmap.Translate(jobConsumerValue))
+			path, err := a.zkClient.ZkCli.CreateSeqNode(dmap.Translate(jobConsumerPath),
+				a.snap.GetSnap())
 			if err != nil {
 				a.Log.Error(err)
 				continue
 			}
 			a.jobNames[i] = path
-            a.Log.Infof("::start job service:%s",i)
+			a.Log.Infof("::start job service:%s", i)
 		}
 	}
 
@@ -56,7 +60,7 @@ type appServerJobHandler struct {
 }
 
 func (r *appServerJobHandler) Request(name string, input string) (result string, err error) {
-    r.Log.Info("recv job server request")
+	r.Log.Info("recv job server request")
 	return getSuccessResult(), nil
 }
 func (r *appServerJobHandler) Send(name string, input string, data []byte) (string, error) {

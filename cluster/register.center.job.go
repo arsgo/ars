@@ -47,7 +47,7 @@ func (d *rcServer) getJobConsumers(jobName string) (jobIPCollection []string) {
 			d.Log.Error(err)
 			continue
 		}
-		jobIPCollection = append(jobIPCollection, consumer.IP)
+		jobIPCollection = append(jobIPCollection, consumer.Address)
 	}
 	return
 

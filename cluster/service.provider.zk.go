@@ -1,9 +1,7 @@
 package cluster
 
 import (
-	"fmt"
 	"strings"
-	"time"
 
 	"github.com/colinyl/lib4go/utility"
 )
@@ -11,14 +9,14 @@ import (
 func (d *spServer) getNewDataMap(serviceName string) *utility.DataMap {
 	nmap := d.dataMap.Copy()
 	nmap.Set("serviceName", serviceName)
-	nmap.Set("last", fmt.Sprintf("%d", time.Now().Unix()))
 	return nmap
 }
-func (d *spServer) createSPPath(path string, nmap *utility.DataMap) {
+
+func (d *spServer) createSPPath(path string, value string) {
 	if d.zkClient.ZkCli.Exists(path) {
 		return
 	}
-	_, err := d.zkClient.ZkCli.CreateTmpNode(path, nmap.Translate(serviceProviderValue))
+	_, err := d.zkClient.ZkCli.CreateTmpNode(path, value)
 	if err != nil {
 		return
 	}

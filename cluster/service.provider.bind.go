@@ -53,7 +53,6 @@ func (d *spServer) deleteSharedSevices(svs map[string]*spService) {
 		if _, ok := svs[i]; ok {
 			continue
 		}
-
 		nmap := d.getNewDataMap(i)
 		path := nmap.Translate(serviceProviderPath)
 		d.zkClient.ZkCli.Delete(path)
@@ -111,6 +110,6 @@ func (d *spServer) bindService(serviceName string, config *spService) (err error
 		d.deleteSPPath(path)
 		return errors.New("ip not match")
 	}
-	d.createSPPath(path, nmap)
+	d.createSPPath(path, d.snap.GetSnap(serviceName))
 	return
 }

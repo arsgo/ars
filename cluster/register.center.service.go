@@ -5,21 +5,20 @@ import (
 	"time"
 )
 
-func (d *rcServer) WatchServiceChange(callback func(services map[string][]string, err error)){
-    d.zkClient.waitZKPathExists(d.servicePublishPath,time.Hour*8640,func(exists bool){
-        if !exists {
+func (d *rcServer) WatchServiceChange(callback func(services map[string][]string, err error)) {
+	d.zkClient.waitZKPathExists(d.servicePublishPath, time.Hour*8640, func(exists bool) {
+		if !exists {
 			d.Log.Info("service publish config not exists")
-		} else {          
+		} else {
 			callback(d.getSPServices())
 		}
-    })
-    d.Log.Info("::watch for service config changes ")
-    d.zkClient.watchZKValueChange(d.servicePublishPath,func(){
-        d.Log.Info("serivce has changed")
-        callback(d.getSPServices())
-    })
+	})
+	d.Log.Info("::watch for service config changes ")
+	d.zkClient.watchZKValueChange(d.servicePublishPath, func() {
+		d.Log.Info("serivce has changed")
+		callback(d.getSPServices())
+	})
 }
-
 
 //WatchServiceProviderChange watch whether any service privider is changed
 func (d *rcServer) watchServiceProviderChange() (err error) {
@@ -39,19 +38,19 @@ func (d *rcServer) watchServiceProviderChange() (err error) {
 	})
 	sproots, err := d.getServiceProviderRoot()
 	for _, v := range sproots {
-		for _, p := range v {        
+		for _, p := range v {
 			d.zkClient.watchZKChildrenPathChange(p, func() {
 				err = d.serviceChange()
 			})
 		}
 
 	}
-    return
+	return
 }
 
 func (d *rcServer) getServiceProviderRoot() (map[string][]string, error) {
 	var spList ServiceProviderList = make(map[string][]string)
-	serviceList, err :=d.zkClient.ZkCli.GetChildren(d.dataMap.Translate(serviceRoot))
+	serviceList, err := d.zkClient.ZkCli.GetChildren(d.dataMap.Translate(serviceRoot))
 	if err != nil {
 		return spList, err
 	}
@@ -59,8 +58,8 @@ func (d *rcServer) getServiceProviderRoot() (map[string][]string, error) {
 	for _, v := range serviceList {
 		nmap := d.dataMap.Copy()
 		nmap.Set("serviceName", v)
-        npath:=nmap.Translate(serviceProviderRoot)
-        spList.Add(v, npath)		
+		npath := nmap.Translate(serviceProviderRoot)
+		spList.Add(v, npath)
 	}
 	return spList, nil
 }
@@ -86,8 +85,7 @@ func (d *rcServer) getSPServices() (ServiceProviderList, error) {
 	return spList, nil
 }
 
-func (d *rcServer) serviceChange() (err error) {    
-	d.setServiceParams()
+func (d *rcServer) serviceChange() (err error) {
 	d.resetRCSnap()
 	err = d.publishServices()
 	return

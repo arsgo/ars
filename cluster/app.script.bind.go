@@ -7,7 +7,6 @@ import (
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/lua"
 	"github.com/colinyl/lib4go/mq"
-	"github.com/colinyl/lib4go/sysinfo"
 	l "github.com/yuin/gopher-lua"
 )
 
@@ -80,10 +79,6 @@ func (a *appServer) bindLogger() (fn []lua.Luafunc) {
 			a.Log.Error(msg)
 			return 0
 		},
-	})
-	fn = append(fn, lua.Luafunc{
-		Name:     "info",
-		Function: sysinfo.SysInfoLoader,
 	})
 
 	return

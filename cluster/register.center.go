@@ -1,17 +1,22 @@
 package cluster
 
 import (
+	"encoding/json"
+	"time"
+
 	"github.com/colinyl/ars/rpcservice"
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/utility"
 )
 
 const (
+	SERVER_MASTER    = "master"
+	SERVER_SLAVE     = "slave"
 	rcServerRoot     = "@domain/rc/servers"
 	rcServerPath     = "@domain/rc/servers/rc_"
 	rcServerNodePath = "@domain/rc/servers/@name"
-	rcServerValue    = `{"domain":"@domain","path":"@path","ip":"@ip","port":"@port","server":"@type","online":"@online","lastPublish":"@pst","last":"@last"}`
-	rcServerConfig   = "@domain/rc/config"
+	//rcServerValue    = `{"domain":"@domain","path":"@path","ip":"@ip","port":"@port","server":"@type","online":"@online","lastPublish":"@pst","last":"@last"}`
+	rcServerConfig = "@domain/rc/config"
 
 	//jobRoot             = "@domain/job"
 	jobConfigPath       = "@domain/job/config"
@@ -19,17 +24,31 @@ const (
 	jobConsumerRealPath = "@domain/job/servers/@jobName/@path"
 )
 
+type rcSnap struct {
+	Domain  string          `json:"domain"`
+	Path    string          `json:"path"`
+	Address string          `json:"address"`
+	Server  string          `json:"server"`
+	Last    int64           `json:"last"`
+	Sys     *sysMonitorInfo `json:"sys"`
+}
+
+func (a rcSnap) GetSnap() string {
+	snap := a
+	snap.Last = time.Now().Unix()
+	snap.Sys, _ = GetSysMonitorInfo()
+	buffer, _ := json.Marshal(&snap)
+	return string(buffer)
+}
+
 //-------------------------register center----------------------------
 type rcServer struct {
-	Path               string
-	IP                 string
-	Port               string
-	Server             string
-	dataMap            *utility.DataMap
-	IsMasterServer     bool
-	Last               int64
-	OnlineTime         int64
-	LastPublish        int64
+	Path           string
+	//IP             string
+	//Port           string
+	Server         string
+	dataMap        *utility.DataMap
+	IsMasterServer bool	
 	jobCallback        func(config *JobConfigs, err error)
 	Log                *logger.Logger
 	rpcServer          *rpcservice.RPCServer
@@ -41,6 +60,7 @@ type rcServer struct {
 	spServerPool       *rpcservice.RPCServerPool
 	spServicesMap      *servicesMap
 	zkClient           *zkClientObj
+	snap               rcSnap
 }
 
 //JobConfigItem job config item
@@ -51,7 +71,7 @@ type JobConfigItem struct {
 	Concurrency int
 }
 type JobConsumerValue struct {
-	IP string
+	Address string
 }
 
 //JobConfigs job configs
@@ -67,7 +87,6 @@ func NewRCServer() *rcServer {
 func (rc *rcServer) init() error {
 	rc.zkClient = NewZKClient()
 	rc.dataMap = rc.zkClient.dataMap.Copy()
-	rc.dataMap.Set("type", "slave")
 	rc.rcServerRoot = rc.dataMap.Translate(rcServerRoot)
 	rc.servicePublishPath = rc.dataMap.Translate(servicePublishPath)
 	rc.serviceRoot = rc.dataMap.Translate(serviceRoot)
@@ -75,6 +94,7 @@ func (rc *rcServer) init() error {
 	rc.rcServerPath = rc.dataMap.Translate(rcServerPath)
 	rc.spServerPool = rpcservice.NewRPCServerPool()
 	rc.spServicesMap = NewServiceMap()
+	rc.snap = rcSnap{Domain: rc.zkClient.Domain, Server: SERVER_SLAVE}
 	return nil
 }
 
@@ -97,7 +117,7 @@ func (r *rcServer) Start() (err error) {
 	return nil
 }
 
-func (r *rcServer) Stop()error {
+func (r *rcServer) Stop() error {
 	defer func() {
 		recover()
 	}()
