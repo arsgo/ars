@@ -7,7 +7,7 @@ import (
 )
 
 func (a *appServer) BindTask(config *AppConfig, err error) error {
-	a.resetSnap(a.appServerAddress, config)
+	a.ResetSnap()
 	scheduler.Stop()
 	for _, v := range config.Tasks {
 		scheduler.AddTask(v.Trigger, scheduler.NewTask(v.Script, func(name interface{}) {

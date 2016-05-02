@@ -1,11 +1,6 @@
 package cluster
 
-import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"time"
-)
+import "time"
 
 func (d *appServer) WatchConfigChange(callback func(config *AppConfig, err error) error) {
 	d.zkClient.waitZKPathExists(d.appServerConfig, time.Hour*8640, func(exists bool) {
@@ -37,18 +32,11 @@ func (d *appServer) WatchRCServerChange(callback func([]*RCServerConfig, error))
 	})
 }
 
-func (d *appServer) resetSnap(path string, config *AppConfig) (err error) {
-	data, err := json.Marshal(config)
-	if err != nil {
-		return
-	}
-	dst := new(bytes.Buffer)
-	json.Indent(dst, data, "  ", "  ")
-	content := fmt.Sprintf("%s", dst)
-	if d.zkClient.ZkCli.Exists(path) {
-		err = d.zkClient.ZkCli.UpdateValue(path, content)
+func (d *appServer) ResetSnap() (err error) {
+	if d.zkClient.ZkCli.Exists(d.appServerAddress) {
+		err = d.zkClient.ZkCli.UpdateValue(d.appServerAddress, d.snap.GetSnap())
 	} else {
-		err = d.zkClient.ZkCli.CreatePath(path, content)
+		err = d.zkClient.ZkCli.CreatePath(d.appServerAddress, d.snap.GetSnap())
 	}
 	return
 }
