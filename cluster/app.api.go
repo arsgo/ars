@@ -16,7 +16,7 @@ func (r *appServer) StopHttpAPIServer() {
 func (r *appServer) StartHttpAPIServer() {
 	r.scriptHandlers = nil
 	r.scriptHandlers = make(map[string]*scriptHandler)
-	r.apiServerAddress = rpcservice.GetLocalRandomAddress()
+	r.apiServerAddress = rpcservice.GetLocalRandomAddress(20320)
 	r.apiServer = webserver.NewWebServer(r.apiServerAddress, r.getAPIServerHandler()...)
 	r.apiServer.Serve()
 	r.Log.Infof("::start api server%s", r.apiServerAddress)

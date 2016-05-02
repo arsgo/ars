@@ -48,13 +48,17 @@ func NewRPCServer(address string, handler rpcHandler) *RPCServer {
 	return rpcs
 }
 
-func GetLocalRandomAddress() string {
-	return fmt.Sprintf(":%d", getPort())
+func GetLocalRandomAddress(start ...int) string {
+	return fmt.Sprintf(":%d", getPort(start...))
 }
 
-func getPort() int {
+func getPort(start ...int) int {
+	s := 10160
+	if len(start) > 0 {
+		s = start[0]
+	}
 	for i := 0; i < 100; i++ {
-		port := 10160 + i*8
+		port := s + i*8
 		if net.IsTCPPortAvailable(port) {
 			return port
 		}

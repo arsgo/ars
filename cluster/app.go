@@ -64,9 +64,20 @@ type scriptHandler struct {
 	data   *taskRouteConfig
 	server *appServer
 }
+type jobPaths struct {
+	data  map[string]string
+	mutex sync.Mutex
+}
+
+func (j jobPaths) getData() map[string]string {
+	j.mutex.Lock()
+	defer j.mutex.Unlock()
+	d := make(map[string]string)
+	return utility.MergeStringMap(j.data, d)
+}
 
 type appServer struct {
-	dataMap           utility.DataMap
+	dataMap utility.DataMap
 	//Last              int64
 	Log               *logger.Logger
 	zkClient          *zkClientObj
@@ -80,7 +91,7 @@ type appServer struct {
 	jobServerAdress   string
 	appServerAddress  string
 	lk                sync.Mutex
-	jobNames          map[string]string
+	jobPaths          jobPaths
 	apiServer         *webserver.WebServer
 	apiServerAddress  string
 	appRoutes         []*taskRouteConfig
@@ -102,9 +113,9 @@ func (app *appServer) init() (err error) {
 	app.rcServerPool = rpcservice.NewRPCServerPool()
 	app.scriptEngine = NewScriptEngine(app)
 	app.rcServicesMap = NewServiceMap()
-	app.jobNames = make(map[string]string)
 	app.scriptHandlers = make(map[string]*scriptHandler)
 	app.snap = appSnap{Address: config.Get().IP}
+	app.jobPaths = jobPaths{data: make(map[string]string)}
 	return
 }
 func (r *appServer) Start() (err error) {

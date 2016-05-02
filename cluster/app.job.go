@@ -31,26 +31,13 @@ func (a *appServer) StartJobConsumer(jobNames []string) {
 		jobMap[v] = v
 	}
 	//clear
-	for i := range a.jobNames {
+	currentPaths := a.jobPaths.getData()
+	for i := range currentPaths {
 		if p, ok := jobMap[i]; !ok {
 			a.zkClient.ZkCli.Delete(p)
 		}
 	}
-	//add jobConsumerPath   = "@domain/job/@jobName/consumers/job_"
-	dmap := a.dataMap.Copy()
-	for i := range jobMap {
-		if _, ok := a.jobNames[i]; !ok {
-			dmap.Set("jobName", i)
-			path, err := a.zkClient.ZkCli.CreateSeqNode(dmap.Translate(jobConsumerPath),
-				a.snap.GetSnap())
-			if err != nil {
-				a.Log.Error(err)
-				continue
-			}
-			a.jobNames[i] = path
-			a.Log.Infof("::start job service:%s", i)
-		}
-	}
+	a.CreateJobSnap(jobMap)
 
 }
 

@@ -8,6 +8,7 @@ func (d *appServer) StartRefreshSnap() {
 		select {
 		case <-tp.C:
 			d.ResetAPPSnap()
+			d.ResetJobSnap()
 		}
 	}
 

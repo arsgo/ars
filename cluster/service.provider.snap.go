@@ -5,7 +5,9 @@ import "time"
 func (d *spServer) ResetSPSnap() {
 	services := d.services.GetService()
 	for k := range services {
-		d.zkClient.ZkCli.UpdateValue(d.Path, d.snap.GetSnap(k))
+		nmap := d.getNewDataMap(k)
+		path := nmap.Translate(serviceProviderPath)
+		d.zkClient.ZkCli.UpdateValue(path, d.snap.GetSnap(k))
 	}
 }
 

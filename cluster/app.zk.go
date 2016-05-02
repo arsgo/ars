@@ -32,6 +32,32 @@ func (d *appServer) WatchRCServerChange(callback func([]*RCServerConfig, error))
 	})
 }
 
+func (d *appServer) CreateJobSnap(jobMap map[string]string) {
+	d.jobPaths.mutex.Lock()
+	defer d.jobPaths.mutex.Unlock()
+	dmap := d.dataMap.Copy()
+	for i := range jobMap {
+		if _, ok := d.jobPaths.data[i]; !ok {
+			dmap.Set("jobName", i)
+			path, err := d.zkClient.ZkCli.CreateSeqNode(dmap.Translate(jobConsumerPath),
+				d.snap.GetSnap())
+			if err != nil {
+				d.Log.Error(err)
+				continue
+			}
+			d.jobPaths.data[i] = path
+			d.Log.Infof("::start job service:%s", i)
+		}
+	}
+}
+
+func (d *appServer) ResetJobSnap() (err error) {
+	paths := d.jobPaths.getData()
+	for _, path := range paths {
+		d.zkClient.ZkCli.UpdateValue(path, d.snap.GetSnap())
+	}
+	return nil
+}
 func (d *appServer) ResetAPPSnap() (err error) {
 	if d.zkClient.ZkCli.Exists(d.appServerAddress) {
 		err = d.zkClient.ZkCli.UpdateValue(d.appServerAddress, d.snap.GetSnap())
