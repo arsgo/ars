@@ -133,7 +133,7 @@ func (zkClient *zkClientObj) GetSourceConfig(typeName string, name string) (conf
 	config = string(values)
 	return
 }
-func (zkClient *zkClientObj) getSPConfig(path string) (svs []*spService, err error) {
+func (zkClient *zkClientObj) getSPConfig(path string) (svs []spService, err error) {
 	values, err := zkClient.ZkCli.GetValue(path)
 	if err != nil {
 		return
@@ -155,7 +155,6 @@ func NewZKClient() *zkClientObj {
 	client.dataMap = utility.NewDataMap()
 	client.dataMap.Set("ip", client.LocalIP)
 	client.dataMap.Set("domain", client.Domain)
-	client.dataMap.Set("now", fmt.Sprintf("%d", time.Now().Unix()))
 	if err != nil && client.Log != nil {
 		client.Log.Error(err)
 	}

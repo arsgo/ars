@@ -29,13 +29,13 @@ type rcSnap struct {
 	Path    string          `json:"path"`
 	Address string          `json:"address"`
 	Server  string          `json:"server"`
-	Last    int64           `json:"last"`
+	Last    string           `json:"last"`
 	Sys     *sysMonitorInfo `json:"sys"`
 }
 
 func (a rcSnap) GetSnap() string {
 	snap := a
-	snap.Last = time.Now().Unix()
+	snap.Last =  time.Now().Format("20060102150405")
 	snap.Sys, _ = GetSysMonitorInfo()
 	buffer, _ := json.Marshal(&snap)
 	return string(buffer)
@@ -113,7 +113,7 @@ func (r *rcServer) Start() (err error) {
 	r.WatchServiceChange(func(services map[string][]string, err error) {
 		r.BindSPServer(services)
 	})
-	r.StartSnapValue()
+	go r.StartRefreshSnap()
 	return nil
 }
 

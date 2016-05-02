@@ -7,6 +7,6 @@ func (d *rcServer) Bind() (err error) {
 		return
 	}
 	go d.watchMasterChange()
-	go d.resetRCSnap()
+	go d.ResetRCSnap()
 	return
 }

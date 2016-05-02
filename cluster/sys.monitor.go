@@ -19,7 +19,7 @@ func GetSysMonitorInfo() (sys *sysMonitorInfo, err error) {
 	sys = &sysMonitorInfo{}
 	baseMap := make(map[string]interface{})
 	baseMap["ip"] = config.Get().IP
-	baseMap["timestamp"] = time.Now().Unix()
+	baseMap["timestamp"] = time.Now().Format("20060102150405")
 	sys.CPU, err = json.Marshal(utility.MergeMaps(baseMap, sysinfo.GetCPU()))
 	if err != nil {
 		return

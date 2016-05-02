@@ -10,7 +10,7 @@ func (d *rcServer) watchMasterChange() {
 	d.zkClient.watchZKChildrenPathChange(d.rcServerRoot, func() {
 		if m := d.isMaster(); m && !d.IsMasterServer {
 			d.setOnlineParams(true)
-			d.resetRCSnap()
+			d.ResetRCSnap()
 			d.watchMasterChange()
 		}
 	})

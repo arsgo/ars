@@ -49,7 +49,7 @@ func (d *rcServer) StartRPCServer() {
 	d.rpcServer = rpcservice.NewRPCServer(port, &rcServerRPCHandler{server: d, Log: d.Log})
 	d.rpcServer.Serve()
 	time.Sleep(time.Second * 2)
-	d.resetRCSnap()
+	d.ResetRCSnap()
 }
 
 func (r *rcServer) BindSPServer(services map[string][]string) {

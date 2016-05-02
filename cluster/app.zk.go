@@ -32,7 +32,7 @@ func (d *appServer) WatchRCServerChange(callback func([]*RCServerConfig, error))
 	})
 }
 
-func (d *appServer) ResetSnap() (err error) {
+func (d *appServer) ResetAPPSnap() (err error) {
 	if d.zkClient.ZkCli.Exists(d.appServerAddress) {
 		err = d.zkClient.ZkCli.UpdateValue(d.appServerAddress, d.snap.GetSnap())
 	} else {

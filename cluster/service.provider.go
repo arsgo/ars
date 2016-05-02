@@ -52,7 +52,28 @@ type spService struct {
 	Script string
 }
 type spConfig struct {
-	services map[string]*spService
+	services map[string]spService
+	mutex    sync.Mutex
+}
+
+func (s *spConfig) GetService() map[string]spService {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	service := make(map[string]spService)
+	for k, v := range s.services {
+		service[k] = v
+	}
+	return service
+}
+func (s *spConfig) Reset(services map[string]spService) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	for k := range s.services {
+		delete(s.services, k)
+	}
+	for k, v := range services {
+		s.services[k] = v
+	}
 }
 
 func (s *spConfig) ToString() string {
@@ -96,14 +117,14 @@ func getDataResult(data string) string {
 type spSnap struct {
 	Address string          `json:"address"`
 	Service string          `json:"service"`
-	Last    int64           `json:"last"`
+	Last    string           `json:"last"`
 	Sys     *sysMonitorInfo `json:"sys"`
 }
 
 func (a spSnap) GetSnap(service string) string {
 	snap := a
 	snap.Service = service
-	snap.Last = time.Now().Unix()
+	snap.Last = time.Now().Format("20060102150405")
 	snap.Sys, _ = GetSysMonitorInfo()
 	buffer, _ := json.Marshal(&snap)
 	return string(buffer)
@@ -185,7 +206,7 @@ func (sp *spServer) init() error {
 	sp.zkClient = NewZKClient()
 	sp.dataMap = sp.zkClient.dataMap.Copy()
 	sp.services = &spConfig{}
-	sp.services.services = make(map[string]*spService, 0)
+	sp.services.services = make(map[string]spService, 0)
 	sp.serviceConfig = sp.dataMap.Translate(serviceConfig)
 	sp.snap = spSnap{}
 	return nil
@@ -198,6 +219,7 @@ func (r *spServer) Start() (err error) {
 
 	r.StartRPC()
 	r.WatchServiceConfigChange()
+	go r.StartRefreshSnap()
 	return nil
 }
 func (r *spServer) Stop() error {

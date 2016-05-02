@@ -14,7 +14,7 @@ func (d *rcServer) createRCServer(path string, value string) (err error) {
 	return
 }
 
-func (d *rcServer) resetRCSnap() (err error) {
+func (d *rcServer) ResetRCSnap() (err error) {
 	err = d.zkClient.ZkCli.UpdateValue(d.Path, d.snap.GetSnap())
 	return
 }

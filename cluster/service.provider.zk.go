@@ -26,10 +26,10 @@ func (d *spServer) deleteSPPath(path string) {
 		d.zkClient.ZkCli.Delete(path)
 	}
 }
-func (d *spServer) groupService() (aloneService map[string]*spService,
-	sharedService map[string]*spService) {
-	aloneService = make(map[string]*spService)
-	sharedService = make(map[string]*spService)
+func (d *spServer) groupService() (aloneService map[string]spService,
+	sharedService map[string]spService) {
+	aloneService = make(map[string]spService)
+	sharedService = make(map[string]spService)
 	svs, _ := d.zkClient.getSPConfig(d.serviceConfig)
 	for _, v := range svs {
 		if strings.EqualFold(v.Mode, eModeAlone) {

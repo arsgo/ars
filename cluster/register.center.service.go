@@ -86,7 +86,7 @@ func (d *rcServer) getSPServices() (ServiceProviderList, error) {
 }
 
 func (d *rcServer) serviceChange() (err error) {
-	d.resetRCSnap()
+	d.ResetRCSnap()
 	err = d.publishServices()
 	return
 }

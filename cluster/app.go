@@ -22,13 +22,13 @@ const (
 
 type appSnap struct {
 	Address string          `json:"address"`
-	Last    int64           `json:"last"`
+	Last    string          `json:"last"`
 	Sys     *sysMonitorInfo `json:"sys"`
 }
 
 func (a appSnap) GetSnap() string {
 	snap := a
-	snap.Last = time.Now().Unix()
+	snap.Last = time.Now().Format("20060102150405")
 	snap.Sys, _ = GetSysMonitorInfo()
 	buffer, _ := json.Marshal(&snap)
 	return string(buffer)
@@ -67,7 +67,7 @@ type scriptHandler struct {
 
 type appServer struct {
 	dataMap           utility.DataMap
-	Last              int64
+	//Last              int64
 	Log               *logger.Logger
 	zkClient          *zkClientObj
 	appServerConfig   string
@@ -104,7 +104,7 @@ func (app *appServer) init() (err error) {
 	app.rcServicesMap = NewServiceMap()
 	app.jobNames = make(map[string]string)
 	app.scriptHandlers = make(map[string]*scriptHandler)
-	app.snap = appSnap{config.Get().IP, 0, nil}
+	app.snap = appSnap{Address: config.Get().IP}
 	return
 }
 func (r *appServer) Start() (err error) {
@@ -119,7 +119,7 @@ func (r *appServer) Start() (err error) {
 		r.BindTask(config, err)
 		return nil
 	})
-
+	go r.StartRefreshSnap()
 	return nil
 }
 
