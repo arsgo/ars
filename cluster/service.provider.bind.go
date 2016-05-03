@@ -35,6 +35,7 @@ func (d *spServer) rebind() {
 		}
 	}
 	config, _ := d.bindServices(aloneService)
+	defer d.setMQConsumer(d.services.services)
 	if len(config.services) > 0 {
 		d.deleteSharedSevices(config.services)
 		d.mode = eModeAlone

@@ -19,7 +19,7 @@ func (a *appServer) StartJobConsumer(jobNames []string) {
 		a.Log.Info("start rpc service for job consumer")
 		a.hasStartJobServer = true
 		a.jobServerAdress = rpcservice.GetLocalRandomAddress()
-		a.snap.Address = fmt.Sprintf("%s%s", a.zkClient.LocalIP, a.jobServerAdress)
+		a.snap.Address = fmt.Sprintf("%s%s", a.zkClient.IP, a.jobServerAdress)
 		a.jobServer = rpcservice.NewRPCServer(a.jobServerAdress, &appServerJobHandler{server: a, Log: a.Log})
 		err := a.jobServer.Serve()
 		if err != nil {

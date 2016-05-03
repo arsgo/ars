@@ -8,8 +8,8 @@ import (
 
 func (d *spServer) StartRPC() error {
 	port := rpcservice.GetLocalRandomAddress()
-	d.dataMap.Set("port",port)
-	d.snap.Address = fmt.Sprintf("%s%s", d.zkClient.LocalIP, port)
-	d.rpcServer = rpcservice.NewRPCServer(port, NewScript(d))
+	d.dataMap.Set("port", port)
+	d.snap.Address = fmt.Sprintf("%s%s", d.zkClient.IP, port)
+	d.rpcServer = rpcservice.NewRPCServer(port, d.scriptEngine)
 	return d.rpcServer.Serve()
 }

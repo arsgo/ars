@@ -18,7 +18,7 @@ const (
 
 type zkClientObj struct {
 	ZkCli   *zk.ZKCli
-	LocalIP string
+	IP      string
 	Domain  string
 	Err     error
 	Log     *logger.Logger
@@ -117,8 +117,11 @@ func (zkClient *zkClientObj) getAppConfig(path string) (config *AppConfig, err e
 	return
 }
 func (zkClient *zkClientObj) checkIP(origin string) bool {
+	if strings.EqualFold(origin, "*") {
+		return true
+	}
 	ips := fmt.Sprintf(",%s,", origin)
-	llocal := fmt.Sprintf(",%s,", zkClient.LocalIP)
+	llocal := fmt.Sprintf(",%s,", zkClient.IP)
 	return strings.Contains(ips, llocal)
 }
 func (zkClient *zkClientObj) GetSourceConfig(typeName string, name string) (config string, err error) {
@@ -150,10 +153,10 @@ func NewZKClient() *zkClientObj {
 	client := &zkClientObj{}
 	client.Log, err = logger.New("zk client", true)
 	client.Domain = config.Get().Domain
-	client.LocalIP = config.Get().IP
+	client.IP = config.Get().IP
 	client.ZkCli, err = zk.New(config.Get().ZKServers, time.Second)
 	client.dataMap = utility.NewDataMap()
-	client.dataMap.Set("ip", client.LocalIP)
+	client.dataMap.Set("ip", client.IP)
 	client.dataMap.Set("domain", client.Domain)
 	if err != nil && client.Log != nil {
 		client.Log.Error(err)

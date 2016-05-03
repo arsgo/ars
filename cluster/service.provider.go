@@ -46,10 +46,13 @@ type servicesMap struct {
 	index int
 }
 type spService struct {
-	Name   string
-	IP     string
-	Mode   string
-	Script string
+	Name   string `json:"name"`
+	IP     string `json:"ip"`
+	Mode   string `json:"mode"`
+	Type   string `json:"type"`
+	Method string `json:"method"`
+	Script string `json:"script"`
+	Params string `json:"params"`
 }
 type spConfig struct {
 	services map[string]spService
@@ -117,7 +120,7 @@ func getDataResult(data string) string {
 type spSnap struct {
 	Address string          `json:"address"`
 	Service string          `json:"service"`
-	Last    string           `json:"last"`
+	Last    string          `json:"last"`
 	Sys     *sysMonitorInfo `json:"sys"`
 }
 
@@ -131,18 +134,18 @@ func (a spSnap) GetSnap(service string) string {
 }
 
 type spServer struct {
-	Path    string
-	dataMap utility.DataMap
-	//Last          int64
-	Log *logger.Logger
-	//Port          string
-	services      *spConfig
-	lk            sync.Mutex
-	mode          string
-	serviceConfig string
-	rpcServer     *rpcservice.RPCServer
-	zkClient      *zkClientObj
-	snap          spSnap
+	Path              string
+	dataMap           utility.DataMap
+	Log               *logger.Logger
+	services          *spConfig
+	lk                sync.Mutex
+	mode              string
+	serviceConfig     string
+	rpcServer         *rpcservice.RPCServer
+	zkClient          *zkClientObj
+	snap              spSnap
+	mqConsumerManager *mqConsumerManager
+	scriptEngine      *spScriptEngine
 }
 
 var (
@@ -201,7 +204,8 @@ func NewSPServer() *spServer {
 	sp.Log, _ = logger.New("sp server", true)
 	return sp
 }
-func (sp *spServer) init() error {
+func (sp *spServer) init() (err error) {
+
 	sp.dataMap = utility.NewDataMap()
 	sp.zkClient = NewZKClient()
 	sp.dataMap = sp.zkClient.dataMap.Copy()
@@ -209,7 +213,9 @@ func (sp *spServer) init() error {
 	sp.services.services = make(map[string]spService, 0)
 	sp.serviceConfig = sp.dataMap.Translate(serviceConfig)
 	sp.snap = spSnap{}
-	return nil
+	sp.mqConsumerManager, err = NewConsumerManager(NewServiceProviderConsumer(sp))
+	sp.scriptEngine = NewScript(sp)
+	return
 }
 
 func (r *spServer) Start() (err error) {
@@ -223,13 +229,12 @@ func (r *spServer) Start() (err error) {
 	return nil
 }
 func (r *spServer) Stop() error {
-	defer func() {
-		recover()
-	}()
+	defer recover()
 	r.zkClient.ZkCli.Close()
 	if r.rpcServer != nil {
 		r.rpcServer.Stop()
 	}
+	r.mqConsumerManager.Stop()
 	r.Log.Info("::sp server closed")
 	return nil
 }

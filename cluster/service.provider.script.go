@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -8,7 +9,7 @@ import (
 
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/lua"
-
+	"github.com/colinyl/lib4go/utility"
 	l "github.com/yuin/gopher-lua"
 )
 
@@ -17,17 +18,31 @@ type spScriptEngine struct {
 	provider *spServer
 	Log      *logger.Logger
 }
+type scriptInputArgs struct {
+	Input  json.RawMessage `json:"input"`
+	Params json.RawMessage `json:"params"`
+}
+
+func getScriptInputArgs(input string, params string) string {
+	args := scriptInputArgs{}
+	args.Input = []byte(input)
+	text, err := utility.GetParams(params)
+	if err == nil {
+		args.Params = []byte(text)
+	}
+	buffer, _ := json.Marshal(&args)
+	return string(buffer)
+}
 
 func (s *spScriptEngine) Request(cmd string, input string) (string, error) {
 	s.Log.Infof("recv request:%s", cmd)
 	s.provider.lk.Lock()
 	svs, ok := s.provider.services.services[cmd]
 	s.provider.lk.Unlock()
-	if !ok {
+	if !ok || !s.checkParam(svs, "request") {
 		return getErrorResult("500", fmt.Sprintf("not support service %s", cmd)), nil
 	}
-	path := svs.Script
-	values, err := s.script.Call(path, input)
+	values, err := s.script.Call(svs.Script, getScriptInputArgs(input, svs.Params))
 	if err != nil {
 		return getErrorResult("500", err.Error()), nil
 	}
@@ -38,11 +53,10 @@ func (s *spScriptEngine) Send(cmd string, input string, data []byte) (string, er
 	s.provider.lk.Lock()
 	svs, ok := s.provider.services.services[cmd]
 	s.provider.lk.Unlock()
-	if !ok {
+	if !ok || !s.checkParam(svs, "send") {
 		return "", errors.New("not suport")
 	}
-	path := svs.Script
-	values, err := s.script.Call(path, input)
+	values, err := s.script.Call(svs.Script, getScriptInputArgs(input, svs.Params))
 	return strings.Join(values, ","), err
 }
 func (s *spScriptEngine) Get(cmd string, input string) ([]byte, error) {
@@ -50,11 +64,10 @@ func (s *spScriptEngine) Get(cmd string, input string) ([]byte, error) {
 	svs, ok := s.provider.services.services[cmd]
 	s.provider.lk.Unlock()
 
-	if !ok {
+	if !ok || !s.checkParam(svs, "get") {
 		return make([]byte, 0), errors.New("not suport")
 	}
-	path := svs.Script
-	values, err := s.script.Call(path, input)
+	values, err := s.script.Call(svs.Script, getScriptInputArgs(input, svs.Params))
 	return []byte(strings.Join(values, ",")), err
 }
 
@@ -67,6 +80,10 @@ func NewScript(p *spServer) *spScriptEngine {
 	}
 	return en
 }
+func (s *spScriptEngine) checkParam(v spService, method string) bool {
+	return strings.EqualFold(strings.ToLower(v.Type), "rpc") && strings.EqualFold(strings.ToLower(v.Method), method)
+}
+
 func (a *spServer) rpcBind(L *l.LState) int {
 
 	var exports = map[string]l.LGFunction{

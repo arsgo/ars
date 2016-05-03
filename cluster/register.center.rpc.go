@@ -45,7 +45,7 @@ func (r *rcServerRPCHandler) Get(name string, input string) ([]byte, error) {
 
 func (d *rcServer) StartRPCServer() {
 	port := rpcservice.GetLocalRandomAddress()
-	d.snap.Address = fmt.Sprintf("%s%s", d.zkClient.LocalIP, port)
+	d.snap.Address = fmt.Sprintf("%s%s", d.zkClient.IP, port)
 	d.rpcServer = rpcservice.NewRPCServer(port, &rcServerRPCHandler{server: d, Log: d.Log})
 	d.rpcServer.Serve()
 	time.Sleep(time.Second * 2)
