@@ -4,23 +4,11 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/colinyl/lib4go/logger"
-	"github.com/colinyl/lib4go/lua"
-	"github.com/colinyl/lib4go/mq"
-	l "github.com/yuin/gopher-lua"
+	"github.com/colinyl/lib4go/script"
 )
 
 type scriptEngine struct {
-	pool *lua.LuaPool
-}
-type scriptCallbackHandler struct {
-	queue chan []string
-	Log   *logger.Logger
-}
-
-func (h *scriptCallbackHandler) GetResult() (result []string) {
-	result = <-h.queue
-	return
+	pool *script.LuaPool
 }
 
 func (e *scriptEngine) Call(name string, input string) ([]string, error) {
@@ -35,60 +23,40 @@ func (e *scriptEngine) Call(name string, input string) ([]string, error) {
 	return e.pool.Call(script, input)
 }
 
-func handerGet(ls *l.LState) (result []string) {
-	ud := ls.CheckUserData(1)
-	if _, ok := ud.Value.(*scriptCallbackHandler); !ok {
-		result = append(result, "rpc handler expected")
-		return
+func (a *appServer) bindGlobalTypes() (funs map[string]interface{}) {
+	handler := NewRpcHandler(a)
+	funs = map[string]interface{}{
+		"handler":       handler,
 	}
-	p := ud.Value.(*scriptCallbackHandler)
-	result = p.GetResult()
-	return result
+	return
 }
-func (a *appServer) bindRPCRequestService(L *l.LState) {
-	lua.Bind(L, &lua.ScriptBindClass{ClassName: "rpcRequest",
-		ConstructorName: "async",
-		ConstructorFunc: func(ls *l.LState) interface{} {
-			return a.asyncRequest(ls)
-		}, ObjectMethods: map[string]lua.ScriptBindFunc{
-			"get": handerGet,
-		}})
-}
-func (a *appServer) bindRPCSendService(L *l.LState) {
-	lua.Bind(L, &lua.ScriptBindClass{ClassName: "rpcSend",
-		ConstructorName: "async",
-		ConstructorFunc: func(L *l.LState) interface{} {
-			return a.asyncSend(L)
-		}, ObjectMethods: map[string]lua.ScriptBindFunc{
-			"get": handerGet,
-		}})
-}
-func (a *appServer) bindLogger() (fn []lua.Luafunc) {
-	fn = append(fn, lua.Luafunc{
-		Name: "print",
-		Function: func(L *l.LState) int {
-			msg := L.CheckString(1)
-			a.Log.Info(msg)
-			return 0
-		},
-	})
-	fn = append(fn, lua.Luafunc{
-		Name: "error",
-		Function: func(L *l.LState) int {
-			msg := L.CheckString(1)
-			a.Log.Error(msg)
-			return 0
-		},
-	})
 
+func (a *appServer) bindGlobalLibs() (funs map[string]interface{}) {
+	handler := NewRpcHandler(a)
+	funs = map[string]interface{}{
+		"print":       a.Log.Info,
+		"printf":      a.Log.Infof,
+		"error":       a.Log.Error,
+		"errorf":      a.Log.Errorf,
+		"rpc_request": handler.request,
+	}
+	return
+}
+
+func (a *appServer) bindModules() (funs map[string]map[string]interface{}) {
+	handler := NewRpcHandler(a)
+	funs = map[string]map[string]interface{}{
+		"rpc": map[string]interface{}{
+			"request": handler.request,
+		},
+	}
 	return
 }
 
 func NewScriptEngine(app *appServer) *scriptEngine {
-	pool := lua.NewLuaPool(app.bindLogger()...)
-	pool.AddUserData(app.bindRPCRequestService)
-	pool.AddUserData(app.bindRPCSendService)
-	mqBinder := mq.NewMQBinder(app.zkClient, pool)
-	pool.AddUserData(mqBinder.BindMQService)
+	pool := script.NewLuaPool()
+	pool.RegisterLibs(app.bindGlobalLibs())
+	pool.RegisterTypes(app.bindGlobalTypes())
+	//	pool.RegisterModules(app.bindModules())
 	return &scriptEngine{pool: pool}
 }

@@ -8,13 +8,12 @@ import (
 	"strings"
 
 	"github.com/colinyl/lib4go/logger"
-	"github.com/colinyl/lib4go/lua"
+	"github.com/colinyl/lib4go/script"
 	"github.com/colinyl/lib4go/utility"
-	l "github.com/yuin/gopher-lua"
 )
 
 type spScriptEngine struct {
-	script   *lua.LuaPool
+	script   *script.LuaPool
 	provider *spServer
 	Log      *logger.Logger
 }
@@ -73,7 +72,8 @@ func (s *spScriptEngine) Get(cmd string, input string) ([]byte, error) {
 
 func NewScript(p *spServer) *spScriptEngine {
 	var err error
-	en := &spScriptEngine{script: lua.NewLuaPool(), provider: p}
+	pool := script.NewLuaPool()
+	en := &spScriptEngine{script: pool, provider: p}
 	en.Log, err = logger.New("app script", true)
 	if err != nil {
 		log.Println(err)
@@ -82,16 +82,4 @@ func NewScript(p *spServer) *spScriptEngine {
 }
 func (s *spScriptEngine) checkParam(v spService, method string) bool {
 	return strings.EqualFold(strings.ToLower(v.Type), "rpc") && strings.EqualFold(strings.ToLower(v.Method), method)
-}
-
-func (a *spServer) rpcBind(L *l.LState) int {
-
-	var exports = map[string]l.LGFunction{
-	//"request": a.request,
-	//"send":    a.send,
-	}
-
-	mod := L.SetFuncs(L.NewTable(), exports)
-	L.Push(mod)
-	return 1
 }

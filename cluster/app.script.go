@@ -1,46 +1,56 @@
 package cluster
 
-import l "github.com/yuin/gopher-lua"
+import (
+	"errors"
+	"fmt"
+	"sync"
+)
 
-func (a *appServer) asyncRequest(L *l.LState) (handler *scriptCallbackHandler) {
-	name := L.ToString(1)
-	input := L.ToString(2)
-	handler = &scriptCallbackHandler{queue: make(chan []string, 1), Log: a.Log}
-	go func(name string, input string) {
-		handler.queue <- a.request(name, input)
-	}(name, input)
-	return
-}
-func (a *appServer) asyncSend(L *l.LState) (handler *scriptCallbackHandler) {
-	handler = &scriptCallbackHandler{queue: make(chan []string, 1), Log: a.Log}
-	go func() {
-		handler.queue <- a.send(L)
-	}()
-	return
+type rpcHandler struct {
+	mutex sync.Mutex
+	app   *appServer
+	queue chan []interface{}
+	Name  string
 }
 
-func (a *appServer) request(name string, input string) (result []string) {
-	rest, err := a.rcServerPool.Request(a.rcServicesMap.Next("-"), name, input)
-	result = append(result, rest)
-	if err != nil {
-		result = append(result, err.Error())
-	} else {
-		result = append(result, "")
+func (r *rpcHandler) New() {	
+	fmt.Println(r.app)
+	fmt.Println("colin")
+	r.Name = "colin"
+}
+func NewRpcHandler(app *appServer) rpcHandler {
+	return rpcHandler{queue: make(chan []interface{}, 1), app: app}
+}
+
+func (h *rpcHandler) get() (r interface{}, err interface{}) {
+	result := <-h.queue
+	if len(result) != 2 {
+		return "", errors.New("rpc method result value len is error")
 	}
+	r = result[0]
+	err = result[1]
 	return
 }
 
-func (a *appServer) send(L *l.LState) (result []string) {
-	name := L.ToString(1)
-	input := L.ToString(2)
-	buffer := []byte(L.ToString(3))
-	group := a.rcServicesMap.Next("-")
-	rest, err := a.rcServerPool.Send(group, name, input, buffer)
-	result = append(result, rest)
-	if err != nil {
-		result = append(result, err.Error())
-	} else {
-		result = append(result, "")
+func (h *rpcHandler) request(name string, input string) (result string, err error) {
+	result, err = h.app.rcServerPool.Request(h.app.rcServicesMap.Next("-"), name, input)
+	return
+}
+
+func (h *rpcHandler) asyncRequest(name string, input string) {
+	h.mutex.Lock()
+	if h.queue == nil {
+		h.queue = make(chan []interface{}, 1)
 	}
+	h.mutex.Unlock()
+	go func(h *rpcHandler, name string, input string) {
+		result, err := h.request(name, input)
+		if err != nil {
+			h.queue <- []interface{}{result, err.Error()}
+		} else {
+			h.queue <- []interface{}{result, nil}
+		}
+
+	}(h, name, input)
 	return
 }
