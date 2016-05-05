@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -15,7 +17,7 @@ type response struct {
 type client interface {
 	RunNow(int) *response
 	GetLen() int
-    Close()
+	Close()
 }
 
 type process struct {
@@ -34,11 +36,15 @@ func NewProcesss(totalRequest int, concurrent int,
 	p := &process{totalRequest: totalRequest, concurrent: concurrent,
 		address: address, timeout: timeout, sleep: sleep}
 	p.startChan = make(chan int, concurrent)
-	p.finishChan = make(chan *response, totalRequest)
+	p.finishChan = make(chan *response, concurrent)
 	return p.init(), p
 }
 
 func (p *process) init() bool {
+	if strings.EqualFold(p.address, "") {
+		flag.Usage()
+		return false
+	}
 	//初始化消息通道，并初始化工作进程数
 	if p.totalRequest > 0 {
 		fmt.Printf("启动 %d 个工作进程,处理 %d个请求\n", p.concurrent, p.totalRequest)
@@ -47,9 +53,9 @@ func (p *process) init() bool {
 	}
 
 	//创建http clients
-	p.clients = NewHTCPClients(p.concurrent, p.address)
+	p.clients =  NewHTCPClients(p.concurrent, p.address)
 
-	for i := 0; i < p.concurrent && i < p.totalRequest; i++ {
+	for i := 0; i < p.concurrent && ((p.totalRequest > 0 && i < p.totalRequest) || p.totalRequest == 0); i++ {
 		go p.run(p.startChan, p.finishChan)
 	}
 	return true
@@ -67,7 +73,7 @@ func (p *process) Start() ([]*response, int) {
 	flowStartTime := time.Now()
 	for index := 0; index < p.concurrent; index++ {
 		p.startChan <- index
-	}
+	}	
 	timePiker := time.NewTicker(time.Second)
 loop:
 	for {
@@ -79,9 +85,9 @@ loop:
 					break loop
 				}
 				if p.sleep > 0 {
-					time.Sleep(time.Duration(time.Millisecond * time.Duration(p.sleep)))
+					time.Sleep(time.Millisecond * time.Duration(p.sleep))
 				}
-				if len(finishResponse)+p.concurrent-1 < p.totalRequest {
+				if len(finishResponse)+p.concurrent-1 < p.totalRequest || p.totalRequest == 0 {
 					p.startChan <- len(finishResponse) % p.clients.GetLen()
 					p.run(p.startChan, p.finishChan)
 				}
@@ -89,9 +95,9 @@ loop:
 		case <-timePiker.C:
 			{
 				passTime++
-				if passTime%2 == 0 && len(finishResponse) > 0 {
+				//if passTime%2 == 0 && len(finishResponse) > 0 {
 					fmt.Printf("完成请求数:%d\r\n", len(finishResponse))
-				}
+				//}
 
 				if passTime >= p.timeout && p.timeout > 0 {
 					break loop
@@ -101,7 +107,6 @@ loop:
 	}
 	flowEndTime := time.Now()
 	totalMillisecond = subTime(flowStartTime, flowEndTime)
-    p.clients.Close()
 	return finishResponse, totalMillisecond
 }
 

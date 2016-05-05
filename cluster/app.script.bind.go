@@ -23,32 +23,13 @@ func (e *scriptEngine) Call(name string, input string) ([]string, error) {
 	return e.pool.Call(script, input)
 }
 
-func (a *appServer) bindGlobalTypes() (funs map[string]interface{}) {
-	handler := NewRpcHandler(a)
-	funs = map[string]interface{}{
-		"handler":       handler,
-	}
-	return
-}
-
 func (a *appServer) bindGlobalLibs() (funs map[string]interface{}) {
-	handler := NewRpcHandler(a)
 	funs = map[string]interface{}{
-		"print":       a.Log.Info,
-		"printf":      a.Log.Infof,
-		"error":       a.Log.Error,
-		"errorf":      a.Log.Errorf,
-		"rpc_request": handler.request,
-	}
-	return
-}
-
-func (a *appServer) bindModules() (funs map[string]map[string]interface{}) {
-	handler := NewRpcHandler(a)
-	funs = map[string]map[string]interface{}{
-		"rpc": map[string]interface{}{
-			"request": handler.request,
-		},
+		"print":  a.Log.Info,
+		"printf": a.Log.Infof,
+		"error":  a.Log.Error,
+		"errorf": a.Log.Errorf,
+		"NewRPC": a.NewRpcHandler,
 	}
 	return
 }
@@ -56,7 +37,5 @@ func (a *appServer) bindModules() (funs map[string]map[string]interface{}) {
 func NewScriptEngine(app *appServer) *scriptEngine {
 	pool := script.NewLuaPool()
 	pool.RegisterLibs(app.bindGlobalLibs())
-	pool.RegisterTypes(app.bindGlobalTypes())
-	//	pool.RegisterModules(app.bindModules())
 	return &scriptEngine{pool: pool}
 }

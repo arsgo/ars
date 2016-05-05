@@ -20,7 +20,7 @@ func (s *RPCServerPool) Register(svs map[string]string) {
 	for _, ip := range svs {
 		if sv, ok := s.servers[ip]; !ok || !sv.Status {
 			s.pool.UnRegister(ip)
-			go s.pool.Register(ip, newRPCClientFactory(ip), 1)
+			go s.pool.Register(ip, newRPCClientFactory(ip), 10)
 			s.servers[ip] = &rpcServerService{IP: ip, Status: true}
 		}
 	}

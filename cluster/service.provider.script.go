@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/colinyl/lib4go/logger"
@@ -70,16 +69,6 @@ func (s *spScriptEngine) Get(cmd string, input string) ([]byte, error) {
 	return []byte(strings.Join(values, ",")), err
 }
 
-func NewScript(p *spServer) *spScriptEngine {
-	var err error
-	pool := script.NewLuaPool()
-	en := &spScriptEngine{script: pool, provider: p}
-	en.Log, err = logger.New("app script", true)
-	if err != nil {
-		log.Println(err)
-	}
-	return en
-}
 func (s *spScriptEngine) checkParam(v spService, method string) bool {
 	return strings.EqualFold(strings.ToLower(v.Type), "rpc") && strings.EqualFold(strings.ToLower(v.Method), method)
 }

@@ -3,32 +3,6 @@
     "jobs": [
         "auto_build_bill"
     ],
-    "monitor": {
-        "cpu": {
-            "source": {
-                "type": "mq",
-                "name": "activeMQ001",
-                "param": "grs:app:cpu"
-            },
-            "trigger": "0 0/1 * * * ?"
-        },
-        "mem": {
-            "source": {
-                "type": "mq",
-                "name": "activeMQ001",
-                "param": "grs:app:mem"
-            },
-            "trigger": "0 0/1 * * * ?"
-        },
-        "disk": {
-            "source": {
-                "type": "mq",
-                "name": "activeMQ001",
-                "param": "grs:app:disk"
-            },
-            "trigger": "0 0/1 * * * ?"
-        }
-    },
     "server": {
         "type": "http",
         "routes": [
@@ -40,9 +14,9 @@
         ]
     },
     "tasks": [
-        {
-            "trigger": "0/30 * * * * ?",
-            "script": "./scripts/rpc.lua"
+         {
+            "trigger": "0/10 * * * * ?",
+            "script": "./scripts/save_logger.lua"
         }
     ]
 }

@@ -147,6 +147,9 @@ func (zkClient *zkClientObj) getSPConfig(path string) (svs []spService, err erro
 func (zkClient *zkClientObj) GetMQConfig(name string) (string, error) {
 	return zkClient.GetSourceConfig("mq", name)
 }
+func (zkClient *zkClientObj) GetElasticConfig(name string) (string, error) {
+	return zkClient.GetSourceConfig("elastic", name)
+}
 
 func NewZKClient() *zkClientObj {
 	var err error

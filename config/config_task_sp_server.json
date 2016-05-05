@@ -9,21 +9,12 @@
         "params": "mq=kafka/kafka01"
     },
     {
-        "name": "save_pay_order",
+        "name": "save_logger",
         "ip": "192.168.0.245,192.168.101.182",
         "mode": "share",
         "type": "rpc",
         "method": "request",
-        "script": "./scripts/md5.lua",
-        "params": "mq=kafka/kafka01&queue=logger"
-    },
-    {
-        "name": "save_pay_order",
-        "ip": "192.168.0.245,192.168.101.182",
-        "mode": "share",
-        "type": "mq",
-        "method": "consumer",
-        "script": "./scripts/md5.lua",
-        "params": "mq=kafka/kafka01&queue=logger"
+        "script": "./scripts/elastic.lua",
+        "params": "elastic=logger&mq=kafka01&queue=delivery"
     }
 ]
