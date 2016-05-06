@@ -6,10 +6,15 @@ import (
 	"github.com/colinyl/lib4go/scheduler"
 )
 
-func (a *appServer) BindTask(config *AppConfig, err error) error {
+func (a *appServer) BindTask(config *AppConfig, err error) (er error) {
 	a.ResetAPPSnap()
 	scheduler.Stop()
 	for _, v := range config.Tasks {
+		er = a.scriptEngine.pool.PreLoad(v.Script, 1)
+		if er != nil {
+			a.Log.Error("load task`s script error in:", v.Script, ",", er)
+			continue
+		}
 		scheduler.AddTask(v.Trigger, scheduler.NewTask(v.Script, func(name interface{}) {
 			a.Log.Infof("start:%s", name)
 			rtvalues, err := a.scriptEngine.pool.Call(name.(string))

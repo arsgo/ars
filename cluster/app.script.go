@@ -11,7 +11,7 @@ import (
 type rpcHandler struct {
 	app    *appServer
 	queues map[string]chan []interface{}
-	mutex  sync.Mutex
+	mutex  sync.RWMutex
 }
 
 func (a *appServer) NewRpcHandler() (h *rpcHandler) {
@@ -19,19 +19,20 @@ func (a *appServer) NewRpcHandler() (h *rpcHandler) {
 }
 
 func (h *rpcHandler) GetAsyncResult(session string) (r interface{}, err interface{}) {
-	h.mutex.Lock()
-	if _, ok := h.queues[session]; !ok {
+	h.mutex.RLock()
+	if queue, ok := h.queues[session]; ok {
+		h.mutex.RUnlock()
+		defer delete(h.queues, session)
+		result := <-queue
+		if len(result) != 2 {
+			return "", errors.New("rpc method result value len is error")
+		}
+		r = result[0]
+		err = result[1]
+	} else {
+		h.mutex.RUnlock()
 		err = errors.New(fmt.Sprint("not find session:", session))
-		return
 	}
-	queue := h.queues[session]
-	h.mutex.Unlock()
-	result := <-queue
-	if len(result) != 2 {
-		return "", errors.New("rpc method result value len is error")
-	}
-	r = result[0]
-	err = result[1]
 	return
 }
 

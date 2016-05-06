@@ -20,59 +20,67 @@ func (s *RPCServerPool) Register(svs map[string]string) {
 	for _, ip := range svs {
 		if sv, ok := s.servers[ip]; !ok || !sv.Status {
 			s.pool.UnRegister(ip)
-			go s.pool.Register(ip, newRPCClientFactory(ip), 10)
+			go func() {
+				err := s.pool.Register(ip, newRPCClientFactory(ip, s.Log), 10)
+				if err != nil {
+					s.Log.Error(err)
+				}
+			}()
 			s.servers[ip] = &rpcServerService{IP: ip, Status: true}
 		}
 	}
 }
 
 func (p *RPCServerPool) Request(group string, svName string, input string) (result string, err error) {
+	defer func() {
+		if ex := recover(); ex != nil {
+		}
+	}()
 	if strings.EqualFold(group, "") {
-		return "", errors.New("not find rpc server")
+		err = errors.New("not find rpc server and name cant be nil")
+		return
 	}
-	o, ex := p.pool.Get(group)
-	if ex != nil {
-		return "", errors.New("not find rpc server")
-	}
-	if !o.Check() {
-		return "", errors.New("not find available rpc server")
+	o, err := p.pool.Get(group)
+	if err != nil {
+		o.Fatal()
+		err = errors.New("not find rpc server")
+		return
 	}
 	defer p.pool.Recycle(group, o)
+	if !o.Check() {
+		err = errors.New("not find available rpc server")
+		return
+	}
 	obj := o.(*RPCClient)
-	defer func(o *RPCClient) {
-		if ex := recover(); ex != nil {
-			err = ex.(error)
-			if o != nil {
-				o.Fatal()
-			}
-		}
-	}(obj)
-	result,err=obj.Request(svName, input)
-    if err!=nil{		
+	result, err = obj.Request(svName, input)
+	if err != nil {
 		p.Log.Error(err)
-        obj.Fatal()
-    }
-    return
+		obj.Fatal()
+	}
+	return
 }
 func (p *RPCServerPool) Send(group string, svName string, input string, data []byte) (result string, err error) {
 	defer func() {
 		if ex := recover(); ex != nil {
-			err = ex.(error)
+			//err = ex.(error)
 		}
 	}()
 	if strings.EqualFold(group, "") {
-		return "", errors.New("not find rpc server")
+		err = errors.New("not find rpc server and name cant be nil")
+		return
 	}
 
-	o, ex := p.pool.Get(group)
-	if ex != nil {
+	o, err := p.pool.Get(group)
+	if err != nil {
 		o.Fatal()
-		return "", errors.New("not find rpc server")
-	}
-	if !o.Check() {
-		return "", errors.New("not find available rpc server")
+		err = errors.New("not find rpc server")
+		return
 	}
 	defer p.pool.Recycle(group, o)
+	if !o.Check() {
+		err = errors.New("not find available rpc server")
+		return
+	}
 	obj := o.(*RPCClient)
 	return obj.Send(svName, input, data)
 }
@@ -80,19 +88,25 @@ func (p *RPCServerPool) Send(group string, svName string, input string, data []b
 func (p *RPCServerPool) Get(group string, svName string, input string) (result []byte, err error) {
 	defer func() {
 		if ex := recover(); ex != nil {
-			err = ex.(error)
+			//err = ex.(error)
 		}
 	}()
-
-	o, ex := p.pool.Get(group)
-	if ex != nil {
-		o.Fatal()
-		return make([]byte, 0), errors.New("not find rpc server")
+	if strings.EqualFold(group, "") {
+		err = errors.New("not find rpc server and name cant be nil")
+		return
 	}
-	if !o.Check() {
-		return make([]byte, 0), errors.New("not find available rpc server")
+
+	o, err := p.pool.Get(group)
+	if err != nil {
+		o.Fatal()
+		err = errors.New("not find rpc server")
+		return
 	}
 	defer p.pool.Recycle(group, o)
+	if !o.Check() {
+		err = errors.New("not find available rpc server")
+		return
+	}
 	obj := o.(*RPCClient)
 	return obj.Get(svName, input)
 }

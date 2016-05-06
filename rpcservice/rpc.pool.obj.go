@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/pool"
@@ -14,7 +15,8 @@ type rpcServerService struct {
 	IP     string
 }
 type rpcClientFactory struct {
-	ip string
+	ip  string
+	Log *logger.Logger
 }
 type RPCServerPool struct {
 	pool    *pool.ObjectPool
@@ -23,19 +25,31 @@ type RPCServerPool struct {
 	Log     *logger.Logger
 }
 
-func newRPCClientFactory(ip string) *rpcClientFactory {
-	log.Println(ip)
-	return &rpcClientFactory{ip: ip}
+func newRPCClientFactory(ip string, log *logger.Logger) *rpcClientFactory {
+	return &rpcClientFactory{ip: ip, Log: log}
 }
+func (j *rpcClientFactory) create() (p pool.Object, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			return
+		}
+	}()
 
-func (j *rpcClientFactory) Create() (pool.Object, error) {
 	o := NewRPCClient(j.ip)
-	if err := o.Open(); err != nil {
-	
-		fmt.Println(err.Error())
-		return nil, err
+	err = o.Open()
+	p = o
+	return
+}
+func (j *rpcClientFactory) Create() (p pool.Object, err error) {
+	for {
+		p, err = j.create()
+		if err == nil {
+			return
+		}
+		fmt.Println(err)
+		time.Sleep(time.Second * 5)
 	}
-	return o, nil
+	return
 }
 func NewRPCServerPool() *RPCServerPool {
 	var err error

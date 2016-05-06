@@ -1,6 +1,7 @@
 package rpcservice
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -27,8 +28,7 @@ func NewRPCClient(address string) *RPCClient {
 func (client *RPCClient) Open() (err error) {
 	client.transport, err = thrift.NewTSocket(client.Address)
 	if err != nil {
-		fmt.Printf("new client error:%s,%s\r\n", client.Address, err.Error())
-		return err
+		return errors.New(fmt.Sprint("new client error:", client.Address, ",", err.Error()))
 	}
 
 	transportFactory := thrift.NewTFramedTransportFactory(thrift.NewTTransportFactory())
@@ -37,8 +37,8 @@ func (client *RPCClient) Open() (err error) {
 	useTransport := transportFactory.GetTransport(client.transport)
 	client.client = rpc.NewServiceProviderClientFactory(useTransport, pf)
 	if err := client.client.Transport.Open(); err != nil {
-		fmt.Printf("open client error :%s,%s",client.Address,err.Error())
-		return err
+		return errors.New(fmt.Sprint("open client error :", client.Address, ",", err.Error()))
+
 	}
 	return nil
 }
