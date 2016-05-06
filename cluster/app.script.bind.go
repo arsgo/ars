@@ -25,11 +25,15 @@ func (e *scriptEngine) Call(name string, input string) ([]string, error) {
 
 func (a *appServer) bindGlobalLibs() (funs map[string]interface{}) {
 	funs = map[string]interface{}{
-		"print":  a.Log.Info,
-		"printf": a.Log.Infof,
-		"error":  a.Log.Error,
-		"errorf": a.Log.Errorf,
-		"NewRPC": a.NewRpcHandler,
+		"print":         a.Log.Info,
+		"printf":        a.Log.Infof,
+		"error":         a.Log.Error,
+		"errorf":        a.Log.Errorf,
+		"NewRPC":        a.NewRpcHandler,
+		"NewMQProducer": a.zkClient.NewMQProducer,
+		"NewElastic":    a.zkClient.NewElastic,
+		"NewInfluxDB":   a.zkClient.NewInfluxDB,
+		"NewMemcached":  a.zkClient.NewMemcached,
 	}
 	return
 }

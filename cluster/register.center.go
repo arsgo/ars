@@ -59,7 +59,7 @@ type rcServer struct {
 	jobConfigPath      string
 	spServerPool       *rpcservice.RPCServerPool
 	spServicesMap      *servicesMap
-	zkClient           *zkClientObj
+	zkClient           *clusterClient
 	snap               rcSnap
 }
 
@@ -85,7 +85,7 @@ func NewRCServer() *rcServer {
 	return rc
 }
 func (rc *rcServer) init() error {
-	rc.zkClient = NewZKClient()
+	rc.zkClient = NewClusterClient()
 	rc.dataMap = rc.zkClient.dataMap.Copy()
 	rc.rcServerRoot = rc.dataMap.Translate(rcServerRoot)
 	rc.servicePublishPath = rc.dataMap.Translate(servicePublishPath)

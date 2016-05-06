@@ -142,7 +142,7 @@ type spServer struct {
 	mode              string
 	serviceConfig     string
 	rpcServer         *rpcservice.RPCServer
-	zkClient          *zkClientObj
+	zkClient          *clusterClient
 	snap              spSnap
 	mqConsumerManager *mqConsumerManager
 	scriptEngine      *spScriptEngine
@@ -207,7 +207,7 @@ func NewSPServer() *spServer {
 func (sp *spServer) init() (err error) {
 
 	sp.dataMap = utility.NewDataMap()
-	sp.zkClient = NewZKClient()
+	sp.zkClient = NewClusterClient()
 	sp.dataMap = sp.zkClient.dataMap.Copy()
 	sp.services = &spConfig{}
 	sp.services.services = make(map[string]spService, 0)

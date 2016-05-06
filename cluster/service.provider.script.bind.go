@@ -13,10 +13,10 @@ func (a *spServer) bindGlobalLibs() (funs map[string]interface{}) {
 		"printf":        a.Log.Infof,
 		"error":         a.Log.Error,
 		"errorf":        a.Log.Errorf,
-		"NewMQProducer": a.NewMQProducer,
-		"NewElastic":    a.NewElastic,
-		"NewInfluxDB":   a.NewInfluxDB,
-		"NewMemcached":  a.NewMemcached,
+		"NewMQProducer": a.zkClient.NewMQProducer,
+		"NewElastic":    a.zkClient.NewElastic,
+		"NewInfluxDB":   a.zkClient.NewInfluxDB,
+		"NewMemcached":  a.zkClient.NewMemcached,
 	}
 	return
 }

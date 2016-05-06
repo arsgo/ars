@@ -80,7 +80,7 @@ type appServer struct {
 	dataMap utility.DataMap
 	//Last              int64
 	Log               *logger.Logger
-	zkClient          *zkClientObj
+	zkClient          *clusterClient
 	appServerConfig   string
 	rcServerRoot      string
 	rcServerPool      *rpcservice.RPCServerPool
@@ -105,7 +105,7 @@ func NewAPPServer() *appServer {
 	return app
 }
 func (app *appServer) init() (err error) {
-	app.zkClient = NewZKClient()
+	app.zkClient = NewClusterClient()
 	app.dataMap = app.zkClient.dataMap.Copy()
 	app.appServerConfig = app.dataMap.Translate(appServerConfig)
 	app.rcServerRoot = app.dataMap.Translate(rcServerRoot)
