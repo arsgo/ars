@@ -15,6 +15,8 @@ func (a *spServer) bindGlobalLibs() (funs map[string]interface{}) {
 		"errorf":        a.Log.Errorf,
 		"NewMQProducer": a.NewMQProducer,
 		"NewElastic":    a.NewElastic,
+		"NewInfluxDB":   a.NewInfluxDB,
+		"NewMemcached":  a.NewMemcached,
 	}
 	return
 }

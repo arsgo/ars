@@ -20,6 +20,6 @@ func (d *spServer) NewElastic(name string) (es *elastic.ElasticSearch, err error
 	if err != nil {
 		return
 	}
-	es = elastic.NewElastic(elasticonfig.Host)
+	es = elastic.New(elasticonfig.Host)
 	return
 }
