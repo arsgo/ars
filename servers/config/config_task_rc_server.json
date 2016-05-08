@@ -1,0 +1,20 @@
+{
+    "cross-domain-access": [
+        {
+            "service": "save_log",
+            "type": "cluster",
+            "domain": "grs.ls",
+            "servers": [
+                "192.168.101.161:2181"
+            ]
+        },
+        {
+            "service": "sms_send",
+            "type": "proxy",
+            "domain": "grs.ls",
+            "servers": [
+                "192.168.101.161:2181"
+            ]
+        }
+    ]
+}

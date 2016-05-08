@@ -1,0 +1,7 @@
+{
+    "type": "kafka",
+    "address": "192.168.101.181:9092",
+    "topic": "delivery",
+    "partition": 0,
+    "count": 1
+}

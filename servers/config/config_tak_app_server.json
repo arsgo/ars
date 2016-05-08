@@ -1,0 +1,22 @@
+{
+    "status": "run",
+    "jobs": [
+        "auto_build_bill"
+    ],
+    "server": {
+        "type": "http",
+        "routes": [
+            {
+                "path": "/system/base/inf",
+                "method": "get",
+                "script": "/scripts/system.base.info"
+            }
+        ]
+    },
+    "tasks": [
+        {
+            "trigger": "0/10 * * * * ?",
+            "script": "./scripts/save_logger.lua"
+        }
+    ]
+}

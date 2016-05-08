@@ -1,0 +1,7 @@
+{
+    "address":"http://192.168.101.183:8086",
+    "db":"ars_monitor",
+    "user":"",
+    "password":"",
+    "row":"ars_mem,ip=@ip total=@total,available=@available,used=@used,usedPercent=@usedPercent @timestamp"
+}

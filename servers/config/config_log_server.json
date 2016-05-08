@@ -1,0 +1,15 @@
+[
+    {
+        "name": "analysis_log",
+        "ip": "192.168.0.245,192.168.101.182",
+        "type": "mq_consumer",
+        "params": "mq=mq/kafka001"
+    },
+    {
+        "name": "recv_log",
+        "ip": "192.168.0.245,192.168.101.182",
+        "type": "rpc",
+        "script": "recv_log.luac",
+        "params": "es=es/logger,db=db/influxdb002,mq=mq/kafka001"
+    }
+]
