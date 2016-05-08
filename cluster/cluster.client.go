@@ -33,6 +33,7 @@ const (
 type ClusterClient struct {
 	appServerTaskPath          string
 	rcServerRoot               string
+	rcServerConfig             string
 	jobConfigPath              string
 	spConfigPath               string
 	rpcPublishPath             string
@@ -56,6 +57,7 @@ func NewClusterClient(domain string, ip string, handler IClusterHandler) (client
 	client.dataMap.Set("ip", client.IP)
 	client.appServerTaskPath = client.dataMap.Translate(p_appTaskConfig)
 	client.rcServerRoot = client.dataMap.Translate(p_rcServerRoot)
+	client.rcServerConfig = client.dataMap.Translate(p_rcServerTaskConfig)
 	client.spConfigPath = client.dataMap.Translate(p_spTaskConfig)
 	client.rpcPublishPath = client.dataMap.Translate(p_servicePublishPath)
 	client.rpcProviderRootPath = client.dataMap.Translate(p_serviceProviderRoot)
@@ -125,4 +127,9 @@ func (client *ClusterClient) WatchClusterChildrenChange(path string, callback fu
 			}
 		}
 	}()
+}
+
+//Close 关闭当前集群客户端
+func (client *ClusterClient) Close(){
+	client.handler.Close()
 }

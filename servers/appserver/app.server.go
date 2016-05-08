@@ -75,7 +75,7 @@ func (app *AppServer) Stop() error {
 	defer func() {
 		recover()
 	}()
-
+	app.clusterClient.Close()
 	app.jobConsumerRPCServer.Stop()
 	if app.httpServer != nil {
 		app.httpServer.Stop()

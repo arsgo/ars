@@ -32,7 +32,7 @@ func (client *ClusterClient) GetRCServerValue(path string) (value *RCServerItem,
 	return
 }
 
-//GetAllRCServers 获取所有RC服务器信息
+//GetAllRCServerValues 获取所有RC服务器信息
 func (client *ClusterClient) GetAllRCServerValues() (servers []*RCServerItem, err error) {
 	rcs, _ := client.handler.GetChildren(client.rcServerRoot)
 	servers = []*RCServerItem{}
@@ -46,6 +46,35 @@ func (client *ClusterClient) GetAllRCServerValues() (servers []*RCServerItem, er
 	}
 	return
 }
+
+//CreateRCServer 创建RCServer
 func (client *ClusterClient) CreateRCServer(value string) (string, error) {
 	return client.handler.CreateSeqNode(client.dataMap.Translate(p_rcServerClusterClientBase), value)
+}
+
+//GetRCServerTasks 获取RC Server任务
+func (client *ClusterClient) GetRCServerTasks() (config RCServerTask, err error) {
+	value, err := client.handler.GetValue(client.rcServerConfig)
+	if err != nil {
+		return
+	}
+	config = RCServerTask{}
+	err = json.Unmarshal([]byte(value), &config)
+	return
+}
+
+//WatchRCTaskChange 监控RC Config变化
+func (client *ClusterClient) WatchRCTaskChange(callback func(RCServerTask, error)) {
+	client.WaitClusterPathExists(client.rcServerConfig, client.timeout, func(exists bool) {
+		if !exists {
+			client.Log.Infof("rc server config not exists:%s", client.rcServerRoot)
+		} else {
+			callback(client.GetRCServerTasks())
+		}
+	})
+	client.Log.Info("::watch for rc server config changes")
+	client.WatchClusterValueChange(client.rcServerRoot, func() {
+		client.Log.Info("rc server config has changed")
+		callback(client.GetRCServerTasks())
+	})
 }

@@ -78,6 +78,7 @@ func (sp *SPServer) Start() (err error) {
 //Stop 停止SP Server服务器
 func (sp *SPServer) Stop() error {
 	defer recover()
+	sp.clusterClient.Close()
 	sp.rpcServer.Stop()
 	sp.Log.Info("::sp server closed")
 	return nil

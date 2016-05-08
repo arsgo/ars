@@ -29,14 +29,21 @@ func (client *ClusterClient) GetRPCService() (sp ServiceProviderList, err error)
 	return
 }
 
-
 //PublishRPCServices 发布所有服务
-func (client *ClusterClient) PublishRPCServices() (err error) {
-
+func (client *ClusterClient) PublishRPCServices(crossServices map[string]map[string][]string) (err error) {
 	providers, err := client.GetServiceProviderPaths()
 	if err != nil {
 		return
 	}
+	//处理跨域服务
+	if crossServices != nil {
+		for domain, services := range crossServices {
+			for service, ips := range services {
+				providers[service+"@"+domain] = ips
+			}
+		}
+	}
+
 	buffer, err := json.Marshal(providers)
 	if err != nil {
 		return

@@ -13,6 +13,7 @@ type IClusterHandler interface {
 	WatchValue(path string, data chan string) error
 	WatchChildren(path string, data chan []string) error
 	Delete(path string) error
+	Close()
 }
 type IClusterClient interface {
 	//base.............
@@ -23,6 +24,7 @@ type IClusterClient interface {
 	GetMQConfig(name string) (string, error)
 	GetElasticConfig(name string) (string, error)
 	GetDBConfig(name string) (string, error)
+	Close()
 
 	//app server..........
 	WatchAppTaskChange(callback func(config *AppServerStartupConfig, err error) error)
@@ -33,6 +35,8 @@ type IClusterClient interface {
 	GetRCServerValue(path string) (value *RCServerItem, err error)
 	GetAllRCServerValues() (servers []*RCServerItem, err error)
 	CreateRCServer(value string) (string, error)
+	GetRCServerTasks() (config RCServerTask, err error)
+	WatchRCTaskChange(callback func(RCServerTask, error))
 
 	//job server/consumer........
 	WatchJobConfigChange(callback func(items *JobItems, err error))
@@ -51,7 +55,7 @@ type IClusterClient interface {
 	WatchSPTaskChange(callback func())
 	GetAllServiceProviderNamePath() (lst map[string][]string, err error)
 	GeServiceTasks() ([]TaskItem, error)
-	PublishRPCServices() (err error)
+	PublishRPCServices(map[string]map[string][]string) (err error)
 	GetServiceProviderPaths() (lst ServiceProviderList, err error)
 	ResetSnap(addr string, snap string) (err error)
 	CreateServiceProvider(name string, port string, value string) (string, error)

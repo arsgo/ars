@@ -1,6 +1,8 @@
 package main
 
 import (
+	"sync"
+
 	"github.com/colinyl/ars/cluster"
 	"github.com/colinyl/ars/rpcclient"
 	"github.com/colinyl/ars/rpcproxy"
@@ -18,6 +20,9 @@ const (
 type RCServer struct {
 	clusterClient     cluster.IClusterClient
 	IsMaster          bool
+	crossDomain       map[string]cluster.IClusterClient
+	crossService      map[string]map[string][]string
+	crossLock         sync.RWMutex
 	Log               *logger.Logger
 	rcRPCServer       *rpcserver.RPCServer       //RC Server服务供RPC调用
 	spRPCClient       *rpcclient.RPCClient       //SP Server调用客户端
@@ -66,6 +71,7 @@ func (rc *RCServer) Stop() error {
 	defer func() {
 		recover()
 	}()
+	rc.clusterClient.Close()
 	rc.rcRPCServer.Stop()
 	rc.Log.Info("::rc server closed")
 	return nil

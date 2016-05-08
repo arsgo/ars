@@ -61,3 +61,15 @@ type TaskItem struct {
 }
 
 //---------------------------------------------------------
+
+//----------------rc server-------------------------------
+type CrossDoaminAccessItem struct {
+	Services []string `json:"service"`
+	Type     string   `json:"type"`
+	Servers  []string `json:"servers"`
+}
+type RCServerTask struct {
+	CrossDomainAccess map[string]CrossDoaminAccessItem `json:"cross-domain-access"`
+}
+
+//---------------------------------------------------------

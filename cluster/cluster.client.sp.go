@@ -30,19 +30,19 @@ func (client *ClusterClient) WatchServiceProviderChange(changed func()) (err err
 		if !exists {
 			client.Log.Info("service provider node not exists")
 		} else {
-			err = client.PublishRPCServices()
+			err = client.PublishRPCServices(nil)
 			changed()
 		}
 	})
 	client.WatchClusterChildrenChange(client.rpcProviderRootPath, func() {
-		err = client.PublishRPCServices()
+		err = client.PublishRPCServices(nil)
 		changed()
 	})
 	lst, err := client.GetAllServiceProviderNamePath()
 	for _, v := range lst {
 		for _, p := range v {
 			client.WatchClusterChildrenChange(p, func() {
-				err = client.PublishRPCServices()
+				err = client.PublishRPCServices(nil)
 				changed()
 			})
 		}
