@@ -1,8 +1,0 @@
-{
-    "type": "kafka",
-    "producer": "192.168.101.181:9092",
-    "consumer": "192.168.101.181:2181",
-    "topic": "delivery",
-    "partition": 0,
-    "concurrent": 1
-}
