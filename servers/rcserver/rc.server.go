@@ -50,23 +50,13 @@ func (rc *RCServer) Start() (err error) {
 	if err = rc.init(); err != nil {
 		return
 	}
+	//启动RPC服务,供APP,SP调用
 	rc.rcRPCServer.Start()
-	rc.snap.Address = rc.rcRPCServer.Address
-	err = rc.Bind()
+	//绑定RC服务
+	err = rc.BindRCServer()
 	if err != nil {
 		return
 	}
-
-	rc.clusterClient.WatchJobConfigChange(func(config *cluster.JobItems, err error) {
-		rc.BindJobScheduler(config, err)
-	})
-	rc.clusterClient.WatchServiceProviderChange(func() {
-		service, err := rc.clusterClient.GetRPCService()
-		if err != nil {
-			rc.spRPCClient.ResetRPCServer(service)
-		}
-
-	})
 	go rc.StartRefreshSnap()
 	return nil
 }
