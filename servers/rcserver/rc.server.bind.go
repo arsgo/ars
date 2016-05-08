@@ -39,9 +39,7 @@ func (rc *RCServer) BindRCServer() (err error) {
 				rc.spRPCClient.ResetRPCServer(services)
 			})
 		}
-
 	})
-
 	return
 }
 
@@ -76,6 +74,7 @@ func (rc *RCServer) BindCrossAccess(task cluster.RCServerTask) (err error) {
 		if _, ok := rc.crossDomain[domain]; !ok && strings.EqualFold(strings.ToLower(v.Type), "cluster") {
 			rc.crossDomain[domain], err = cluster.GetClusterClient(domain, config.Get().IP, v.Servers...)
 			if err != nil {
+				rc.Log.Error(err)
 				continue
 			}
 			rc.crossService[domain] = make(map[string][]string)
@@ -99,14 +98,15 @@ func (rc *RCServer) BindCrossAccess(task cluster.RCServerTask) (err error) {
 			for _, service := range v.Services {
 				rc.crossService[domain][service] = v.Servers
 			}
-
 		}
 	}
 	//重新发布服务
-	rc.clusterClient.PublishRPCServices(rc.crossService)
+	err = rc.clusterClient.PublishRPCServices(rc.crossService)
+	if err != nil {
+		return
+	}
 	rc.UpdateLocalService()
 	return
-
 }
 
 //IsMasterServer 检查当前RC Server是否是Master
