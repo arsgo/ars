@@ -3,13 +3,13 @@ package appserver
 import (
 	"sync"
 
-	"github.com/colinyl/ars.bak/config"
 	"github.com/colinyl/ars/cluster"
 	"github.com/colinyl/ars/httpserver"
 	"github.com/colinyl/ars/rpcclient"
 	"github.com/colinyl/ars/rpcproxy"
 	"github.com/colinyl/ars/rpcserver"
 	"github.com/colinyl/ars/scriptpool"
+	"github.com/colinyl/ars/servers/config"
 	"github.com/colinyl/lib4go/logger"
 )
 

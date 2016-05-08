@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/colinyl/ars.bak/config"
+	"github.com/colinyl/ars/servers/config"
 	"github.com/colinyl/lib4go/sysinfo"
 	"github.com/colinyl/lib4go/utility"
 )
