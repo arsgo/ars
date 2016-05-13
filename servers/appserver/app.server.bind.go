@@ -26,7 +26,7 @@ func (a *AppServer) BindTask(config *cluster.AppServerStartupConfig, err error) 
 	a.ResetAPPSnap()
 	scheduler.Stop()
 	for _, v := range config.Tasks {
-		er = a.scriptPool.Pool.PreLoad(v.Script, 1)
+		er = a.scriptPool.Pool.PreLoad(v.Script, 1, 10)
 		if er != nil {
 			a.Log.Error("load task`s script error in:", v.Script, ",", er)
 			continue

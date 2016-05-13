@@ -19,7 +19,7 @@ func (s *RPCServerPool) Register(svs map[string]string) {
 		if _, ok := s.servers[ip]; !ok {
 			s.servers[ip] = &rpcServerService{IP: ip, Status: true}
 			go func() {
-				err := s.pool.Register(ip, newRPCClientFactory(ip, s.Log), 3)
+				err := s.pool.Register(ip, newRPCClientFactory(ip, s.Log), 3, 10)
 				if err != nil {
 					s.Log.Error(err)
 				}
