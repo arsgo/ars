@@ -40,8 +40,6 @@ type ClusterClient struct {
 	rpcProviderRootPath        string
 	appServerPath              string
 	spServerTaskPath           string
-	jobConsumerNamedRootFormat string //format
-	jobConsumerRealPathFormat  string //format
 	handler                    IClusterHandler
 	Log                        *logger.Logger
 	timeout                    time.Duration
@@ -61,8 +59,7 @@ func NewClusterClient(domain string, ip string, handler IClusterHandler) (client
 	client.spConfigPath = client.dataMap.Translate(p_spTaskConfig)
 	client.rpcPublishPath = client.dataMap.Translate(p_servicePublishPath)
 	client.rpcProviderRootPath = client.dataMap.Translate(p_serviceProviderRoot)
-	client.jobConsumerNamedRootFormat = client.dataMap.Translate(p_jobConsumerNamedRootForamt)
-	client.jobConsumerRealPathFormat = client.dataMap.Translate(p_jobConsumerClusterClientPathFormat)
+	client.jobConfigPath = client.dataMap.Translate(p_jobTaskConfig)
 	client.appServerPath = client.dataMap.Translate(p_appServerPath)
 	client.spServerTaskPath = client.dataMap.Translate(p_spTaskConfig)
 	client.Log, err = logger.New("cluster.client", true)
@@ -130,6 +127,6 @@ func (client *ClusterClient) WatchClusterChildrenChange(path string, callback fu
 }
 
 //Close 关闭当前集群客户端
-func (client *ClusterClient) Close(){
+func (client *ClusterClient) Close() {
 	client.handler.Close()
 }

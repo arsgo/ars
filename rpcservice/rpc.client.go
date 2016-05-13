@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"time"
 
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/colinyl/ars/rpcservice/rpc"
@@ -15,6 +16,7 @@ type RPCClient struct {
 	transport thrift.TTransport
 	client    *rpc.ServiceProviderClient
 	isFatal   bool
+	timeout   time.Duration
 }
 
 func NewRPCClient(address string) *RPCClient {
@@ -22,11 +24,18 @@ func NewRPCClient(address string) *RPCClient {
 	if !strings.Contains(address, ":") {
 		addr = net.JoinHostPort(address, "1016")
 	}
-	return &RPCClient{Address: addr}
+	return &RPCClient{Address: addr, timeout: time.Second * 3}
+}
+func NewRPCClientTimeout(address string, timeout time.Duration) *RPCClient {
+	addr := address
+	if !strings.Contains(address, ":") {
+		addr = net.JoinHostPort(address, "1016")
+	}
+	return &RPCClient{Address: addr, timeout: timeout}
 }
 
 func (client *RPCClient) Open() (err error) {
-	client.transport, err = thrift.NewTSocket(client.Address)
+	client.transport, err = thrift.NewTSocketTimeout(client.Address, client.timeout)
 	if err != nil {
 		return errors.New(fmt.Sprint("new client error:", client.Address, ",", err.Error()))
 	}
@@ -58,14 +67,8 @@ func (j *RPCClient) Close() {
 		recover()
 	}()
 	if j.transport != nil {
+		fmt.Println("close connection")
 		j.transport.Close()
 	}
 
-}
-
-func (j *RPCClient) Check() bool {
-	return !j.isFatal && j.transport != nil
-}
-func (j *RPCClient) Fatal() {
-	j.isFatal = true
 }

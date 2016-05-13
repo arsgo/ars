@@ -8,13 +8,13 @@ func (client *ClusterClient) WatchRPCServiceChange(callback func(services map[st
 		if !exists {
 			client.Log.Info("service publish config not exists")
 		} else {
-			callback(client.GetRPCService())
+			go callback(client.GetRPCService())
 		}
 	})
 	client.Log.Info("::watch for service config changes ")
 	client.WatchClusterValueChange(client.rpcPublishPath, func() {
 		client.Log.Info("serivce has changed")
-		callback(client.GetRPCService())
+		go callback(client.GetRPCService())
 	})
 }
 
@@ -29,8 +29,23 @@ func (client *ClusterClient) GetRPCService() (sp ServiceProviderList, err error)
 	return
 }
 
+//FilterRPCService 过滤RPC服务
+func (client *ClusterClient) FilterRPCService(services map[string][]string) (items []TaskItem, err error) {
+	all, err := client.GetServiceTasks()
+	if err != nil {
+		return
+	}
+	for _, v := range all {
+		if _, ok := services[v.Name]; ok {
+			items = append(items, v)
+		}
+	}
+	return
+}
+
 //PublishRPCServices 发布所有服务
 func (client *ClusterClient) PublishRPCServices(crossServices map[string]map[string][]string) (err error) {
+	crossServices = make(map[string]map[string][]string)
 	providers, err := client.GetServiceProviderPaths()
 	if err != nil {
 		return

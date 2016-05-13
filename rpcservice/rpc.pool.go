@@ -8,25 +8,22 @@ import (
 
 //Register 注册服务列表
 func (s *RPCServerPool) Register(svs map[string]string) {
-	s.lk.Lock()
-	defer s.lk.Unlock()
 	//标记不能使用的服务
 	for _, server := range s.servers {
 		if _, ok := svs[server.IP]; !ok {
-			server.Status = false
+			go s.pool.UnRegister(server.IP)
 		}
 	}
 	//添加可以使用使用的服务
 	for _, ip := range svs {
-		if sv, ok := s.servers[ip]; !ok || !sv.Status {
-			s.pool.UnRegister(ip)
+		if _, ok := s.servers[ip]; !ok {
+			s.servers[ip] = &rpcServerService{IP: ip, Status: true}
 			go func() {
-				err := s.pool.Register(ip, newRPCClientFactory(ip, s.Log), 10)
+				err := s.pool.Register(ip, newRPCClientFactory(ip, s.Log), 3)
 				if err != nil {
 					s.Log.Error(err)
 				}
 			}()
-			s.servers[ip] = &rpcServerService{IP: ip, Status: true}
 		}
 	}
 }
@@ -42,20 +39,15 @@ func (p *RPCServerPool) Request(group string, svName string, input string) (resu
 	}
 	o, err := p.pool.Get(group)
 	if err != nil {
-		o.Fatal()
 		err = errors.New("not find rpc server")
 		return
 	}
 	defer p.pool.Recycle(group, o)
-	if !o.Check() {
-		err = errors.New("not find available rpc server")
-		return
-	}
 	obj := o.(*RPCClient)
 	result, err = obj.Request(svName, input)
 	if err != nil {
 		p.Log.Error(err)
-		obj.Fatal()
+		p.pool.Unusable(svName, obj)
 	}
 	return
 }
@@ -72,17 +64,17 @@ func (p *RPCServerPool) Send(group string, svName string, input string, data []b
 
 	o, err := p.pool.Get(group)
 	if err != nil {
-		o.Fatal()
 		err = errors.New("not find rpc server")
 		return
 	}
 	defer p.pool.Recycle(group, o)
-	if !o.Check() {
-		err = errors.New("not find available rpc server")
-		return
-	}
 	obj := o.(*RPCClient)
-	return obj.Send(svName, input, data)
+	result, err = obj.Send(svName, input, data)
+	if err != nil {
+		p.Log.Error(err)
+		p.pool.Unusable(svName, obj)
+	}
+	return
 }
 
 func (p *RPCServerPool) Get(group string, svName string, input string) (result []byte, err error) {
@@ -98,26 +90,26 @@ func (p *RPCServerPool) Get(group string, svName string, input string) (result [
 
 	o, err := p.pool.Get(group)
 	if err != nil {
-		o.Fatal()
 		err = errors.New("not find rpc server")
 		return
 	}
 	defer p.pool.Recycle(group, o)
-	if !o.Check() {
-		err = errors.New("not find available rpc server")
-		return
-	}
 	obj := o.(*RPCClient)
-	return obj.Get(svName, input)
+	result, err = obj.Get(svName, input)
+	if err != nil {
+		p.Log.Error(err)
+		p.pool.Unusable(svName, obj)
+	}
+	return
 }
 func (p *RPCServerPool) clearUp() {
-	p.lk.Lock()
+	/*p.lk.Lock()
 	for k, server := range p.servers {
 		if !server.Status && p.pool.Close(server.IP) {
 			delete(p.servers, k)
 		}
 	}
-	p.lk.Unlock()
+	p.lk.Unlock()*/
 }
 
 func (p *RPCServerPool) autoClearUp() {

@@ -1,4 +1,4 @@
-package appserver
+package main
 
 import (
 	"encoding/json"
@@ -10,8 +10,10 @@ import (
 //AppSnap  app server快照信息
 type AppSnap struct {
 	Address string                  `json:"address"`
+	Server  string                  `json:"server"`
 	Last    string                  `json:"last"`
 	Sys     *monitor.SysMonitorInfo `json:"sys"`
+	ip      string
 }
 
 //GetSnap 获取快照信息

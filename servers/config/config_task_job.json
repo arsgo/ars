@@ -1,8 +1,9 @@
-{
-    "auto_build_bill": {
+[
+    {
         "name": "auto_build_bill",
-        "trigger": "0/10 * * * * ?",
-        "script": "auto_build_bill.luac",
+        "trigger": "0/30 * * * * ?",
+        "script": "./scripts/md5.lua",
+        "params": "mq=kafka/kafka01",
         "concurrency": 1
     }
-}
+]

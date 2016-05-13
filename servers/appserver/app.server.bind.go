@@ -1,6 +1,7 @@
-package appserver
+package main
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/colinyl/ars/cluster"
@@ -53,12 +54,16 @@ func (a *AppServer) BindTask(config *cluster.AppServerStartupConfig, err error) 
 		a.httpServer, err = httpserver.NewHttpScriptServer(config.Server.Routes, a.scriptPool.Call)
 		if err == nil {
 			a.httpServer.Start()
+			a.snap.Server = fmt.Sprint(a.snap.ip, a.httpServer.Address)
 		} else {
 			a.Log.Error(err)
 		}
 
 	}
 	if len(config.Jobs) > 0 {
+		a.jobConsumerRPCServer.Stop()
+		a.jobConsumerRPCServer.Start()
+		a.snap.Address = fmt.Sprint(a.snap.ip, a.jobConsumerRPCServer.Address)
 		a.jobConsumerRPCServer.UpdateTasks(config.Jobs)
 	} else {
 		a.jobConsumerRPCServer.Stop()
@@ -70,6 +75,7 @@ func (a *AppServer) BindTask(config *cluster.AppServerStartupConfig, err error) 
 func (a *AppServer) OnJobCreate(task cluster.TaskItem) (path string) {
 	path, err := a.clusterClient.CreateJobConsumer(task.Name, a.snap.GetSnap())
 	if err != nil {
+		a.Log.Error(err)
 		return
 	}
 	a.Log.Info("::start job service:", task.Name)

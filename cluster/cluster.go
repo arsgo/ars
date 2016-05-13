@@ -39,8 +39,8 @@ type IClusterClient interface {
 	WatchRCTaskChange(callback func(RCServerTask, error))
 
 	//job server/consumer........
-	WatchJobConfigChange(callback func(items *JobItems, err error))
-	GetJobConfig(path string) (items *JobItems, err error)
+	WatchJobConfigChange(callback func(items map[string]TaskItem, err error))
+	GetJobConfig() (items map[string]TaskItem, err error)
 	GetJobConsumers(jobName string) (consumers []string)
 	CreateJobConsumer(jobName string, value string) (string, error)
 	UpdateJobConsumerPath(path string, value string) error
@@ -54,7 +54,8 @@ type IClusterClient interface {
 	WatchServiceProviderChange(changed func()) (err error)
 	WatchSPTaskChange(callback func())
 	GetAllServiceProviderNamePath() (lst map[string][]string, err error)
-	GeServiceTasks() ([]TaskItem, error)
+	GetServiceTasks() ([]TaskItem, error)
+	FilterRPCService(map[string][]string) ([]TaskItem, error)
 	PublishRPCServices(map[string]map[string][]string) (err error)
 	GetServiceProviderPaths() (lst ServiceProviderList, err error)
 	ResetSnap(addr string, snap string) (err error)

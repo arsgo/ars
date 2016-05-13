@@ -13,12 +13,12 @@ func (client *ClusterClient) WatchSPTaskChange(callback func()) {
 			client.Log.Info("sp server config not exists")
 
 		} else {
-			callback()
+			go callback()
 		}
 	})
 	client.Log.Info("::watch for provider config change")
 	client.WatchClusterValueChange(client.spConfigPath, func() {
-		callback()
+		go callback()
 	})
 }
 
@@ -31,19 +31,19 @@ func (client *ClusterClient) WatchServiceProviderChange(changed func()) (err err
 			client.Log.Info("service provider node not exists")
 		} else {
 			err = client.PublishRPCServices(nil)
-			changed()
+			go changed()
 		}
 	})
 	client.WatchClusterChildrenChange(client.rpcProviderRootPath, func() {
 		err = client.PublishRPCServices(nil)
-		changed()
+		go changed()
 	})
 	lst, err := client.GetAllServiceProviderNamePath()
 	for _, v := range lst {
 		for _, p := range v {
 			client.WatchClusterChildrenChange(p, func() {
 				err = client.PublishRPCServices(nil)
-				changed()
+				go changed()
 			})
 		}
 
@@ -91,8 +91,9 @@ func (client *ClusterClient) GetServiceProviderPaths() (lst ServiceProviderList,
 	return
 }
 
-//GeServiceTasks 获取service provider 的任务列表
-func (client *ClusterClient) GeServiceTasks() (items []TaskItem, err error) {
+//GetServiceTasks 获取service provider 的任务列表
+func (client *ClusterClient) GetServiceTasks() (items []TaskItem, err error) {
+	fmt.Println("::GetServiceTasks")
 	var taskItem []TaskItem
 	values, err := client.handler.GetValue(client.spServerTaskPath)
 	if err != nil {

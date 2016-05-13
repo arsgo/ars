@@ -26,5 +26,17 @@ func (client *ClusterClient) GetAppServerStartupConfig(path string) (config *App
 		return
 	}
 	err = json.Unmarshal([]byte(values), &config)
+	if err != nil {
+		return
+	}
+	jobs, err := client.GetJobConfig()
+	if err != nil {
+		return
+	}
+	for _, v := range config.JobNames {
+		if _, ok := jobs[v]; ok {
+			config.Jobs = append(config.Jobs, jobs[v])
+		}
+	}
 	return
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
@@ -10,35 +11,46 @@ import (
 
 //BindRCServer 绑定服务
 func (rc *RCServer) BindRCServer() (err error) {
-	rc.snap.Address = rc.rcRPCServer.Address
+	rc.snap.Address = fmt.Sprint(rc.snap.ip, rc.rcRPCServer.Address)
 	rc.snap.Path, err = rc.clusterClient.CreateRCServer(rc.snap.GetSnap())
 	if err != nil {
 		return
 	}
+	rc.clusterClient.ResetSnap(rc.snap.Path, rc.snap.GetSnap())
 	rc.clusterClient.WatchRCServerChange(func(items []*cluster.RCServerItem, err error) {
-		rc.IsMaster = rc.IsMasterServer(items, rc.snap.Path)
-		if rc.IsMaster {
+		isMaster := rc.IsMasterServer(items)
+		if isMaster && !rc.IsMaster {
+			rc.IsMaster = true
 			//as master
 			rc.snap.Server = SERVER_MASTER
-			rc.Log.Info("current server is ", SERVER_MASTER)
+			rc.Log.Info("current server is ", rc.snap.Server)
 
-			rc.clusterClient.WatchJobConfigChange(func(config *cluster.JobItems, err error) {
+			rc.clusterClient.WatchJobConfigChange(func(config map[string]cluster.TaskItem, err error) {
 				rc.BindJobScheduler(config, err)
 			})
 			rc.clusterClient.WatchServiceProviderChange(func() {
-				rc.UpdateLocalService()
+				rc.Log.Info(">service provider has changed")
 			})
 			rc.clusterClient.WatchRCTaskChange(func(task cluster.RCServerTask, err error) {
 				rc.BindCrossAccess(task)
 			})
 
-		} else {
+		} else if !isMaster {
 			//as slave
-			rc.Log.Info("current server is ", SERVER_SLAVE)
-			rc.clusterClient.WatchRPCServiceChange(func(services map[string][]string, err error) {
-				rc.spRPCClient.ResetRPCServer(services)
-			})
+			rc.IsMaster = false
+			rc.snap.Server = SERVER_SLAVE
+			rc.Log.Info("current server is ", rc.snap.Server)
 		}
+	})
+	rc.clusterClient.WatchRPCServiceChange(func(services map[string][]string, err error) {
+		ip := rc.spRPCClient.ResetRPCServer(services)
+		rc.Log.Info("update ip list:", ip)
+		tasks, er := rc.clusterClient.FilterRPCService(services)
+		if er != nil {
+			rc.Log.Error(er)
+			return
+		}
+		rc.rcRPCServer.UpdateTasks(tasks)
 	})
 	return
 }
@@ -105,25 +117,15 @@ func (rc *RCServer) BindCrossAccess(task cluster.RCServerTask) (err error) {
 	if err != nil {
 		return
 	}
-	rc.UpdateLocalService()
 	return
 }
 
 //IsMasterServer 检查当前RC Server是否是Master
-func (rc *RCServer) IsMasterServer(items []*cluster.RCServerItem, path string) bool {
+func (rc *RCServer) IsMasterServer(items []*cluster.RCServerItem) bool {
 	var servers []string
 	for _, v := range items {
-		servers = append(servers, v.Address)
+		servers = append(servers, v.Path)
 	}
-
 	sort.Sort(sort.StringSlice(servers))
-	return len(servers) == 0 || strings.HasSuffix(path, servers[0])
-}
-
-//UpdateLocalService 更新本定服务列表
-func (rc *RCServer) UpdateLocalService() {
-	service, err := rc.clusterClient.GetRPCService()
-	if err != nil {
-		rc.spRPCClient.ResetRPCServer(service)
-	}
+	return len(servers) == 0 || strings.EqualFold(rc.snap.Path, servers[0])
 }

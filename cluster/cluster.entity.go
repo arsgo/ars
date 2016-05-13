@@ -15,10 +15,11 @@ type ServerConfig struct {
 	Routes     []*ServerRouteConfig `json:"routes"`
 }
 type AppServerStartupConfig struct {
-	Status string        `json:"status"`
-	Tasks  []*TaskConfig `json:"tasks"`
-	Jobs   []TaskItem    `json:"jobs"`
-	Server *ServerConfig `json:"server"`
+	Status   string        `json:"status"`
+	Tasks    []*TaskConfig `json:"tasks"`
+	JobNames []string      `json:"jobs"`
+	Jobs     []TaskItem
+	Server   *ServerConfig `json:"server"`
 }
 
 //---------------------------------------------------------
@@ -27,23 +28,13 @@ type RCServerItem struct {
 	Domain  string
 	Address string
 	Server  string
+	Path    string
 }
 
 //---------------------------------------------------------
 //----------------job server-------------------------------
 type JobConsumerValue struct {
-	Address string
-}
-type JobItem struct {
-	Name        string
-	Script      string
-	Trigger     string
-	Concurrency int
-}
-
-//JobConfigs job configs
-type JobItems struct {
-	Jobs map[string]JobItem
+	Address string `json:"address"`
 }
 type ServiceProviderList map[string][]string
 
@@ -51,13 +42,15 @@ type ServiceProviderList map[string][]string
 
 //----------------sp server-------------------------------
 type TaskItem struct {
-	Name   string `json:"name"`
-	IP     string `json:"ip"`
-	Mode   string `json:"mode"`
-	Type   string `json:"type"`
-	Method string `json:"method"`
-	Script string `json:"script"`
-	Params string `json:"params"`
+	Name        string `json:"name"`
+	IP          string `json:"ip"`
+	Mode        string `json:"mode"`
+	Type        string `json:"type"`
+	Method      string `json:"method"`
+	Script      string `json:"script"`
+	Params      string `json:"params"`
+	Trigger     string `json:"trigger"`
+	Concurrency int    `json:"concurrency"`
 }
 
 //---------------------------------------------------------

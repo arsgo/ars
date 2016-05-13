@@ -16,10 +16,12 @@ func (sp *SPServer) BindRCServer(configs []*cluster.RCServerItem, err error) err
 
 //rebindService 重新绑定SP所有服务列表
 func (sp *SPServer) rebindService() {
-	tasks, err := sp.clusterClient.GeServiceTasks()
+	tasks, err := sp.clusterClient.GetServiceTasks()
 	if err != nil {
+		sp.Log.Error(err)
 		return
 	}
+	sp.Log.Info("sp task:", len(tasks))
 	sp.rpcServer.UpdateTasks(tasks)
 }
 

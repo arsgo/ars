@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"sync"
 	"time"
 
 	"github.com/colinyl/ars/monitor"
@@ -13,11 +14,15 @@ type SPSnap struct {
 	Service string                  `json:"service"`
 	Last    string                  `json:"last"`
 	Sys     *monitor.SysMonitorInfo `json:"sys"`
+	ip      string
+	mutex   sync.Mutex
 }
 
 //GetSnap 获取指定服务的快照信息
 func (sn SPSnap) GetSnap(service string) string {
+	sn.mutex.Lock()
 	snap := sn
+	sn.mutex.Unlock()
 	snap.Service = service
 	snap.Last = time.Now().Format("20060102150405")
 	snap.Sys, _ = monitor.GetSysMonitorInfo()
@@ -36,6 +41,7 @@ func (sp *SPServer) ResetSPSnap() {
 //StartRefreshSnap 启动快照刷新服务
 func (sp *SPServer) StartRefreshSnap() {
 	tp := time.NewTicker(time.Second * 60)
+	defer tp.Stop()
 	for {
 		select {
 		case <-tp.C:

@@ -15,6 +15,7 @@ type RCSnap struct {
 	Server  string                  `json:"server"`
 	Last    string                  `json:"last"`
 	Sys     *monitor.SysMonitorInfo `json:"sys"`
+	ip      string
 }
 
 //GetSnap 获取RC服务的快照信息

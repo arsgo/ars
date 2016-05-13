@@ -3,25 +3,24 @@ package cluster
 import "encoding/json"
 
 //WatchJobConfigChange 监控JOB配置变化
-func (client *ClusterClient) WatchJobConfigChange(callback func(config *JobItems, err error)) {
+func (client *ClusterClient) WatchJobConfigChange(callback func(config map[string]TaskItem, err error)) {
 	client.WaitClusterPathExists(client.jobConfigPath, client.timeout, func(exists bool) {
 		if exists {
-			callback(client.GetJobConfig(client.jobConfigPath))
+			callback(client.GetJobConfig())
 		} else {
 			client.Log.Info("job config path not exists")
 		}
 	})
-	client.Log.Info("::watch job config changes")
+	client.Log.Info("::watch for job config changes")
 	client.WatchClusterValueChange(client.jobConfigPath, func() {
 		client.Log.Info("job config has changed")
-		callback(client.GetJobConfig(client.jobConfigPath))
+		callback(client.GetJobConfig())
 	})
 }
 
 //GetJobConfigs 获取JOB配置信息
-func (client *ClusterClient) GetJobConfig(path string) (items *JobItems, err error) {
-	items = &JobItems{}
-	items.Jobs = make(map[string]JobItem)
+func (client *ClusterClient) GetJobConfig() (items map[string]TaskItem, err error) {
+	path := client.jobConfigPath
 	if !client.handler.Exists(path) {
 		return
 	}
@@ -29,7 +28,15 @@ func (client *ClusterClient) GetJobConfig(path string) (items *JobItems, err err
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal([]byte(value), &items.Jobs)
+	jobs := []TaskItem{}
+	items = make(map[string]TaskItem)
+	err = json.Unmarshal([]byte(value), &jobs)
+	if err != nil {
+		return
+	}
+	for _, v := range jobs {
+		items[v.Name] = v
+	}
 	return
 }
 
@@ -37,16 +44,16 @@ func (client *ClusterClient) GetJobConfig(path string) (items *JobItems, err err
 func (client *ClusterClient) GetJobConsumers(jobName string) (jobs []string) {
 	dmap := client.dataMap.Copy()
 	dmap.Set("jobName", jobName)
-	path := dmap.Translate(client.jobConsumerNamedRootFormat)
-	children, err := client.handler.GetChildren(path)
+	root := dmap.Translate(p_jobConsumerNamedRootForamt)
+	children, err := client.handler.GetChildren(root)
 	if err != nil {
 		client.Log.Error(err)
 		return
 	}
-
 	for _, v := range children {
 		dmap.Set("path", v)
-		values, err := client.handler.GetValue(dmap.Translate(client.jobConsumerRealPathFormat))
+		path := dmap.Translate(p_jobConsumerClusterClientPathFormat)
+		values, err := client.handler.GetValue(path)
 		if err != nil {
 			client.Log.Error(err)
 			continue
