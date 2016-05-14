@@ -1,8 +1,6 @@
 package rpcservice
 
 import (
-	"fmt"
-
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/pool"
 )
@@ -24,13 +22,10 @@ func (j *rpcClientFactory) Create() (p pool.Object, err error) {
 		}
 	}()
 	ch := make(chan *RpcClientConn, 1)
-	fmt.Println("add subscribe")
 	Subscribe(j.ip, ch)
-	fmt.Println("wait connect create")
 	for {
 		select {
 		case client := <-ch:
-			fmt.Println("recv subscriber response")
 			p = client.Client
 			err = client.Err
 			return

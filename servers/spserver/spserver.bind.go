@@ -16,17 +16,20 @@ func (sp *SPServer) BindRCServer(configs []*cluster.RCServerItem, err error) err
 
 //rebindService 重新绑定SP所有服务列表
 func (sp *SPServer) rebindService() {
-	tasks, err := sp.clusterClient.GetServiceTasks()
+	sp.Log.Info(" -> start bind services")
+	task, err := sp.clusterClient.GetServiceTasks()
 	if err != nil {
 		sp.Log.Error(err)
 		return
 	}
-	sp.Log.Info("sp task:", len(tasks))
-	sp.rpcServer.UpdateTasks(tasks)
+	sp.Log.Info("rpc pool size min:", task.RPCPoolSetting.MinSize, ",max:", task.RPCPoolSetting.MaxSize)
+	sp.rpcClient.SetPoolSize(task.RPCPoolSetting.MinSize, task.RPCPoolSetting.MaxSize)
+	sp.rpcServer.UpdateTasks(task.Tasks)
 }
 
 //OnSPServiceCreate 服务创建时同时创建集群节点
 func (sp *SPServer) OnSPServiceCreate(task cluster.TaskItem) (path string) {
+	sp.scriptPool.Pool.PreLoad(task.Script, task.MinSize, task.MaxSize)
 	path, err := sp.clusterClient.CreateServiceProvider(task.Name, sp.rpcServer.Address,
 		sp.snap.GetSnap(task.Name))
 	if err != nil {

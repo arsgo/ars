@@ -6,14 +6,14 @@ import "encoding/json"
 func (client *ClusterClient) WatchJobConfigChange(callback func(config map[string]TaskItem, err error)) {
 	client.WaitClusterPathExists(client.jobConfigPath, client.timeout, func(exists bool) {
 		if exists {
-			callback(client.GetJobConfig())
+			go callback(client.GetJobConfig())
 		} else {
 			client.Log.Info("job config path not exists")
 		}
 	})
 	client.Log.Info("::watch for job config changes")
 	client.WatchClusterValueChange(client.jobConfigPath, func() {
-		client.Log.Info("job config has changed")
+		client.Log.Info(" -> job config has changed")
 		callback(client.GetJobConfig())
 	})
 }
@@ -79,6 +79,7 @@ func (client *ClusterClient) CreateJobConsumer(jobName string, value string) (st
 	return client.handler.CreateSeqNode(path, value)
 
 }
+
 func (client *ClusterClient) CloseJobConsumer(path string) error {
 	return client.handler.Delete(path)
 }

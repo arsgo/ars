@@ -43,7 +43,7 @@ func (rc *RCServer) BindJobScheduler(jobs map[string]cluster.TaskItem, err error
 					continue
 				}
 				if !rpcproxy.ResultIsSuccess(result) {
-					rc.Log.Infof("call job(%s - %v) failed ", task.Name, consumers[i], result)
+					rc.Log.Infof("call job(%s - %v) failed %s", task.Name, consumers[i], result)
 					continue
 				} else {
 					rc.Log.Infof("call job(%s - %s) success", task.Name, consumers[i])

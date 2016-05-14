@@ -24,6 +24,7 @@ func (rs RCSnap) GetSnap() string {
 	snap.Last = time.Now().Format("20060102150405")
 	snap.Sys, _ = monitor.GetSysMonitorInfo()
 	buffer, _ := json.Marshal(&snap)
+	//fmt.Println(string(buffer))
 	return string(buffer)
 }
 

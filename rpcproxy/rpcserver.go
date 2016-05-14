@@ -90,8 +90,8 @@ func (r *RPCHandlerProxy) UpdateTasks(tasks []cluster.TaskItem) {
 
 	for i, v := range services {
 		if _, ok := tks[i]; !ok {
+			r.handler.CloseTask(v.(cluster.TaskItem))
 			r.tasks.Services.Delete(i)
-			go r.handler.CloseTask(v.(cluster.TaskItem))
 		} else {
 			r.tasks.Services.Set(i, tks[i]) //更新可能已经变化的服务
 		}
@@ -99,7 +99,7 @@ func (r *RPCHandlerProxy) UpdateTasks(tasks []cluster.TaskItem) {
 	for i, v := range tks {
 		if _, ok := services[i]; !ok {
 			r.tasks.Services.Set(i, v) //添加新任务
-			go r.handler.OpenTask(v)
+			r.handler.OpenTask(v)
 		}
 	}
 
@@ -109,16 +109,18 @@ func (r *RPCHandlerProxy) UpdateTasks(tasks []cluster.TaskItem) {
 func (r *RPCHandlerProxy) Request(name string, input string) (result string, err error) {
 	r.Log.Info("-> recv request:", name)
 	task := r.tasks.Services.Get(name)
-	if task != nil {
-		return GetErrorResult("500", "not find service:", name), nil
-	}
-	result, er := r.handler.Request(task.(cluster.TaskItem), input)
-	if er != nil {
-		r.Log.Error(er)
-		result = GetErrorResult("500", er.Error())
+	var currentErr error
+	if task == nil {
+		result = GetErrorResult("500", "not find service:", name)
 	} else {
-		r.Log.Info(result)
+		result, currentErr = r.handler.Request(task.(cluster.TaskItem), input)
 	}
+
+	if currentErr != nil {
+		result = GetErrorResult("500", currentErr.Error())
+	}
+	r.Log.Info(result)
+
 	return
 }
 
@@ -143,7 +145,7 @@ func (r *RPCHandlerProxy) Send(name string, input string, data []byte) (result s
 func (r *RPCHandlerProxy) Get(name string, input string) (buffer []byte, err error) {
 	r.Log.Info("-> recv get:", name)
 	task := r.tasks.Services.Get(name)
-	if task != nil {
+	if task == nil {
 		return []byte(GetErrorResult("500", "not find service:", name)), nil
 	}
 	buffer, er := r.handler.Get(task.(cluster.TaskItem), input)

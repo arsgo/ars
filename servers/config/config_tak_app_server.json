@@ -3,6 +3,10 @@
     "jobs": [
         "auto_build_bill"
     ],
+    "rpc-pool": {
+        "min": 3,
+        "max": 50
+    },
     "server": {
         "type": "http",
         "routes": [

@@ -52,6 +52,12 @@ func NewRPCClient() *RPCClient {
 	return client
 }
 
+//SetPoolSize  设置连接池大小
+func (r *RPCClient) SetPoolSize(minSize int, maxSize int) {
+	r.pool.MinSize = minSize
+	r.pool.MaxSize = maxSize
+}
+
 //ResetRPCServer 重置所有RPC服务器
 func (r *RPCClient) ResetRPCServer(servers map[string][]string) string {
 	ips := make(map[string]string) //构建IP列表，用于注册服务
@@ -65,7 +71,7 @@ func (r *RPCClient) ResetRPCServer(servers map[string][]string) string {
 			}
 		}
 		if _, ok := service[n]; !ok {
-			r.services.Set(n, serviceItem{service: v})
+			r.services.Set(n, &serviceItem{service: v})
 		}
 	}
 	r.pool.Register(ips)
@@ -79,12 +85,19 @@ func (r *RPCClient) GetAsyncResult(session string) (rt interface{}, err interfac
 		result := <-queue.(chan []interface{})
 		r.queues.Delete(session)
 		if len(result) != 2 {
-			return "", errors.New("rpc method result value len is error")
+			return "", "rpc method result value len is error"
 		}
 		rt = result[0]
-		err = result[1]
+		if result[1] != nil {
+			er := result[1].(string)
+			if strings.EqualFold(er, "") {
+				err = nil
+			} else {
+				err = er
+			}
+		}
 	} else {
-		err = errors.New(fmt.Sprint("not find session:", session))
+		err = fmt.Sprint("not find session:", session)
 	}
 	return
 }
@@ -92,7 +105,7 @@ func (r *RPCClient) GetAsyncResult(session string) (rt interface{}, err interfac
 //getGroupName 根据名称获取一个分组
 func (r *RPCClient) getGroupName(name string) string {
 	group := r.services.Get(name)
-	if group != nil {
+	if group == nil {
 		group = r.services.Get("*")
 	}
 	if group != nil {
@@ -107,7 +120,12 @@ func (r *RPCClient) Request(name string, input string) (result string, err error
 	if strings.EqualFold(group, "") {
 		return "", errors.New("not find rpc server")
 	}
-	result, err = r.pool.Request(group, name, input)
+	result, er := r.pool.Request(group, name, input)
+	if er != nil {
+		result = GetErrorResult("500", er.Error())
+	} else {
+		result = GetDataResult(result)
+	}
 	return
 }
 
@@ -136,7 +154,7 @@ func (r *RPCClient) AsyncRequest(name string, input string) (session string) {
 		if err != nil {
 			queueChan <- []interface{}{result, err.Error()}
 		} else {
-			queueChan <- []interface{}{result, nil}
+			queueChan <- []interface{}{result, ""}
 		}
 
 	}(queueChan, r, name, input)
@@ -153,7 +171,7 @@ func (r *RPCClient) AsyncSend(name string, input string, data string) (session s
 		if err != nil {
 			queue <- []interface{}{result, err.Error()}
 		} else {
-			queue <- []interface{}{result, nil}
+			queue <- []interface{}{result, ""}
 		}
 
 	}(queueChan, r, name, input, data)
@@ -170,7 +188,7 @@ func (r *RPCClient) AsyncGet(name string, input string) (session string) {
 		if err != nil {
 			queue <- []interface{}{result, err.Error()}
 		} else {
-			queue <- []interface{}{result, nil}
+			queue <- []interface{}{result, ""}
 		}
 
 	}(queueChan, r, name, input)

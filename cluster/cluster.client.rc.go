@@ -16,7 +16,7 @@ func (client *ClusterClient) WatchRCServerChange(callback func([]*RCServerItem, 
 	})
 	client.Log.Info("::watch for rc server changes")
 	client.WatchClusterChildrenChange(client.rcServerRoot, func() {
-		client.Log.Info("rc server has changed")
+		client.Log.Info(" -> rc server has changed")
 		go callback(client.GetAllRCServerValues())
 	})
 }
@@ -75,7 +75,7 @@ func (client *ClusterClient) WatchRCTaskChange(callback func(RCServerTask, error
 	})
 	client.Log.Info("::watch for rc server config changes")
 	client.WatchClusterValueChange(client.rcServerRoot, func() {
-		client.Log.Info("rc server config has changed")
+		client.Log.Info(" -> rc server config has changed")
 		go callback(client.GetRCServerTasks())
 	})
 }

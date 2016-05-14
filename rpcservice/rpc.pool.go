@@ -9,17 +9,21 @@ import (
 //Register 注册服务列表
 func (s *RPCServerPool) Register(svs map[string]string) {
 	//标记不能使用的服务
-	for _, server := range s.servers {
+	servers := s.servers.GetAll()
+	for _, sv := range servers {
+		server := sv.(*rpcServerService)
 		if _, ok := svs[server.IP]; !ok {
+			s.servers.Delete(server.IP)
 			go s.pool.UnRegister(server.IP)
 		}
 	}
+	//*
 	//添加可以使用使用的服务
 	for _, ip := range svs {
-		if _, ok := s.servers[ip]; !ok {
-			s.servers[ip] = &rpcServerService{IP: ip, Status: true}
+		if _, ok := servers[ip]; !ok {
 			go func() {
-				err := s.pool.Register(ip, newRPCClientFactory(ip, s.Log), 3, 10)
+				s.servers.Set(ip, &rpcServerService{IP: ip, Status: true})
+				err := s.pool.Register(ip, newRPCClientFactory(ip, s.Log), s.MinSize, s.MaxSize)
 				if err != nil {
 					s.Log.Error(err)
 				}
@@ -46,7 +50,6 @@ func (p *RPCServerPool) Request(group string, svName string, input string) (resu
 	obj := o.(*RPCClient)
 	result, err = obj.Request(svName, input)
 	if err != nil {
-		p.Log.Error(err)
 		p.pool.Unusable(svName, obj)
 	}
 	return
@@ -71,7 +74,6 @@ func (p *RPCServerPool) Send(group string, svName string, input string, data []b
 	obj := o.(*RPCClient)
 	result, err = obj.Send(svName, input, data)
 	if err != nil {
-		p.Log.Error(err)
 		p.pool.Unusable(svName, obj)
 	}
 	return
@@ -97,7 +99,6 @@ func (p *RPCServerPool) Get(group string, svName string, input string) (result [
 	obj := o.(*RPCClient)
 	result, err = obj.Get(svName, input)
 	if err != nil {
-		p.Log.Error(err)
 		p.pool.Unusable(svName, obj)
 	}
 	return

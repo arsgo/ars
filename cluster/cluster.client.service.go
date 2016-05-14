@@ -13,7 +13,7 @@ func (client *ClusterClient) WatchRPCServiceChange(callback func(services map[st
 	})
 	client.Log.Info("::watch for service config changes ")
 	client.WatchClusterValueChange(client.rpcPublishPath, func() {
-		client.Log.Info("serivce has changed")
+		client.Log.Info(" -> rpc serivce has changed")
 		go callback(client.GetRPCService())
 	})
 }
@@ -35,7 +35,7 @@ func (client *ClusterClient) FilterRPCService(services map[string][]string) (ite
 	if err != nil {
 		return
 	}
-	for _, v := range all {
+	for _, v := range all.Tasks {
 		if _, ok := services[v.Name]; ok {
 			items = append(items, v)
 		}

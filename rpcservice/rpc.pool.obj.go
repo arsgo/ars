@@ -3,6 +3,7 @@ package rpcservice
 import (
 	"log"
 
+	"github.com/colinyl/lib4go/concurrent"
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/pool"
 )
@@ -14,8 +15,10 @@ type rpcServerService struct {
 
 type RPCServerPool struct {
 	pool    *pool.ObjectPool
-	servers map[string]*rpcServerService
+	servers concurrent.ConcurrentMap
 	Log     *logger.Logger
+	MinSize int
+	MaxSize int
 }
 
 func NewRPCServerPool() *RPCServerPool {
@@ -23,7 +26,7 @@ func NewRPCServerPool() *RPCServerPool {
 	pl := &RPCServerPool{}
 	pl.pool = pool.New()
 	go pl.autoClearUp()
-	pl.servers = make(map[string]*rpcServerService)
+	pl.servers = concurrent.NewConcurrentMap()
 	pl.Log, err = logger.New("rc server", true)
 	if err != nil {
 		log.Println(err)

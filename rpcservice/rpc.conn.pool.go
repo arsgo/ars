@@ -4,9 +4,10 @@ package rpcservice
 
 import (
 	"errors"
-	"fmt"
 	"sync"
 	"time"
+
+	"github.com/colinyl/lib4go/logger"
 )
 
 const (
@@ -28,12 +29,14 @@ type worker struct {
 	status      chan bool
 	connect     int
 	subscribers chan *subscriber
+	Log         *logger.Logger
 }
 
 type connPool struct {
 	workers map[string]*worker
 	mutex   sync.Mutex
 	status  bool
+	Log     *logger.Logger
 }
 
 var globalPool *connPool
@@ -46,8 +49,10 @@ func Subscribe(address string, notify chan *RpcClientConn) {
 	globalPool.Subscribe(address, notify)
 }
 
-func NewConnPool() *connPool {
-	return &connPool{workers: make(map[string]*worker)}
+func NewConnPool() (conn *connPool) {
+	conn = &connPool{workers: make(map[string]*worker)}
+	conn.Log, _ = logger.New("conn pool", true)
+	return
 }
 
 func (n *connPool) Subscribe(address string, notify chan *RpcClientConn) {
@@ -56,6 +61,7 @@ func (n *connPool) Subscribe(address string, notify chan *RpcClientConn) {
 	wkr, ok := n.workers[address]
 	if !ok {
 		wkr = &worker{address: address, status: make(chan bool, 1)}
+		wkr.Log = n.Log
 		wkr.subscribers = make(chan *subscriber, 100)
 		wkr.status <- true
 		n.workers[address] = wkr
@@ -69,11 +75,10 @@ func (w *worker) doWork() {
 		select {
 		case sub := <-w.subscribers:
 			{
-				fmt.Println("recv:subscriber")
 				if w.connect == c_cant_connect {
 					sub.notify <- &RpcClientConn{Err: errors.New("cant connect server")}
 				} else {
-					fmt.Println("connect to ", w.address)
+					w.Log.Info(" -> connect to:", w.address)
 					client := NewRPCClient(w.address)
 					err := client.Open()
 					if err == nil {
@@ -86,13 +91,13 @@ func (w *worker) doWork() {
 			}
 		case <-tp.C:
 			if w.connect == c_cant_connect {
-				fmt.Println("定时重连:", w.address)
+				w.Log.Info(" -> 定时重连:", w.address)
 				client := NewRPCClient(w.address)
 				err := client.Open()
 				if err == nil {
 					w.connect = c_connecdted
 				} else {
-					fmt.Println(err)
+					w.Log.Error(err)
 				}
 				if w.connect == c_connecdted {
 					client.Close()

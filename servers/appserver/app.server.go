@@ -18,7 +18,7 @@ type AppServer struct {
 	jobConsumerScriptHandler *rpcproxy.RPCScriptHandler //本地JOB Consumer提供的RPC接口,使用的代理处理程序为脚本处理
 	jobConsumerRPCServer     *rpcproxy.RPCServer        //接收JOB事件调用,改事件将触发脚本执行
 	rpcClient                *rpcproxy.RPCClient        //RPC远程调用客户端,调用RC Server提供的RPC服务
-	scriptPool               *rpcproxy.ScriptPool     //脚本池,用于缓存JOB Consumer脚本和本地task任务执行脚本
+	scriptPool               *rpcproxy.ScriptPool       //脚本池,用于缓存JOB Consumer脚本和本地task任务执行脚本
 	lk                       sync.Mutex
 	httpServer               *httpserver.HttpScriptServer
 	snap                     AppSnap
@@ -60,7 +60,7 @@ func (app *AppServer) Start() (err error) {
 	})
 
 	app.clusterClient.WatchAppTaskChange(func(config *cluster.AppServerStartupConfig, err error) error {
-		go app.BindTask(config, err)
+		app.BindTask(config, err)
 		return nil
 	})
 	go app.StartRefreshSnap()

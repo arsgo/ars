@@ -21,30 +21,28 @@ func (rc *RCServer) BindRCServer() (err error) {
 		isMaster := rc.IsMasterServer(items)
 		if isMaster && !rc.IsMaster {
 			rc.IsMaster = true
-			//as master
 			rc.snap.Server = SERVER_MASTER
-			rc.Log.Info("current server is ", rc.snap.Server)
+			rc.Log.Info("::current server is ", rc.snap.Server)
 
 			rc.clusterClient.WatchJobConfigChange(func(config map[string]cluster.TaskItem, err error) {
 				rc.BindJobScheduler(config, err)
 			})
 			rc.clusterClient.WatchServiceProviderChange(func() {
-				rc.Log.Info(">service provider has changed")
 			})
-			rc.clusterClient.WatchRCTaskChange(func(task cluster.RCServerTask, err error) {
-				rc.BindCrossAccess(task)
-			})
-
 		} else if !isMaster {
-			//as slave
 			rc.IsMaster = false
 			rc.snap.Server = SERVER_SLAVE
-			rc.Log.Info("current server is ", rc.snap.Server)
+			rc.Log.Info("::current server is ", rc.snap.Server)
 		}
+	})
+	rc.clusterClient.WatchRCTaskChange(func(task cluster.RCServerTask, err error) {
+		rc.Log.Info("rpc pool size min:", task.RPCPoolSetting.MinSize, ",max:", task.RPCPoolSetting.MaxSize)
+		rc.spRPCClient.SetPoolSize(task.RPCPoolSetting.MinSize, task.RPCPoolSetting.MaxSize)
+		rc.BindCrossAccess(task)
 	})
 	rc.clusterClient.WatchRPCServiceChange(func(services map[string][]string, err error) {
 		ip := rc.spRPCClient.ResetRPCServer(services)
-		rc.Log.Info("update ip list:", ip)
+		rc.Log.Info("rpc services:(", len(services), ") ", ip)
 		tasks, er := rc.clusterClient.FilterRPCService(services)
 		if er != nil {
 			rc.Log.Error(er)
@@ -56,6 +54,9 @@ func (rc *RCServer) BindRCServer() (err error) {
 }
 
 func (rc *RCServer) BindCrossAccess(task cluster.RCServerTask) (err error) {
+	if !rc.IsMaster {
+		return
+	}
 	rc.crossLock.Lock()
 	defer rc.crossLock.Unlock()
 

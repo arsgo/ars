@@ -18,13 +18,13 @@ func (client *ClusterClient) WatchSPTaskChange(callback func()) {
 	})
 	client.Log.Info("::watch for provider config change")
 	client.WatchClusterValueChange(client.spConfigPath, func() {
+		client.Log.Info(" -> service provider task has changed")
 		go callback()
 	})
 }
 
 //WatchServiceProviderChange 监控RPC服务提供方变化
 func (client *ClusterClient) WatchServiceProviderChange(changed func()) (err error) {
-
 	client.Log.Info("::watch for service providers changes")
 	client.WaitClusterPathExists(client.rpcProviderRootPath, client.timeout, func(exists bool) {
 		if !exists {
@@ -46,7 +46,6 @@ func (client *ClusterClient) WatchServiceProviderChange(changed func()) (err err
 				go changed()
 			})
 		}
-
 	}
 	return
 }
@@ -92,24 +91,24 @@ func (client *ClusterClient) GetServiceProviderPaths() (lst ServiceProviderList,
 }
 
 //GetServiceTasks 获取service provider 的任务列表
-func (client *ClusterClient) GetServiceTasks() (items []TaskItem, err error) {
-	fmt.Println("::GetServiceTasks")
-	var taskItem []TaskItem
+func (client *ClusterClient) GetServiceTasks() (task ServiceProviderTask, err error) {
+
+	task = ServiceProviderTask{}
 	values, err := client.handler.GetValue(client.spServerTaskPath)
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal([]byte(values), &taskItem)
+	err = json.Unmarshal([]byte(values), &task)
 	if err != nil {
 		return
 	}
-	for _, v := range taskItem {
-		if strings.EqualFold(v.IP, "*") ||
-			strings.Contains(","+v.IP+",", client.IP) {
+	var items []TaskItem
+	for _, v := range task.Tasks {
+		if strings.EqualFold(v.IP, "*") || strings.Contains(","+v.IP+",", client.IP) {
 			items = append(items, v)
 		}
 	}
-
+	task.Tasks = items
 	return
 }
 
@@ -123,6 +122,7 @@ func (client *ClusterClient) CreateServiceProvider(name string, port string, val
 	return client.handler.CreateTmpNode(path, value)
 
 }
+
 func (client *ClusterClient) CloseServiceProvider(path string) error {
 	return client.handler.Delete(path)
 }

@@ -47,7 +47,7 @@ func NewScriptPool(clusterClient cluster.IClusterClient, rpcclient *RPCClient) (
 	p.clusterClient = clusterClient
 	p.rpcclient = rpcclient
 	p.Pool = script.NewLuaPool()
-	p.Pool.SetPackages(`E:\Project\golang\bin\scripts\xlib`, `E:\Project\golang\bin\scripts`)
+	p.Pool.SetPackages(`./scripts/xlib`, `./scripts`)
 	p.Log, err = logger.New("script", true)
 	p.Pool.RegisterLibs(p.bindGlobalLibs())
 	return

@@ -52,7 +52,7 @@ func (h *RPCProxyHandler) OpenTask(task cluster.TaskItem) {
 
 //CloseTask 关闭任务
 func (h *RPCProxyHandler) CloseTask(ti cluster.TaskItem) {
-	h.Log.Info("->close service", ti.Name)
+	h.Log.Info(" -> close service:", ti.Name)
 	h.tasks.Delete(ti.Name)
 }
 

@@ -9,6 +9,7 @@ import (
 
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/colinyl/ars/rpcservice/rpc"
+	"github.com/colinyl/lib4go/logger"
 )
 
 type RPCClient struct {
@@ -17,21 +18,20 @@ type RPCClient struct {
 	client    *rpc.ServiceProviderClient
 	isFatal   bool
 	timeout   time.Duration
+	Log       *logger.Logger
 }
 
-func NewRPCClient(address string) *RPCClient {
-	addr := address
-	if !strings.Contains(address, ":") {
-		addr = net.JoinHostPort(address, "1016")
-	}
-	return &RPCClient{Address: addr, timeout: time.Second * 3}
+func NewRPCClient(address string) (client *RPCClient) {
+	return NewRPCClientTimeout(address, time.Second*5)
 }
-func NewRPCClientTimeout(address string, timeout time.Duration) *RPCClient {
+func NewRPCClientTimeout(address string, timeout time.Duration) (client *RPCClient) {
 	addr := address
 	if !strings.Contains(address, ":") {
 		addr = net.JoinHostPort(address, "1016")
 	}
-	return &RPCClient{Address: addr, timeout: timeout}
+	client = &RPCClient{Address: addr, timeout: timeout}
+	client.Log, _ = logger.New("rpc client", true)
+	return
 }
 
 func (client *RPCClient) Open() (err error) {
@@ -67,7 +67,7 @@ func (j *RPCClient) Close() {
 		recover()
 	}()
 	if j.transport != nil {
-		fmt.Println("close connection")
+		j.Log.Info(" -> close connection ", j.Address)
 		j.transport.Close()
 	}
 

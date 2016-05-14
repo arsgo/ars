@@ -4,6 +4,12 @@ package cluster
 type TaskConfig struct {
 	Trigger string `json:"trigger"`
 	Script  string `json:"script"`
+	MinSize int    `json:"min"`
+	MaxSize int    `json:"max"`
+}
+type RPCPoolSetting struct {
+	MinSize int `json:"min"`
+	MaxSize int `json:"max"`
 }
 type ServerRouteConfig struct {
 	Path   string `json:"path"`
@@ -15,11 +21,12 @@ type ServerConfig struct {
 	Routes     []*ServerRouteConfig `json:"routes"`
 }
 type AppServerStartupConfig struct {
-	Status   string        `json:"status"`
-	Tasks    []*TaskConfig `json:"tasks"`
-	JobNames []string      `json:"jobs"`
-	Jobs     []TaskItem
-	Server   *ServerConfig `json:"server"`
+	Status         string        `json:"status"`
+	Tasks          []*TaskConfig `json:"tasks"`
+	JobNames       []string      `json:"jobs"`
+	Jobs           []TaskItem
+	Server         *ServerConfig  `json:"server"`
+	RPCPoolSetting RPCPoolSetting `json:"rpc-pool"`
 }
 
 //---------------------------------------------------------
@@ -51,6 +58,12 @@ type TaskItem struct {
 	Params      string `json:"params"`
 	Trigger     string `json:"trigger"`
 	Concurrency int    `json:"concurrency"`
+	MinSize     int    `json:"min"`
+	MaxSize     int    `json:"max"`
+}
+type ServiceProviderTask struct {
+	RPCPoolSetting RPCPoolSetting `json:"rpc-pool"`
+	Tasks          []TaskItem     `json:"tasks"`
 }
 
 //---------------------------------------------------------
@@ -61,8 +74,10 @@ type CrossDoaminAccessItem struct {
 	Type     string   `json:"type"`
 	Servers  []string `json:"servers"`
 }
+
 type RCServerTask struct {
 	CrossDomainAccess map[string]CrossDoaminAccessItem `json:"cross-domain-access"`
+	RPCPoolSetting    RPCPoolSetting                   `json:"rpc-pool"`
 }
 
 //---------------------------------------------------------

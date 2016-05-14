@@ -17,16 +17,19 @@ func (a *AppServer) BindRCServer(configs []*cluster.RCServerItem, err error) err
 	}
 	services := make(map[string][]string)
 	services["*"] = tasks
+	a.Log.Info(" -> bind rc server (", len(services), ")")
 	a.rpcClient.ResetRPCServer(services)
 	return nil
 }
 
 //BindTask 绑定本地任务
 func (a *AppServer) BindTask(config *cluster.AppServerStartupConfig, err error) (er error) {
+	a.Log.Info("rpc pool size min:", config.RPCPoolSetting.MinSize, ",max:", config.RPCPoolSetting.MaxSize)
+	a.rpcClient.SetPoolSize(config.RPCPoolSetting.MinSize, config.RPCPoolSetting.MaxSize)
 	a.ResetAPPSnap()
 	scheduler.Stop()
 	for _, v := range config.Tasks {
-		er = a.scriptPool.Pool.PreLoad(v.Script, 1, 10)
+		er = a.scriptPool.Pool.PreLoad(v.Script, v.MinSize, v.MaxSize)
 		if er != nil {
 			a.Log.Error("load task`s script error in:", v.Script, ",", er)
 			continue
@@ -39,6 +42,7 @@ func (a *AppServer) BindTask(config *cluster.AppServerStartupConfig, err error) 
 			} else {
 				a.Log.Infof("result:%d,%s", len(rtvalues), strings.Join(rtvalues, ","))
 			}
+
 		}))
 	}
 	if len(config.Tasks) > 0 {

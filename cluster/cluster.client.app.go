@@ -8,13 +8,13 @@ func (client *ClusterClient) WatchAppTaskChange(callback func(config *AppServerS
 		if !exists {
 			client.Log.Infof("app config not exists:%s", client.appServerTaskPath)
 		} else {
-			callback(client.GetAppServerStartupConfig(client.appServerTaskPath))
+			go callback(client.GetAppServerStartupConfig(client.appServerTaskPath))
 		}
 	})
 	client.Log.Info("::watch for app config changes")
 	client.WatchClusterValueChange(client.appServerTaskPath, func() {
-		client.Log.Info("app config has changed")
-		callback(client.GetAppServerStartupConfig(client.appServerTaskPath))
+		client.Log.Info(" -> app config has changed")
+		go callback(client.GetAppServerStartupConfig(client.appServerTaskPath))
 	})
 }
 

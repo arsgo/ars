@@ -1,4 +1,8 @@
 {
+    "rpc-pool": {
+        "min": 10,
+        "max": 50
+    },
     "cross-domain-access": [
         {
             "service": "save_log",
