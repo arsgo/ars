@@ -42,12 +42,12 @@ func (rc *RCServer) BindRCServer() (err error) {
 	})
 	rc.clusterClient.WatchRPCServiceChange(func(services map[string][]string, err error) {
 		ip := rc.spRPCClient.ResetRPCServer(services)
-		rc.Log.Info("rpc services:(", len(services), ") ", ip)
 		tasks, er := rc.clusterClient.FilterRPCService(services)
 		if er != nil {
 			rc.Log.Error(er)
 			return
 		}
+		rc.Log.Info("rpc services:(", len(tasks), ") ", ip)
 		rc.rcRPCServer.UpdateTasks(tasks)
 	})
 	return

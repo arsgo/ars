@@ -69,8 +69,10 @@ func (r *RPCClient) ResetRPCServer(servers map[string][]string) string {
 				aips = append(aips, ip)
 			}
 		}
-		if _, ok := service[n]; !ok {
+		if _, ok := service[n]; !ok && len(v) > 0 {
 			r.services.Set(n, &serviceItem{service: v})
+		} else {
+			r.services.Delete(n)
 		}
 	}
 	r.pool.Register(ips)
@@ -117,7 +119,8 @@ func (r *RPCClient) getGroupName(name string) string {
 func (r *RPCClient) Request(name string, input string) (result string, err error) {
 	group := r.getGroupName(name)
 	if strings.EqualFold(group, "") {
-		return "", fmt.Errorf("not find rpc server:%s", group)
+		result = GetErrorResult("500", "not find rpc server: ", name, " in service list")
+		return
 	}
 	result, er := r.pool.Request(group, name, input)
 	if er != nil {
