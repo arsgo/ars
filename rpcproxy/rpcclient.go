@@ -7,7 +7,6 @@ RPC客户端，维护RPC服务器列表，并提供RPC服务调用接口，调�
 package rpcproxy
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -118,7 +117,7 @@ func (r *RPCClient) getGroupName(name string) string {
 func (r *RPCClient) Request(name string, input string) (result string, err error) {
 	group := r.getGroupName(name)
 	if strings.EqualFold(group, "") {
-		return "", errors.New("not find rpc server")
+		return "", fmt.Errorf("not find rpc server:%s", group)
 	}
 	result, er := r.pool.Request(group, name, input)
 	if er != nil {

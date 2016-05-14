@@ -22,7 +22,7 @@ type RPCClient struct {
 }
 
 func NewRPCClient(address string) (client *RPCClient) {
-	return NewRPCClientTimeout(address, time.Second*5)
+	return NewRPCClientTimeout(address, time.Second*3)
 }
 func NewRPCClientTimeout(address string, timeout time.Duration) (client *RPCClient) {
 	addr := address
