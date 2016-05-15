@@ -1,6 +1,9 @@
 package cluster
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"strings"
+)
 
 //WatchRPCServiceChange 监控已发布的RPC服务变化
 func (client *ClusterClient) WatchRPCServiceChange(callback func(services map[string][]string, err error)) {
@@ -36,6 +39,7 @@ func (client *ClusterClient) FilterRPCService(services map[string][]string) (ite
 		return
 	}
 	for _, v := range all.Tasks {
+		v.Name = client.GetServiceFullPath(v.Name)
 		if _, ok := services[v.Name]; ok {
 			items = append(items, v)
 		}
@@ -70,4 +74,12 @@ func (client *ClusterClient) PublishRPCServices(crossServices map[string]map[str
 		err = client.handler.CreatePath(client.rpcPublishPath, serviceValue)
 	}
 	return
+}
+
+//GetServiceFullPath 获了服务的全名
+func (client *ClusterClient) GetServiceFullPath(name string) string {
+	if strings.Contains(name, "@") {
+		return name
+	}
+	return name + client.domainPath
 }

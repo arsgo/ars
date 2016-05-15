@@ -12,6 +12,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/colinyl/ars/cluster"
 	"github.com/colinyl/ars/rpcservice"
 	"github.com/colinyl/lib4go/concurrent"
 	"github.com/colinyl/lib4go/utility"
@@ -39,12 +40,14 @@ type RPCClient struct {
 	queues   concurrent.ConcurrentMap //map[string]chan []interface{}
 	pool     *rpcservice.RPCServerPool
 	services concurrent.ConcurrentMap
+	client   cluster.IClusterClient
 	mutex    sync.RWMutex
 }
 
 //NewRPCClient 创建RPC Client
-func NewRPCClient() *RPCClient {
+func NewRPCClient(cli cluster.IClusterClient) *RPCClient {
 	client := &RPCClient{}
+	client.client = cli
 	client.pool = rpcservice.NewRPCServerPool()
 	client.services = concurrent.NewConcurrentMap()
 	client.queues = concurrent.NewConcurrentMap()
@@ -122,7 +125,8 @@ func (r *RPCClient) getGroupName(name string) string {
 }
 
 //Request 发送Request请求
-func (r *RPCClient) Request(name string, input string) (result string, err error) {
+func (r *RPCClient) Request(cmd string, input string) (result string, err error) {
+	name := r.client.GetServiceFullPath(cmd)
 	group := r.getGroupName(name)
 	if strings.EqualFold(group, "") {
 		result = GetErrorResult("500", "not find rpc server: ", name, " in service list")
@@ -138,13 +142,15 @@ func (r *RPCClient) Request(name string, input string) (result string, err error
 }
 
 //Send 发送Send请求
-func (r *RPCClient) Send(name string, input string, data string) (result string, err error) {
+func (r *RPCClient) Send(cmd string, input string, data string) (result string, err error) {
+	name := r.client.GetServiceFullPath(cmd)
 	result, err = r.pool.Send(r.getGroupName(name), name, input, []byte(data))
 	return
 }
 
 //Get 发送Gety请求
-func (r *RPCClient) Get(name string, input string) (result string, err error) {
+func (r *RPCClient) Get(cmd string, input string) (result string, err error) {
+	name := r.client.GetServiceFullPath(cmd)
 	data, err := r.pool.Get(r.getGroupName(name), name, input)
 	if err != nil {
 		result = string(data)

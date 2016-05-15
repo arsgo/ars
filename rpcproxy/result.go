@@ -36,5 +36,9 @@ func GetSuccessResult() string {
 }
 
 func GetDataResult(data string) string {
+	if strings.HasSuffix(data, "}") &&
+		strings.HasPrefix(data, "{") {
+		return data
+	}
 	return fmt.Sprintf(result_data_format, data)
 }

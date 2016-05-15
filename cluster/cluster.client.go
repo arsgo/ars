@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"strings"
 	"time"
 
 	"github.com/colinyl/lib4go/logger"
@@ -31,24 +32,28 @@ const (
 
 //ClusterClient 集群客户端
 type ClusterClient struct {
-	appServerTaskPath          string
-	rcServerRoot               string
-	rcServerConfig             string
-	jobConfigPath              string
-	spConfigPath               string
-	rpcPublishPath             string
-	rpcProviderRootPath        string
-	appServerPath              string
-	spServerTaskPath           string
-	handler                    IClusterHandler
-	Log                        *logger.Logger
-	timeout                    time.Duration
-	dataMap                    utility.DataMap
-	IP                         string
+	domain              string
+	domainPath          string
+	appServerTaskPath   string
+	rcServerRoot        string
+	rcServerConfig      string
+	jobConfigPath       string
+	spConfigPath        string
+	rpcPublishPath      string
+	rpcProviderRootPath string
+	appServerPath       string
+	spServerTaskPath    string
+	handler             IClusterHandler
+	Log                 *logger.Logger
+	timeout             time.Duration
+	dataMap             utility.DataMap
+	IP                  string
 }
 
 func NewClusterClient(domain string, ip string, handler IClusterHandler) (client *ClusterClient, err error) {
 	client = &ClusterClient{}
+	client.domain = domain
+	client.domainPath = "@" + strings.Replace(strings.TrimLeft(domain, "/"), "/", ".", -1)
 	client.IP = ip
 	client.dataMap = utility.NewDataMap()
 	client.dataMap.Set("domain", domain)

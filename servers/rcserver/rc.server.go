@@ -42,7 +42,7 @@ func (rc *RCServer) init() (err error) {
 		return
 	}
 	rc.snap = RCSnap{Domain: config.Get().Domain, Server: SERVER_SLAVE, ip: config.Get().IP}
-	rc.spRPCClient = rpcproxy.NewRPCClient()
+	rc.spRPCClient = rpcproxy.NewRPCClient(rc.clusterClient)
 	rc.rcRPCProxyHandler = rpcproxy.NewRPCProxyHandler(rc.clusterClient, rc.spRPCClient, rc.snap)
 	rc.rcRPCServer = rpcproxy.NewRPCServer(rc.rcRPCProxyHandler)
 	return nil

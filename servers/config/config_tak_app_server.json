@@ -4,16 +4,28 @@
         "auto_build_bill"
     ],
     "rpc-pool": {
-        "min": 3,
-        "max": 50
+        "min": 2,
+        "max": 2
     },
     "server": {
         "type": "http",
+        "address": "1016",
         "routes": [
             {
-                "path": "/system/base/inf",
+                "path": "/system/md5",
                 "method": "get",
-                "script": "/scripts/system.base.info"
+                "script": "./scripts/md5.lua"
+            },
+            {
+                "path": "/system/rpc",
+                "method": "get",
+                "script": "./scripts/rpc.lua"
+            },
+            {
+                "path": "/system/query",
+                "method": "get",
+                "script": "./scripts/query.lua",
+                "params": "id=1"
             }
         ]
     },

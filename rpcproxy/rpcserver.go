@@ -102,7 +102,6 @@ func (r *RPCHandlerProxy) UpdateTasks(tasks []cluster.TaskItem) {
 			r.handler.OpenTask(v)
 		}
 	}
-
 }
 
 //Request 执行RPC Request服务

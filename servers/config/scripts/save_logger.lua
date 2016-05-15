@@ -3,5 +3,6 @@ function main(input)
 
     local rpc=NewRPC()
 	local session=rpc:AsyncRequest("save_logger","{}")
-	return rpc:GetAsyncResult(session)
+	r,e= rpc:GetAsyncResult(session)
+	return r,e
 end

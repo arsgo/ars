@@ -39,7 +39,7 @@ func (app *AppServer) init() (err error) {
 		return
 	}
 	app.snap = AppSnap{ip: config.Get().IP}
-	app.rpcClient = rpcproxy.NewRPCClient()
+	app.rpcClient = rpcproxy.NewRPCClient(app.clusterClient)
 	app.snap.Address = config.Get().IP
 	app.scriptPool, err = rpcproxy.NewScriptPool(app.clusterClient, app.rpcClient)
 	app.jobConsumerScriptHandler = rpcproxy.NewRPCScriptHandler(app.clusterClient, app.scriptPool)

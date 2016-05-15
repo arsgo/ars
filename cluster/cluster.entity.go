@@ -15,8 +15,10 @@ type ServerRouteConfig struct {
 	Path   string `json:"path"`
 	Method string `json:"method"`
 	Script string `json:"script"`
+	Params string `json:"params"`
 }
 type ServerConfig struct {
+	Address    string               `json:"address"`
 	ServerType string               `json:"type"`
 	Routes     []*ServerRouteConfig `json:"routes"`
 }

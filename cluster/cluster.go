@@ -24,6 +24,7 @@ type IClusterClient interface {
 	GetMQConfig(name string) (string, error)
 	GetElasticConfig(name string) (string, error)
 	GetDBConfig(name string) (string, error)
+	GetServiceFullPath(name string) string
 	Close()
 
 	//app server..........

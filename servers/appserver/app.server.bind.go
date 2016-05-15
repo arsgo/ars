@@ -55,7 +55,7 @@ func (a *AppServer) BindTask(config *cluster.AppServerStartupConfig, err error) 
 	}
 	if config.Server != nil && len(config.Server.Routes) > 0 &&
 		strings.EqualFold(strings.ToLower(config.Server.ServerType), "http") {
-		a.httpServer, err = httpserver.NewHttpScriptServer(config.Server.Routes, a.scriptPool.Call)
+		a.httpServer, err = httpserver.NewHttpScriptServer(config.Server.Address, config.Server.Routes, a.scriptPool.Call)
 		if err == nil {
 			a.httpServer.Start()
 			a.snap.Server = fmt.Sprint(a.snap.ip, a.httpServer.Address)

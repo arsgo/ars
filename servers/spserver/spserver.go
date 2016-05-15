@@ -44,7 +44,7 @@ func (sp *SPServer) init() (err error) {
 		return
 	}
 	sp.snap = SPSnap{ip: cfg.IP}
-	sp.rpcClient = rpcproxy.NewRPCClient()
+	sp.rpcClient = rpcproxy.NewRPCClient(sp.clusterClient)
 	sp.scriptPool, err = rpcproxy.NewScriptPool(sp.clusterClient, sp.rpcClient)
 	if err != nil {
 		return

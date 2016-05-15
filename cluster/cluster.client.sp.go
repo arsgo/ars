@@ -74,17 +74,18 @@ func (client *ClusterClient) GetServiceProviderPaths() (lst ServiceProviderList,
 		return
 	}
 
-	for _, v := range serviceList {
-		path := fmt.Sprintf("%s/%s", client.rpcProviderRootPath, v)
+	for _, value := range serviceList {
+		name := client.GetServiceFullPath(value)
+		path := fmt.Sprintf("%s/%s", client.rpcProviderRootPath, value)
 		providerList, er := client.handler.GetChildren(path)
 		if er != nil {
 			continue
 		}
 		for _, l := range providerList {
-			if _, ok := lst[v]; !ok {
-				lst[v] = []string{}
+			if _, ok := lst[name]; !ok {
+				lst[name] = []string{}
 			}
-			lst[v] = append(lst[v], l)
+			lst[name] = append(lst[name], l)
 		}
 	}
 	return
@@ -105,6 +106,7 @@ func (client *ClusterClient) GetServiceTasks() (task ServiceProviderTask, err er
 	var items []TaskItem
 	for _, v := range task.Tasks {
 		if strings.EqualFold(v.IP, "*") || strings.Contains(","+v.IP+",", client.IP) {
+			v.Name = client.GetServiceFullPath(v.Name)
 			items = append(items, v)
 		}
 	}
