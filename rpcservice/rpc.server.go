@@ -24,12 +24,12 @@ func (r *RPCServer) Serve() (er error) {
 	r.server = thrift.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)
 
 	r.log.Infof("::start rpc server %s", r.Address)
-	go func() {
+	go func(r *RPCServer) {
 		er = r.server.Serve()
 		if er != nil {
 			r.log.Error(er)
 		}
-	}()
+	}(r)
 	time.Sleep(time.Second * 2)
 	return
 }

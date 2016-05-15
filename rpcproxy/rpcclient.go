@@ -66,13 +66,19 @@ func (r *RPCClient) ResetRPCServer(servers map[string][]string) string {
 		for _, ip := range v {
 			if _, ok := ips[ip]; !ok {
 				ips[ip] = ip
-				aips = append(aips, ip)
+				aips = append(aips, ip) //收集IP地址
 			}
 		}
-		if _, ok := service[n]; !ok && len(v) > 0 {
-			r.services.Set(n, &serviceItem{service: v})
+		if len(v) > 0 {
+			r.services.Set(n, &serviceItem{service: v}) //添加新服务
 		} else {
-			r.services.Delete(n)
+			r.services.Delete(n) //移除无可用IP的服务
+		}
+
+	}
+	for k := range service {
+		if _, ok := servers[k]; !ok {
+			r.services.Delete(k) //移除已不存在的服务
 		}
 	}
 	r.pool.Register(ips)

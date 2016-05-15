@@ -11,24 +11,24 @@ import (
 func (s *RPCServerPool) Register(svs map[string]string) {
 	//标记不能使用的服务
 	servers := s.servers.GetAll()
-	for _, sv := range servers {
-		server := sv.(*rpcServerService)
-		if _, ok := svs[server.IP]; !ok {
-			s.servers.Delete(server.IP)
-			go s.pool.UnRegister(server.IP)
+	for ip := range servers {
+		if _, ok := svs[ip]; !ok {
+			s.servers.Delete(ip)
+			go s.pool.UnRegister(ip)
 		}
 	}
 	//*
 	//添加可以使用使用的服务
-	for _, ip := range svs {
+	for ip := range svs {
 		if _, ok := servers[ip]; !ok {
-			go func() {
-				s.servers.Set(ip, &rpcServerService{IP: ip, Status: true})
+			go func(ip string) {
 				err := s.pool.Register(ip, newRPCClientFactory(ip, s.Log), s.MinSize, s.MaxSize)
 				if err != nil {
 					s.Log.Error(err)
 				}
-			}()
+				s.servers.Set(ip, &rpcServerService{IP: ip, Status: true})
+
+			}(ip)
 		}
 	}
 }
