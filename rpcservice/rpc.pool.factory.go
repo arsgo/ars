@@ -1,6 +1,8 @@
 package rpcservice
 
 import (
+	"errors"
+
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/pool"
 )
@@ -21,18 +23,19 @@ func (j *rpcClientFactory) Create() (p pool.Object, err error) {
 			return
 		}
 	}()
+	if j.isClose {
+		err = errors.New("factory is closed")
+		return
+	}
 	ch := make(chan *RpcClientConn, 1)
 	Subscribe(j.ip, ch)
-	for {
-		select {
-		case client := <-ch:
-			p = client.Client
-			err = client.Err
-			return
-		case <-j.closeQueue:
-			return nil, nil
-		}
+	select {
+	case client := <-ch:
+		p = client.Client
+		err = client.Err
 	}
+	return
+
 }
 func (j *rpcClientFactory) Close() {
 	j.isClose = true

@@ -3,9 +3,38 @@ package rpcservice
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strings"
-	"time"
+
+	"github.com/colinyl/lib4go/concurrent"
+	"github.com/colinyl/lib4go/logger"
+	"github.com/colinyl/lib4go/pool"
 )
+
+type rpcServerService struct {
+	Status bool
+	IP     string
+}
+
+type RPCServerPool struct {
+	pool    *pool.ObjectPool
+	servers concurrent.ConcurrentMap
+	Log     *logger.Logger
+	MinSize int
+	MaxSize int
+}
+
+func NewRPCServerPool() *RPCServerPool {
+	var err error
+	pl := &RPCServerPool{}
+	pl.pool = pool.New()
+	pl.servers = concurrent.NewConcurrentMap()
+	pl.Log, err = logger.New("rc server", true)
+	if err != nil {
+		log.Println(err)
+	}
+	return pl
+}
 
 //Register 注册服务列表
 func (s *RPCServerPool) Register(svs map[string]string) {
@@ -47,11 +76,12 @@ func (p *RPCServerPool) Request(group string, svName string, input string) (resu
 		err = fmt.Errorf("not find rpc server:%s/%s", group, svName)
 		return
 	}
-	defer p.pool.Recycle(group, o)
 	obj := o.(*RPCClient)
 	result, err = obj.Request(svName, input)
 	if err != nil {
 		p.pool.Unusable(svName, obj)
+	} else {
+		p.pool.Recycle(group, o)
 	}
 	return
 }
@@ -71,11 +101,12 @@ func (p *RPCServerPool) Send(group string, svName string, input string, data []b
 		err = errors.New("not find rpc server")
 		return
 	}
-	defer p.pool.Recycle(group, o)
 	obj := o.(*RPCClient)
 	result, err = obj.Send(svName, input, data)
 	if err != nil {
 		p.pool.Unusable(svName, obj)
+	} else {
+		p.pool.Recycle(group, o)
 	}
 	return
 }
@@ -96,32 +127,12 @@ func (p *RPCServerPool) Get(group string, svName string, input string) (result [
 		err = errors.New("not find rpc server")
 		return
 	}
-	defer p.pool.Recycle(group, o)
 	obj := o.(*RPCClient)
 	result, err = obj.Get(svName, input)
 	if err != nil {
 		p.pool.Unusable(svName, obj)
+	} else {
+		p.pool.Recycle(group, o)
 	}
 	return
-}
-func (p *RPCServerPool) clearUp() {
-	/*p.lk.Lock()
-	for k, server := range p.servers {
-		if !server.Status && p.pool.Close(server.IP) {
-			delete(p.servers, k)
-		}
-	}
-	p.lk.Unlock()*/
-}
-
-func (p *RPCServerPool) autoClearUp() {
-	timepk := time.NewTicker(time.Second * 10)
-	for {
-		select {
-		case <-timepk.C:
-			{
-				p.clearUp()
-			}
-		}
-	}
 }

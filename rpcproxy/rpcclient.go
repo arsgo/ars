@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/colinyl/ars/cluster"
 	"github.com/colinyl/ars/rpcservice"
@@ -92,20 +93,29 @@ func (r *RPCClient) ResetRPCServer(servers map[string][]string) string {
 func (r *RPCClient) GetAsyncResult(session string) (rt interface{}, err interface{}) {
 	queue := r.queues.Get(session)
 	if queue != nil {
-		result := <-queue.(chan []interface{})
-		r.queues.Delete(session)
-		if len(result) != 2 {
-			return "", "rpc method result value len is error"
-		}
-		rt = result[0]
-		if result[1] != nil {
-			er := result[1].(string)
-			if strings.EqualFold(er, "") {
-				err = nil
-			} else {
-				err = er
+		ticker := time.NewTicker(time.Second)
+		select {
+		case <-ticker.C:
+			err = fmt.Sprint("request timeout")
+			break
+		case result := <-queue.(chan []interface{}):
+			{
+				r.queues.Delete(session)
+				if len(result) != 2 {
+					return "", "rpc method result value len is error"
+				}
+				rt = result[0]
+				if result[1] != nil {
+					er := result[1].(string)
+					if strings.EqualFold(er, "") {
+						err = nil
+					} else {
+						err = er
+					}
+				}
 			}
 		}
+
 	} else {
 		err = fmt.Sprint("not find session:", session)
 	}
