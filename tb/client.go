@@ -19,7 +19,7 @@ type TCPClient struct {
 
 func NewTCPClient(address string) *TCPClient {
 	client := &TCPClient{address: address}
-	client.client = rpcservice.NewRPCClient(address)
+	client.client = rpcservice.NewRPCClientTimeout(address, 10)
 	err := client.client.Open()
 	if err != nil {
 		Log.Fatal(err)
@@ -45,7 +45,7 @@ func (c *TCPClient) Reqeust() (resp *response) {
 		resp = &response{success: false, url: c.address, useTime: 0}
 		return
 	}*/
-	result, err := c.client.Request("get_pay_order", "{}")
+	result, err := c.client.Request("save_logger", "{}")
 	if err != nil {
 		Log.Print(err)
 	}
@@ -56,14 +56,14 @@ func (c *TCPClient) Reqeust() (resp *response) {
 	code := &resultCode{}
 	err = json.Unmarshal([]byte(result), &code)
 	var isSuccess bool
-	if err != nil {		
+	if err != nil {
 		Log.Print(err)
 	} else if !strings.EqualFold(code.Code, "100") {
 		Log.Print(result)
-	}else{
-		isSuccess=true
+	} else {
+		isSuccess = true
 	}
-	
+
 	return &response{success: err == nil && isSuccess, url: c.address, useTime: subTime(startTime, endTime)}
 
 }
