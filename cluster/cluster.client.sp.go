@@ -117,7 +117,7 @@ func (client *ClusterClient) GetServiceTasks() (task ServiceProviderTask, err er
 //CreateServiceProvider 创建服务提供节点
 func (client *ClusterClient) CreateServiceProvider(name string, port string, value string) (string, error) {
 	data := client.dataMap.Copy()
-	data.Set("serviceName", name)
+	data.Set("serviceName", strings.TrimSuffix(name, client.domainPath))
 	data.Set("ip", client.IP)
 	data.Set("port", port)
 	path := data.Translate(p_serviceProviderPath)
