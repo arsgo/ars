@@ -35,6 +35,11 @@ func NewRPCClientTimeout(address string, timeout time.Duration) (client *RPCClie
 }
 
 func (client *RPCClient) Open() (err error) {
+	defer func() {
+		if er := recover(); er != nil {
+			err = er.(error)
+		}
+	}()
 	client.transport, err = thrift.NewTSocketTimeout(client.Address, client.timeout)
 	if err != nil {
 		return errors.New(fmt.Sprint("new client error:", client.Address, ",", err.Error()))

@@ -45,7 +45,7 @@ func (c *TCPClient) Reqeust() (resp *response) {
 		resp = &response{success: false, url: c.address, useTime: 0}
 		return
 	}*/
-	result, err := c.client.Request("save_logger", "{}")
+	result, err := c.client.Request("save_logger@grs.core", "{}")
 	if err != nil {
 		Log.Print(err)
 	}
@@ -57,7 +57,7 @@ func (c *TCPClient) Reqeust() (resp *response) {
 	err = json.Unmarshal([]byte(result), &code)
 	var isSuccess bool
 	if err != nil {
-		Log.Print(err)
+		Log.Print(err, "[", result, "]")
 	} else if !strings.EqualFold(code.Code, "100") {
 		Log.Print(result)
 	} else {
@@ -70,6 +70,8 @@ func (c *TCPClient) Reqeust() (resp *response) {
 func subTime(startTime time.Time, endTime time.Time) int {
 	return int(endTime.Sub(startTime).Nanoseconds() / 1000 / 1000)
 }
+
+
 func (c *TCPClient) Close() {
 	c.client.Close()
 }
