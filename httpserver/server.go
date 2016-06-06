@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/colinyl/ars/cluster"
+	"github.com/colinyl/ars/rpcproxy"
 	"github.com/colinyl/ars/rpcservice"
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/webserver"
@@ -91,7 +92,7 @@ func (r *HttpScriptController) Handle(ctx *web.Context) {
 		return
 	}
 	if len(result) == 1 {
-		ctx.ResponseWriter.Write([]byte(result[0]))
+		ctx.ResponseWriter.Write([]byte(rpcproxy.GetDataResult(result[0])))
 		return
 	}
 	if len(result) == 2 && result[0] == "302" {

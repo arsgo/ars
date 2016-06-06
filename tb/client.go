@@ -45,7 +45,9 @@ func (c *TCPClient) Reqeust() (resp *response) {
 		resp = &response{success: false, url: c.address, useTime: 0}
 		return
 	}*/
+	c.client.Open()
 	result, err := c.client.Request("save_logger@grs.core", "{}")
+	defer c.client.Close()
 	if err != nil {
 		Log.Print(err)
 	}
@@ -70,7 +72,6 @@ func (c *TCPClient) Reqeust() (resp *response) {
 func subTime(startTime time.Time, endTime time.Time) int {
 	return int(endTime.Sub(startTime).Nanoseconds() / 1000 / 1000)
 }
-
 
 func (c *TCPClient) Close() {
 	c.client.Close()

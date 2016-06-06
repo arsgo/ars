@@ -77,6 +77,12 @@ func (p *RPCServerPool) Request(group string, svName string, input string) (resu
 		return
 	}
 	obj := o.(*RPCClient)
+	err = obj.Open()
+	if err != nil {
+		p.pool.Unusable(svName, obj)
+		return
+	}
+	defer obj.Close()
 	result, err = obj.Request(svName, input)
 	if err != nil {
 		p.pool.Unusable(svName, obj)
