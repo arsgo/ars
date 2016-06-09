@@ -52,7 +52,6 @@ func NewScriptPool(clusterClient cluster.IClusterClient, rpcclient *RPCClient) (
 	p.Pool.RegisterLibs(p.bindGlobalLibs())
 	return
 }
-
 //Call 执行脚本
 func (s *ScriptPool) Call(name string, input string, params string) ([]string, error) {
 	if strings.EqualFold(name, "") {

@@ -3,7 +3,7 @@
 package rpcservice
 
 import (
-	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -76,9 +76,9 @@ func (w *worker) doWork() {
 		case sub := <-w.subscribers:
 			{
 				if w.connect == c_cant_connect {
-					sub.notify <- &RpcClientConn{Err: errors.New("cant connect server")}
+					sub.notify <- &RpcClientConn{Err: fmt.Errorf("cant connect server:%s", w.address)}
 				} else {
-					w.Log.Info(" -> connect to:", w.address)
+					//	w.Log.Info(" -> connect to:", w.address)
 					client := NewRPCClient(w.address)
 					err := client.Open()
 					if err == nil {
