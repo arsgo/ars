@@ -35,35 +35,32 @@ func (client *ClusterClient) GetRPCService() (sp ServiceProviderList, err error)
 //FilterRPCService 过滤RPC服务
 func (client *ClusterClient) FilterRPCService(services map[string][]string) (items []TaskItem, err error) {
 	all, err := client.GetServiceTasks()
+	indentity := make(map[string]string)
 	if err != nil {
 		return
 	}
 	for _, v := range all.Tasks {
 		v.Name = client.GetServiceFullPath(v.Name)
+		if _, ok := indentity[v.Name]; !ok {
+			indentity[v.Name] = v.Name
+		}
 		if _, ok := services[v.Name]; ok {
 			items = append(items, v)
 		}
+	}
+	for name := range services {
+		if _, ok := indentity[name]; !ok {
+			item := TaskItem{Name: name}
+			items = append(items, item)
+		}
+
 	}
 	return
 }
 
 //PublishRPCServices 发布所有服务
-func (client *ClusterClient) PublishRPCServices(crossServices map[string]map[string][]string) (err error) {
-	crossServices = make(map[string]map[string][]string)
-	providers, err := client.GetServiceProviderPaths()
-	if err != nil {
-		return
-	}
-	//处理跨域服务
-	if crossServices != nil {
-		for domain, services := range crossServices {
-			for service, ips := range services {
-				providers[service+"@"+domain] = ips
-			}
-		}
-	}
-
-	buffer, err := json.Marshal(providers)
+func (client *ClusterClient) PublishRPCServices(services ServiceProviderList) (err error) {
+	buffer, err := json.Marshal(services)
 	if err != nil {
 		return
 	}

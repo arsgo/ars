@@ -24,26 +24,23 @@ func (client *ClusterClient) WatchSPTaskChange(callback func()) {
 }
 
 //WatchServiceProviderChange 监控RPC服务提供方变化
-func (client *ClusterClient) WatchServiceProviderChange(changed func()) (err error) {
+func (client *ClusterClient) WatchServiceProviderChange(changed func(ServiceProviderList,error)) (err error) {
 	client.Log.Info("::watch for service providers changes")
 	client.WaitClusterPathExists(client.rpcProviderRootPath, client.timeout, func(exists bool) {
 		if !exists {
 			client.Log.Info("service provider node not exists")
-		} else {
-			err = client.PublishRPCServices(nil)
-			go changed()
+		} else {		
+			go changed(client.GetServiceProviderPaths())
 		}
 	})
 	client.WatchClusterChildrenChange(client.rpcProviderRootPath, func() {
-		err = client.PublishRPCServices(nil)
-		go changed()
+		go changed(client.GetServiceProviderPaths())
 	})
 	lst, err := client.GetAllServiceProviderNamePath()
 	for _, v := range lst {
 		for _, p := range v {
 			client.WatchClusterChildrenChange(p, func() {
-				err = client.PublishRPCServices(nil)
-				go changed()
+				go changed(client.GetServiceProviderPaths())
 			})
 		}
 	}

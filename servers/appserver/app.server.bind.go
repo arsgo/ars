@@ -26,6 +26,7 @@ func (a *AppServer) BindRCServer(configs []*cluster.RCServerItem, err error) err
 func (a *AppServer) BindTask(config *cluster.AppServerStartupConfig, err error) (er error) {
 	a.Log.Info("rpc pool size min:", config.RPCPoolSetting.MinSize, ",max:", config.RPCPoolSetting.MaxSize)
 	a.rpcClient.SetPoolSize(config.RPCPoolSetting.MinSize, config.RPCPoolSetting.MaxSize)
+	a.scriptPool.Pool.SetPoolSize(config.RPCPoolSetting.MinSize, config.RPCPoolSetting.MaxSize)
 	a.ResetAPPSnap()
 	scheduler.Stop()
 	for _, v := range config.Tasks {

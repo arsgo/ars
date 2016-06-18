@@ -4,8 +4,8 @@
         "auto_build_bill"
     ],
     "rpc-pool": {
-        "min": 2,
-        "max": 2
+        "min": 500,
+        "max": 800
     },
     "server": {
         "type": "http",
@@ -31,8 +31,9 @@
     },
     "tasks": [
         {
-            "trigger": "0/10 * * * * ?",
-            "script": "./scripts/save_logger.lua"
+            "script": "./scripts/rpc.lua",
+            "min": 100,
+            "max": 200
         }
     ]
 }

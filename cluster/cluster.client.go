@@ -52,11 +52,11 @@ type ClusterClient struct {
 
 func NewClusterClient(domain string, ip string, handler IClusterHandler) (client *ClusterClient, err error) {
 	client = &ClusterClient{}
-	client.domain = domain
-	client.domainPath = "@" + strings.Replace(strings.TrimLeft(domain, "/"), "/", ".", -1)
+	client.domain = "/" + strings.TrimLeft(strings.Replace(domain, ".", "/", -1), "/")
+	client.domainPath = "@" + strings.Replace(strings.TrimLeft(client.domain, "/"), "/", ".", -1)
 	client.IP = ip
 	client.dataMap = utility.NewDataMap()
-	client.dataMap.Set("domain", domain)
+	client.dataMap.Set("domain", client.domain)
 	client.dataMap.Set("ip", client.IP)
 	client.appServerTaskPath = client.dataMap.Translate(p_appTaskConfig)
 	client.rcServerRoot = client.dataMap.Translate(p_rcServerRoot)

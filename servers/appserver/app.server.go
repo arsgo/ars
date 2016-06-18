@@ -34,13 +34,18 @@ func NewAPPServer() *AppServer {
 
 //init 初始化服务器
 func (app *AppServer) init() (err error) {
-	app.clusterClient, err = cluster.GetClusterClient(config.Get().Domain, config.Get().IP, config.Get().ZKServers...)
+	cfg, err := config.Get()
 	if err != nil {
 		return
 	}
-	app.snap = AppSnap{ip: config.Get().IP}
+	app.clusterClient, err = cluster.GetClusterClient(cfg.Domain, cfg.IP, cfg.ZKServers...)
+	if err != nil {
+		return
+	}
+
+	app.snap = AppSnap{ip: cfg.IP}
 	app.rpcClient = rpcproxy.NewRPCClient(app.clusterClient)
-	app.snap.Address = config.Get().IP
+	app.snap.Address = cfg.IP
 	app.scriptPool, err = rpcproxy.NewScriptPool(app.clusterClient, app.rpcClient)
 	app.jobConsumerScriptHandler = rpcproxy.NewRPCScriptHandler(app.clusterClient, app.scriptPool)
 	app.jobConsumerScriptHandler.OnOpenTask = app.OnJobCreate
@@ -73,6 +78,7 @@ func (app *AppServer) Stop() error {
 		recover()
 	}()
 	app.clusterClient.Close()
+	app.rpcClient.Close()
 	app.jobConsumerRPCServer.Stop()
 	if app.httpServer != nil {
 		app.httpServer.Stop()

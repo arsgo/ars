@@ -70,7 +70,7 @@ func (n *connPool) Subscribe(address string, notify chan *RpcClientConn) {
 	wkr.subscribers <- &subscriber{notify: notify}
 }
 func (w *worker) doWork() {
-	tp := time.NewTicker(time.Second * 5)
+	tp := time.NewTicker(time.Second * 3)
 	for {
 		select {
 		case sub := <-w.subscribers:
@@ -78,12 +78,13 @@ func (w *worker) doWork() {
 				if w.connect == c_cant_connect {
 					sub.notify <- &RpcClientConn{Err: fmt.Errorf("cant connect server:%s", w.address)}
 				} else {
-					//	w.Log.Info(" -> connect to:", w.address)
-					client := NewRPCClient(w.address)
+					//w.Log.Info(" -> connect to:", w.address)
+					client := NewRPCClientTimeout(w.address, time.Second*3)
 					err := client.Open()
 					if err == nil {
 						w.connect = c_connecdted
 					} else {
+						w.Log.Error(err)
 						w.connect = c_cant_connect
 					}
 					sub.notify <- &RpcClientConn{Client: client, Err: err}

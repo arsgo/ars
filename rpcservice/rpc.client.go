@@ -57,7 +57,7 @@ func (client *RPCClient) Open() (err error) {
 	return nil
 }
 
-func (j *RPCClient) Request(name string, input string) (string, error) {	
+func (j *RPCClient) Request(name string, input string) (string, error) {
 	return j.client.Request(name, input)
 }
 
@@ -72,7 +72,6 @@ func (j *RPCClient) Close() {
 		recover()
 	}()
 	if j.transport != nil {
-	//	j.Log.Info(" -> close connection ", j.Address)
 		j.transport.Close()
 	}
 

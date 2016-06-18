@@ -5,6 +5,8 @@ Script执行程序(RPCScriptHandler),用于执行本地LUA脚本
 package rpcproxy
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/colinyl/ars/cluster"
@@ -82,6 +84,8 @@ func NewRPCHandlerProxy(h RPCHandler) *RPCHandlerProxy {
 
 //UpdateTasks 更新服务列表
 func (r *RPCHandlerProxy) UpdateTasks(tasks []cluster.TaskItem) {
+	//r.Log.Infof("UpdateTasks:%d", len(tasks))
+
 	tks := make(map[string]cluster.TaskItem)
 	for _, v := range tasks {
 		tks[v.Name] = v
@@ -104,33 +108,68 @@ func (r *RPCHandlerProxy) UpdateTasks(tasks []cluster.TaskItem) {
 	}
 }
 
+//getDomain 获取domain
+func (r *RPCHandlerProxy) getDomain(name string) string {
+	if !strings.Contains(name, "@") {
+		return ""
+	}
+	items := strings.Split(name, "@")
+	return "@" + items[1]
+}
+
+//getTaskItem 根据名称获取一个分组
+func (r *RPCHandlerProxy) getTaskItem(name string) (item cluster.TaskItem, err error) {
+
+//	all := r.tasks.Services.GetAll()
+//	for i, v := range all {
+		//fmt.Printf("getTaskItem:%s,%v\n", i, v.(cluster.TaskItem).IP)
+//	}
+
+	//r.Log.Info("get1:", name)
+	group := r.tasks.Services.Get(name)
+	if group == nil {
+		//r.Log.Info("get3:", "*"+r.getDomain(name))
+		group = r.tasks.Services.Get("*" + r.getDomain(name))
+	}
+	if group == nil {
+		//r.Log.Info("get3:", "*")
+		group = r.tasks.Services.Get("*")
+	}
+
+	if group != nil {
+		item = group.(cluster.TaskItem)
+		item.Name = name
+		return
+	}
+	total := r.tasks.Services.GetAll()
+	for i, v := range total {
+		r.Log.Info(i, v.(cluster.TaskItem).IP)
+	}
+	err = fmt.Errorf("not find service:%s", name)
+	return
+}
+
 //Request 执行RPC Request服务
 func (r *RPCHandlerProxy) Request(name string, input string) (result string, err error) {
 	r.Log.Info("-> recv request:", name)
-	task := r.tasks.Services.Get(name)
-	var currentErr error
-	if task == nil {
-		result = GetErrorResult("500", "not find service:", name)
-	} else {
-		result, currentErr = r.handler.Request(task.(cluster.TaskItem), input)
-	}
-
+	task, currentErr := r.getTaskItem(name)
 	if currentErr != nil {
 		result = GetErrorResult("500", currentErr.Error())
+	} else {
+		result, currentErr = r.handler.Request(task, input)
 	}
 	r.Log.Info(result)
-
 	return
 }
 
 //Send 执行RPC Send服务
 func (r *RPCHandlerProxy) Send(name string, input string, data []byte) (result string, err error) {
 	r.Log.Info("-> recv send:", name)
-	task := r.tasks.Services.Get(name)
-	if task == nil {
-		return GetErrorResult("500", "not find service:", name), nil
+	task, er := r.getTaskItem(name)
+	if er != nil {
+		return GetErrorResult("500", er.Error()), nil
 	}
-	result, er := r.handler.Send(task.(cluster.TaskItem), input, data)
+	result, er = r.handler.Send(task, input, data)
 	if er != nil {
 		r.Log.Error(er)
 		result = GetErrorResult("500", er.Error())
@@ -143,11 +182,11 @@ func (r *RPCHandlerProxy) Send(name string, input string, data []byte) (result s
 //Get 执行RPC Get服务
 func (r *RPCHandlerProxy) Get(name string, input string) (buffer []byte, err error) {
 	r.Log.Info("-> recv get:", name)
-	task := r.tasks.Services.Get(name)
-	if task == nil {
+	task, er := r.getTaskItem(name)
+	if er != nil {
 		return []byte(GetErrorResult("500", "not find service:", name)), nil
 	}
-	buffer, er := r.handler.Get(task.(cluster.TaskItem), input)
+	buffer, er = r.handler.Get(task, input)
 	if er != nil {
 		r.Log.Error(er)
 		buffer = []byte(GetErrorResult("500", er.Error()))

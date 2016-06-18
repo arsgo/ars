@@ -72,7 +72,7 @@ type ServiceProviderTask struct {
 
 //----------------rc server-------------------------------
 type CrossDoaminAccessItem struct {
-	Services []string `json:"service"`
+	Services []string `json:"services"`
 	Type     string   `json:"type"`
 	Servers  []string `json:"servers"`
 }
@@ -80,6 +80,14 @@ type CrossDoaminAccessItem struct {
 type RCServerTask struct {
 	CrossDomainAccess map[string]CrossDoaminAccessItem `json:"cross-domain-access"`
 	RPCPoolSetting    RPCPoolSetting                   `json:"rpc-pool"`
+}
+
+func (c CrossDoaminAccessItem) GetServicesMap() map[string][]string {
+	m := make(map[string][]string)
+	for _, k := range c.Services {
+		m[k] = c.Servers
+	}
+	return m
 }
 
 //---------------------------------------------------------

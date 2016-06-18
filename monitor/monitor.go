@@ -19,8 +19,12 @@ type SysMonitorInfo struct {
 //GetSysMonitorInfo 获取系统信息
 func GetSysMonitorInfo() (sys *SysMonitorInfo, err error) {
 	sys = &SysMonitorInfo{}
+	cfg, err := config.Get()
+	if err != nil {
+		return
+	}
 	baseMap := make(map[string]interface{})
-	baseMap["ip"] = config.Get().IP
+	baseMap["ip"] = cfg.IP
 	baseMap["timestamp"] = time.Now().Format("20060102150405")
 	sys.CPU, err = json.Marshal(utility.MergeMaps(baseMap, sysinfo.GetCPU()))
 	if err != nil {

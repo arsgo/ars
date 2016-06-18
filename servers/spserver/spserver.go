@@ -38,7 +38,10 @@ func NewSPServer() *SPServer {
 
 //init 初始化服务器
 func (sp *SPServer) init() (err error) {
-	cfg := config.Get()
+	cfg, err := config.Get()
+	if err != nil {
+		return
+	}
 	sp.clusterClient, err = cluster.GetClusterClient(cfg.Domain, cfg.IP, cfg.ZKServers...)
 	if err != nil {
 		return
@@ -79,6 +82,7 @@ func (sp *SPServer) Start() (err error) {
 func (sp *SPServer) Stop() error {
 	defer recover()
 	sp.clusterClient.Close()
+	sp.rpcClient.Close()
 	sp.rpcServer.Stop()
 	sp.Log.Info("::sp server closed")
 	return nil

@@ -36,6 +36,9 @@ func GetSuccessResult() string {
 }
 
 func GetDataResult(data string) string {
+	if strings.EqualFold(data, "") || strings.EqualFold(data, "nil") {
+		return result_success_format
+	}
 	if strings.HasSuffix(data, "}") &&
 		strings.HasPrefix(data, "{") {
 		return data

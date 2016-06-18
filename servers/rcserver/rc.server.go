@@ -1,11 +1,10 @@
 package main
 
 import (
-	"sync"
-
 	"github.com/colinyl/ars/cluster"
 	"github.com/colinyl/ars/rpcproxy"
 	"github.com/colinyl/ars/servers/config"
+	"github.com/colinyl/lib4go/concurrent"
 	"github.com/colinyl/lib4go/logger"
 )
 
@@ -18,9 +17,9 @@ const (
 type RCServer struct {
 	clusterClient     cluster.IClusterClient
 	IsMaster          bool
-	crossDomain       map[string]cluster.IClusterClient
-	crossService      map[string]map[string][]string
-	crossLock         sync.RWMutex
+	currentServices   concurrent.ConcurrentMap
+	crossDomain       concurrent.ConcurrentMap //map[string]cluster.IClusterClient
+	crossService      concurrent.ConcurrentMap //map[string]map[string][]string
 	Log               *logger.Logger
 	rcRPCServer       *rpcproxy.RPCServer //RC Server服务供RPC调用
 	spRPCClient       *rpcproxy.RPCClient //SP Server调用客户端
@@ -31,17 +30,25 @@ type RCServer struct {
 //NewRCServer 创建RC Server服务器
 func NewRCServer() *RCServer {
 	rc := &RCServer{}
+	rc.currentServices = concurrent.NewConcurrentMap()
+	rc.crossDomain = concurrent.NewConcurrentMap()
+	rc.crossService = concurrent.NewConcurrentMap()
 	rc.Log, _ = logger.New("rc server", true)
 	return rc
 }
 
 //init 初始化服务
 func (rc *RCServer) init() (err error) {
-	rc.clusterClient, err = cluster.GetClusterClient(config.Get().Domain, config.Get().IP, config.Get().ZKServers...)
+
+	cfg, err := config.Get()
 	if err != nil {
 		return
 	}
-	rc.snap = RCSnap{Domain: config.Get().Domain, Server: SERVER_SLAVE, ip: config.Get().IP}
+	rc.clusterClient, err = cluster.GetClusterClient(cfg.Domain, cfg.IP, cfg.ZKServers...)
+	if err != nil {
+		return
+	}
+	rc.snap = RCSnap{Domain: cfg.Domain, Server: SERVER_SLAVE, ip: cfg.IP}
 	rc.spRPCClient = rpcproxy.NewRPCClient(rc.clusterClient)
 	rc.rcRPCProxyHandler = rpcproxy.NewRPCProxyHandler(rc.clusterClient, rc.spRPCClient, rc.snap)
 	rc.rcRPCServer = rpcproxy.NewRPCServer(rc.rcRPCProxyHandler)
@@ -72,6 +79,7 @@ func (rc *RCServer) Stop() error {
 		recover()
 	}()
 	rc.clusterClient.Close()
+	rc.spRPCClient.Close()
 	rc.rcRPCServer.Stop()
 	rc.Log.Info("::rc server closed")
 	return nil

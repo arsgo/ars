@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/colinyl/ars/cluster"
-	"github.com/colinyl/ars/servers/config"
 )
 
 //BindRCServer 绑定服务
@@ -17,6 +16,7 @@ func (rc *RCServer) BindRCServer() (err error) {
 		return
 	}
 	rc.clusterClient.ResetSnap(rc.snap.Path, rc.snap.GetSnap())
+
 	rc.clusterClient.WatchRCServerChange(func(items []*cluster.RCServerItem, err error) {
 		isMaster := rc.IsMasterServer(items)
 		if isMaster && !rc.IsMaster {
@@ -24,21 +24,26 @@ func (rc *RCServer) BindRCServer() (err error) {
 			rc.snap.Server = SERVER_MASTER
 			rc.Log.Info("::current server is ", rc.snap.Server)
 
-			rc.clusterClient.WatchJobConfigChange(func(config map[string]cluster.TaskItem, err error) {
+			go rc.clusterClient.WatchJobConfigChange(func(config map[string]cluster.TaskItem, err error) {
 				rc.BindJobScheduler(config, err)
 			})
-			rc.clusterClient.WatchServiceProviderChange(func() {
+			go rc.clusterClient.WatchServiceProviderChange(func(lst cluster.ServiceProviderList, err error) {
+				//重新发布服务
+				rc.currentServices.Set("*", lst)
+				rc.PublishNow()
+			})
+			go rc.clusterClient.WatchRCTaskChange(func(task cluster.RCServerTask, err error) {
+				rc.spRPCClient.SetPoolSize(task.RPCPoolSetting.MinSize, task.RPCPoolSetting.MaxSize)
+			//	rc.BindCrossAccess(task)
 			})
 		} else if !isMaster {
 			rc.IsMaster = false
 			rc.snap.Server = SERVER_SLAVE
 			rc.Log.Info("::current server is ", rc.snap.Server)
+			go rc.clusterClient.WatchRCTaskChange(func(task cluster.RCServerTask, err error) {
+				rc.spRPCClient.SetPoolSize(task.RPCPoolSetting.MinSize, task.RPCPoolSetting.MaxSize)
+			})
 		}
-	})
-	rc.clusterClient.WatchRCTaskChange(func(task cluster.RCServerTask, err error) {
-		rc.Log.Info("rpc pool size min:", task.RPCPoolSetting.MinSize, ",max:", task.RPCPoolSetting.MaxSize)
-		rc.spRPCClient.SetPoolSize(task.RPCPoolSetting.MinSize, task.RPCPoolSetting.MaxSize)
-		rc.BindCrossAccess(task)
 	})
 	rc.clusterClient.WatchRPCServiceChange(func(services map[string][]string, err error) {
 		ip := rc.spRPCClient.ResetRPCServer(services)
@@ -46,79 +51,131 @@ func (rc *RCServer) BindRCServer() (err error) {
 		if er != nil {
 			rc.Log.Error(er)
 			return
-		}
-		rc.Log.Info("rpc services:(", len(tasks), ") ", ip)
+		}		
+		rc.Log.Infof("rpc services:len(%d)%s ", len(tasks), ip)
 		rc.rcRPCServer.UpdateTasks(tasks)
 	})
 	return
 }
 
+//PublishNow 立即发布服务
+func (rc *RCServer) PublishNow() {
+	defer func() {
+		if r := recover(); r != nil {
+			rc.Log.Info(r)
+		}
+	}()
+	//立即发布服务
+	services := rc.MergeService()
+	rc.Log.Infof("->publish services:%d", len(services))
+	err := rc.clusterClient.PublishRPCServices(services)
+	if err != nil {
+		rc.Log.Error(err)
+	}
+}
+
+//BindCrossAccess 绑定垮域访问服务
 func (rc *RCServer) BindCrossAccess(task cluster.RCServerTask) (err error) {
-	if !rc.IsMaster {
+	//if !rc.IsMaster {
+	//	return
+	//}
+	rc.ResetCrossDomainServices(task)
+	rc.WatchCrossDomain(task)
+	return
+}
+
+//ResetCrossDomainServices 重置跨域服务
+func (rc *RCServer) ResetCrossDomainServices(task cluster.RCServerTask) {
+	//添加、关闭、更新服务
+	allServices := rc.crossService.GetAll()
+	//添加不存在的域和服务
+	for domain, item := range task.CrossDomainAccess {
+		if _, ok := allServices[domain]; ok {
+			continue
+		}
+		crossData := item.GetServicesMap()
+		rc.crossService.Set(domain, crossData) //添加不存在的域服务
+	}
+	//删除，更新服务
+	for domain, svs := range allServices {
+		if _, ok := task.CrossDomainAccess[domain]; !ok {
+			rc.crossService.Delete(domain) //不存在域,则删除
+			continue
+		}
+		//检查本地服务是否与远程服务一致
+		currentServices := svs.(map[string][]string)
+		remoteServices := task.CrossDomainAccess[domain].GetServicesMap()
+		//删除更新服务
+		for name := range currentServices {
+			if _, ok := remoteServices[name]; !ok {
+				delete(currentServices, name)
+			} else {
+				currentServices[name] = task.CrossDomainAccess[domain].Servers
+			}
+		}
+		//添加服务
+		for name := range remoteServices {
+			if _, ok := currentServices[name]; !ok {
+				currentServices[name] = task.CrossDomainAccess[domain].Servers
+			}
+		}
+
+	}
+}
+
+//WatchCrossDomain 监控外部域
+func (rc *RCServer) WatchCrossDomain(task cluster.RCServerTask) {
+	if len(task.CrossDomainAccess) == 0 {
 		return
 	}
-	rc.crossLock.Lock()
-	defer rc.crossLock.Unlock()
-
-	//移除所有监控
-	for domain, client := range rc.crossDomain {
-		client.Close()
-		delete(rc.crossDomain, domain)
-	}
-
-	//移除域和服务
-	for domain, services := range rc.crossService {
+	rc.Log.Info("::watch cross domain")
+	//关闭域
+	currentCluster := rc.crossDomain.GetAll()
+	for domain, clt := range currentCluster {
 		if _, ok := task.CrossDomainAccess[domain]; !ok {
-			delete(rc.crossService, domain) //不存在域,则删除
-		}
-		for onesvs := range services {
-			for _, v := range task.CrossDomainAccess[domain].Services {
-				if strings.EqualFold(v, onesvs) {
-					rc.crossService[domain][onesvs] = task.CrossDomainAccess[domain].Servers //存在服务,则更新IP列表
-					continue
-				}
-			}
-			delete(rc.crossService[domain], onesvs) //不存在服务,则移除服务
+			client := clt.(cluster.IClusterClient)
+			client.Close()
+			rc.crossDomain.Delete(domain)
 		}
 	}
 
+	//监控域
 	for domain, v := range task.CrossDomainAccess {
 		//为cluster类型时,添加监控
-		if _, ok := rc.crossDomain[domain]; !ok && strings.EqualFold(strings.ToLower(v.Type), "cluster") {
-			rc.crossDomain[domain], err = cluster.GetClusterClient(domain, config.Get().IP, v.Servers...)
+		if rc.crossDomain.Get(domain) == nil {
+			clusterClient, err := cluster.GetClusterClient(domain, rc.snap.ip, v.Servers...)
 			if err != nil {
 				rc.Log.Error(err)
 				continue
 			}
-			rc.crossService[domain] = make(map[string][]string)
+
+			//将服务添加到服务列表
+			rc.crossDomain.Set(domain, clusterClient)
+			currentServices := make(map[string][]string)
 			for _, svs := range v.Services {
-				rc.crossService[domain][svs] = v.Servers
+				currentServices[svs] = v.Servers
 			}
+			rc.crossService.Set(domain, currentServices)
+
 			//监控外部RC服务器变化,变化后更新本地服务
-			go rc.crossDomain[domain].WatchRCServerChange(func(items []*cluster.RCServerItem, err error) {
-				rc.crossLock.Lock()
-				defer rc.crossLock.Unlock()
-				var ips = []string{}
-				for _, v := range items {
-					ips = append(ips, v.Server)
-				}
-				for service := range rc.crossService[domain] {
-					rc.crossService[domain][service] = ips
-				}
-			})
-		} else if strings.EqualFold(strings.ToLower(v.Type), "proxy") {
-			//为 proxy类型时,直接添加到服务列表
-			for _, service := range v.Services {
-				rc.crossService[domain][service] = v.Servers
-			}
+			go func(domain string) {
+				rc.Log.Infof("::watch [%s] rc server change", domain)
+				clusterClient.WatchRCServerChange(func(items []*cluster.RCServerItem, err error) {
+					rc.Log.Infof("::rc server changed:%s", domain)
+					var ips = []string{}
+					for _, v := range items {
+						ips = append(ips, v.Address)
+					}
+					allServices := rc.crossService.Get(domain).(map[string][]string)
+					for name := range allServices {
+						allServices[name] = ips
+					}
+					rc.PublishNow()
+
+				})
+			}(domain)
 		}
 	}
-	//重新发布服务
-	err = rc.clusterClient.PublishRPCServices(rc.crossService)
-	if err != nil {
-		return
-	}
-	return
 }
 
 //IsMasterServer 检查当前RC Server是否是Master
@@ -129,4 +186,24 @@ func (rc *RCServer) IsMasterServer(items []*cluster.RCServerItem) bool {
 	}
 	sort.Sort(sort.StringSlice(servers))
 	return len(servers) == 0 || strings.EqualFold(rc.snap.Path, servers[0])
+}
+
+//MergeService 合并所有服务
+func (rc *RCServer) MergeService() (lst cluster.ServiceProviderList) {
+	lst = make(map[string][]string)
+	services := rc.currentServices.Get("*")
+	if services != nil {
+		lst = services.(cluster.ServiceProviderList)
+	}
+	crossServices := rc.crossService.GetAll()
+	for domain, svs := range crossServices {
+		service := svs.(map[string][]string)
+		for i, v := range service {
+			if len(v) > 0 {
+				lst[i+"@"+domain] = v
+			}
+
+		}
+	}
+	return lst
 }

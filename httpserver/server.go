@@ -77,29 +77,49 @@ func (r *HttpScriptController) Handle(ctx *web.Context) {
 	r.server.Log.Info("api.start:", r.config.Script)
 	data, err := json.Marshal(&ctx.Params)
 	if err != nil {
-		r.server.Log.Error(err)
-		ctx.Abort(500, err.Error())
+		r.setResponse(ctx, 500, err.Error())
 		return
 	}
 	result, err := r.server.call(r.config.Script, string(data), r.config.Params)
-	r.server.Log.Info("api.result:", strings.Join(result, ","), err)
 	if err != nil {
-		r.server.Log.Error(err)
-		ctx.Abort(500, err.Error())
+		r.setResponse(ctx, 500, err.Error())
 		return
 	}
 	if len(result) == 0 {
+		r.setResponse(ctx, 200, "")
 		return
 	}
 	if len(result) == 1 {
-		ctx.ResponseWriter.Write([]byte(rpcproxy.GetDataResult(result[0])))
+		r.setResponse(ctx, 200, result[0])
 		return
 	}
 	if len(result) == 2 && result[0] == "302" {
-		ctx.Redirect(302, result[1])
+		r.setResponse(ctx, 302, result[1])
 	} else {
-		ctx.Redirect(500, "err")
+		r.setResponse(ctx, 500, "system busy")
 	}
 	return
 
+}
+func (r *HttpScriptController) setResponse(ctx *web.Context, code int, msg string) {
+
+	responseContent := ""
+	switch code {
+	case 200:
+		{
+			responseContent = rpcproxy.GetDataResult(msg)
+			ctx.ResponseWriter.Write([]byte(responseContent))
+		}
+	case 500:
+		{
+			responseContent = rpcproxy.GetErrorResult(string(code), msg)
+			ctx.Abort(500, responseContent)
+		}
+	case 302:
+		{
+			responseContent = msg
+			ctx.Redirect(302, responseContent)
+		}
+	}
+	r.server.Log.Infof("api.response:%d %s", code, responseContent)
 }

@@ -49,7 +49,7 @@ type RPCClient struct {
 func NewRPCClient(cli cluster.IClusterClient) *RPCClient {
 	client := &RPCClient{}
 	client.client = cli
-	client.pool = rpcservice.NewRPCServerPool()
+	client.pool = rpcservice.NewRPCServerPool(5, 10)
 	client.services = concurrent.NewConcurrentMap()
 	client.queues = concurrent.NewConcurrentMap()
 	return client
@@ -59,6 +59,12 @@ func NewRPCClient(cli cluster.IClusterClient) *RPCClient {
 func (r *RPCClient) SetPoolSize(minSize int, maxSize int) {
 	r.pool.MinSize = minSize
 	r.pool.MaxSize = maxSize
+	r.pool.ResetAllPoolSize(minSize, maxSize)
+}
+
+//Close 关闭连接池
+func (r *RPCClient) Close() {
+	r.pool.Close()
 }
 
 //ResetRPCServer 重置所有RPC服务器
@@ -78,7 +84,6 @@ func (r *RPCClient) ResetRPCServer(servers map[string][]string) string {
 		} else {
 			r.services.Delete(n) //移除无可用IP的服务
 		}
-
 	}
 	for k := range service {
 		if _, ok := servers[k]; !ok {
@@ -93,7 +98,7 @@ func (r *RPCClient) ResetRPCServer(servers map[string][]string) string {
 func (r *RPCClient) GetAsyncResult(session string) (rt interface{}, err interface{}) {
 	queue := r.queues.Get(session)
 	if queue != nil {
-		ticker := time.NewTicker(time.Second)
+		ticker := time.NewTicker(time.Second * 4)
 		select {
 		case <-ticker.C:
 			err = fmt.Sprint("request timeout")
@@ -122,12 +127,31 @@ func (r *RPCClient) GetAsyncResult(session string) (rt interface{}, err interfac
 	return
 }
 
+//getDomain 获取domain
+func (r *RPCClient) getDomain(name string) string {
+	if !strings.Contains(name, "@") {
+		return ""
+	}
+	items := strings.Split(name, "@")
+	return "@" + items[1]
+}
+
 //getGroupName 根据名称获取一个分组
 func (r *RPCClient) getGroupName(name string) string {
+
+	//all := r.services.GetAll()
+	//for i, v := range all {
+	//	fmt.Printf("getGroupName:%s,%v\n", i, v.(*serviceItem).service)
+	//	}
+
 	group := r.services.Get(name)
+	if group == nil {
+		group = r.services.Get("*" + r.getDomain(name))
+	}
 	if group == nil {
 		group = r.services.Get("*")
 	}
+
 	if group != nil {
 		return group.(*serviceItem).getOne()
 	}

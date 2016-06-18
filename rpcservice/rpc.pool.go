@@ -24,9 +24,10 @@ type RPCServerPool struct {
 	MaxSize int
 }
 
-func NewRPCServerPool() *RPCServerPool {
+//NewRPCServerPool 创建RPC连接池
+func NewRPCServerPool(minSize int, maxSize int) *RPCServerPool {
 	var err error
-	pl := &RPCServerPool{}
+	pl := &RPCServerPool{MinSize: minSize, MaxSize: maxSize}
 	pl.pool = pool.New()
 	pl.servers = concurrent.NewConcurrentMap()
 	pl.Log, err = logger.New("rc server", true)
@@ -34,6 +35,18 @@ func NewRPCServerPool() *RPCServerPool {
 		log.Println(err)
 	}
 	return pl
+}
+
+//ResetAllPoolSize 重置所有连接池大小
+func (s *RPCServerPool) ResetAllPoolSize(minSize int, maxSize int) {
+	s.MinSize = minSize
+	s.MaxSize = maxSize
+	s.pool.ResetAllPoolSize(minSize, maxSize)
+}
+
+//Close 关闭连接池
+func (s *RPCServerPool) Close() {
+   s.pool.Close()
 }
 
 //Register 注册服务列表
@@ -73,7 +86,7 @@ func (p *RPCServerPool) Request(group string, svName string, input string) (resu
 	}
 	o, err := p.pool.Get(group)
 	if err != nil {
-		err = fmt.Errorf("not find rpc server:%s/%s", group, svName)
+		err = fmt.Errorf("not find rpc server:%s/%s,%s", group, svName, err)
 		return
 	}
 	obj := o.(*RPCClient)

@@ -52,12 +52,12 @@ type IClusterClient interface {
 	GetRPCService() (ServiceProviderList, error)
 
 	//sp server........
-	WatchServiceProviderChange(changed func()) (err error)
+	WatchServiceProviderChange(changed func(ServiceProviderList, error)) (err error)
 	WatchSPTaskChange(callback func())
 	GetAllServiceProviderNamePath() (lst map[string][]string, err error)
 	GetServiceTasks() (ServiceProviderTask, error)
 	FilterRPCService(map[string][]string) ([]TaskItem, error)
-	PublishRPCServices(map[string]map[string][]string) (err error)
+	PublishRPCServices(services ServiceProviderList) (err error)
 	GetServiceProviderPaths() (lst ServiceProviderList, err error)
 	ResetSnap(addr string, snap string) (err error)
 	CreateServiceProvider(name string, port string, value string) (string, error)
