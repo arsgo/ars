@@ -36,13 +36,13 @@ func GetSuccessResult() string {
 }
 
 func GetDataResult(data string) string {
-	if strings.EqualFold(data, "") || strings.EqualFold(data, "nil") {
+	if strings.EqualFold(data, "") || strings.EqualFold(strings.ToLower(data), "nil") || strings.EqualFold(strings.ToLower(data), "null") {
 		return result_success_format
 	}
 	if strings.HasPrefix(data, "{") && strings.HasSuffix(data, "}") {
 		return data
 	}
-	if strings.HasPrefix(data, "[") && strings.HasSuffix(data, "]") {
+	if strings.HasPrefix(data, "[{") && strings.HasSuffix(data, "}]") {
 		return data
 	}
 	return fmt.Sprintf(result_data_format, data)
