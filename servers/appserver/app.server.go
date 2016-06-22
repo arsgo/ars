@@ -46,7 +46,7 @@ func (app *AppServer) init() (err error) {
 	app.snap = AppSnap{ip: cfg.IP}
 	app.rpcClient = rpcproxy.NewRPCClient(app.clusterClient)
 	app.snap.Address = cfg.IP
-	app.scriptPool, err = rpcproxy.NewScriptPool(app.clusterClient, app.rpcClient)
+	app.scriptPool, err = rpcproxy.NewScriptPool(app.clusterClient, app.rpcClient, make(map[string]interface{}))
 	app.jobConsumerScriptHandler = rpcproxy.NewRPCScriptHandler(app.clusterClient, app.scriptPool)
 	app.jobConsumerScriptHandler.OnOpenTask = app.OnJobCreate
 	app.jobConsumerScriptHandler.OnCloseTask = app.OnJobClose

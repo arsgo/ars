@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/colinyl/ars/cluster"
+	"github.com/colinyl/lib4go/db"
 	"github.com/colinyl/lib4go/elastic"
 	"github.com/colinyl/lib4go/influxdb"
 	"github.com/colinyl/lib4go/logger"
@@ -42,16 +43,17 @@ type ScriptPool struct {
 }
 
 //NewScriptPool 创建脚本POOl
-func NewScriptPool(clusterClient cluster.IClusterClient, rpcclient *RPCClient) (p *ScriptPool, err error) {
+func NewScriptPool(clusterClient cluster.IClusterClient, rpcclient *RPCClient, extlibs map[string]interface{}) (p *ScriptPool, err error) {
 	p = &ScriptPool{}
 	p.clusterClient = clusterClient
 	p.rpcclient = rpcclient
 	p.Pool = script.NewLuaPool()
 	p.Pool.SetPackages(`./scripts/xlib`, `./scripts`)
 	p.Log, err = logger.New("script", true)
-	p.Pool.RegisterLibs(p.bindGlobalLibs())
+	p.Pool.RegisterLibs(p.bindGlobalLibs(extlibs))
 	return
 }
+
 //Call 执行脚本
 func (s *ScriptPool) Call(name string, input string, params string) ([]string, error) {
 	if strings.EqualFold(name, "") {
@@ -112,8 +114,18 @@ func (s *ScriptPool) NewElastic(name string) (es *elastic.ElasticSearch, err err
 	return
 }
 
+//NewDB NewDB
+func (s *ScriptPool) NewDB(name string) (bind *db.DBScriptBind, err error) {
+	config, err := s.clusterClient.GetDBConfig(name)
+	if err != nil {
+		return
+	}
+	bind, err = db.NewDBScriptBind(config)
+	return
+}
+
 //bindGlobalLibs 绑定lib
-func (s *ScriptPool) bindGlobalLibs() (funs map[string]interface{}) {
+func (s *ScriptPool) bindGlobalLibs(extlibs map[string]interface{}) (funs map[string]interface{}) {
 	funs = map[string]interface{}{
 		"print":         s.Log.Info,
 		"printf":        s.Log.Infof,
@@ -124,6 +136,10 @@ func (s *ScriptPool) bindGlobalLibs() (funs map[string]interface{}) {
 		"NewElastic":    s.NewElastic,
 		"NewInfluxDB":   s.NewInfluxDB,
 		"NewMemcached":  s.NewMemcached,
+		"NewDB":         s.NewDB,
+	}
+	for i, v := range extlibs {
+		funs[i] = v
 	}
 	return
 }

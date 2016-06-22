@@ -8,8 +8,8 @@ import (
 
 const (
 	result_error_format   = `{"code":"%s","msg":"%s"}`
-	result_success_format = `{"code":"100","msg":"success"}`
-	result_data_format    = `{"code":"100","msg":"success","data":"%s"}`
+	result_success_format = `{"code":"success","msg":"成功"}`
+	result_data_format    = `{"code":"success","msg":"成功","data":"%s"}`
 )
 
 //ResultEntity 结果实体
@@ -39,9 +39,12 @@ func GetDataResult(data string) string {
 	if strings.EqualFold(data, "") || strings.EqualFold(data, "nil") {
 		return result_success_format
 	}
-	if strings.HasSuffix(data, "}") &&
-		strings.HasPrefix(data, "{") {
+	if strings.HasPrefix(data, "{") && strings.HasSuffix(data, "}") {
+		return data
+	}
+	if strings.HasPrefix(data, "[") && strings.HasSuffix(data, "]") {
 		return data
 	}
 	return fmt.Sprintf(result_data_format, data)
+
 }

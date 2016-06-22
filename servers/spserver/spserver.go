@@ -27,11 +27,18 @@ type SPServer struct {
 	clusterClient  cluster.IClusterClient
 	scriptPool     *rpcproxy.ScriptPool //脚本引擎池
 	snap           SPSnap
+	extlibs        map[string]interface{}
+}
+
+//NoExtlibs 无外部扩展库
+func NoExtlibs() map[string]interface{} {
+	return make(map[string]interface{})
 }
 
 //NewSPServer 创建SP server服务器
-func NewSPServer() *SPServer {
+func NewSPServer(extlibs map[string]interface{}) *SPServer {
 	sp := &SPServer{}
+	sp.extlibs = extlibs
 	sp.Log, _ = logger.New("sp server", true)
 	return sp
 }
@@ -48,7 +55,7 @@ func (sp *SPServer) init() (err error) {
 	}
 	sp.snap = SPSnap{ip: cfg.IP}
 	sp.rpcClient = rpcproxy.NewRPCClient(sp.clusterClient)
-	sp.scriptPool, err = rpcproxy.NewScriptPool(sp.clusterClient, sp.rpcClient)
+	sp.scriptPool, err = rpcproxy.NewScriptPool(sp.clusterClient, sp.rpcClient, sp.extlibs)
 	if err != nil {
 		return
 	}

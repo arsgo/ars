@@ -139,11 +139,6 @@ func (r *RPCClient) getDomain(name string) string {
 //getGroupName 根据名称获取一个分组
 func (r *RPCClient) getGroupName(name string) string {
 
-	//all := r.services.GetAll()
-	//for i, v := range all {
-	//	fmt.Printf("getGroupName:%s,%v\n", i, v.(*serviceItem).service)
-	//	}
-
 	group := r.services.Get(name)
 	if group == nil {
 		group = r.services.Get("*" + r.getDomain(name))
