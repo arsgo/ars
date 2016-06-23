@@ -75,6 +75,8 @@ func NewHttpScriptController(r *HttpScriptServer, config *cluster.ServerRouteCon
 //Handle 脚本处理程序
 func (r *HttpScriptController) Handle(ctx *web.Context) {
 	r.server.Log.Info("api.start:", r.config.Script)
+	r.server.Log.Info("from_data:", ctx.Request.Form.Encode())
+	r.server.Log.Info("PostForm:", ctx.Request.PostForm.Encode())
 	data, err := json.Marshal(&ctx.Params)
 	if err != nil {
 		r.setResponse(ctx, 500, err.Error())
