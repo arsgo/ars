@@ -30,6 +30,7 @@ func (a *AppServer) BindTask(config *cluster.AppServerStartupConfig, err error) 
 	a.ResetAPPSnap()
 	scheduler.Stop()
 	for _, v := range config.Tasks {
+		a.Log.Info("::start script:", v.Script)
 		er = a.scriptPool.Pool.PreLoad(v.Script, v.MinSize, v.MaxSize)
 		if er != nil {
 			a.Log.Error("load task`s script error in:", v.Script, ",", er)
@@ -54,6 +55,15 @@ func (a *AppServer) BindTask(config *cluster.AppServerStartupConfig, err error) 
 	if a.httpServer != nil {
 		a.httpServer.Stop()
 	}
+	for _, v := range config.Server.Routes {
+		er = a.scriptPool.Pool.PreLoad(v.Script, v.MinSize, v.MaxSize)
+		if er != nil {
+			a.Log.Error("load script error in:", v.Script, ",", er)		
+		} else {
+			a.Log.Info("::start script ", v.Script)
+		}
+	}
+
 	if config.Server != nil && len(config.Server.Routes) > 0 &&
 		strings.EqualFold(strings.ToLower(config.Server.ServerType), "http") {
 		a.httpServer, err = httpserver.NewHttpScriptServer(config.Server.Address, config.Server.Routes, a.scriptPool.Call)
@@ -63,7 +73,6 @@ func (a *AppServer) BindTask(config *cluster.AppServerStartupConfig, err error) 
 		} else {
 			a.Log.Error(err)
 		}
-
 	}
 	if len(config.Jobs) > 0 {
 		a.jobConsumerRPCServer.Stop()

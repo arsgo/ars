@@ -3,6 +3,7 @@ package rpcproxy
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/colinyl/ars/cluster"
@@ -12,6 +13,7 @@ import (
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/mem"
 	"github.com/colinyl/lib4go/mq"
+	"github.com/colinyl/lib4go/net"
 	"github.com/colinyl/lib4go/script"
 	"github.com/colinyl/lib4go/utility"
 )
@@ -23,15 +25,21 @@ type scriptInputArgs struct {
 }
 
 //getScriptInputArgs 获取脚本输入参数
-func getScriptInputArgs(input string, params string) string {
+func getScriptInputArgs(input string, params string) (r string) {
 	args := scriptInputArgs{}
 	args.Input = []byte(input)
 	text, err := utility.GetParams(params)
-	if err == nil {
-		args.Params = []byte(text)
+	if strings.EqualFold(text, "") {
+		text = "{}"
 	}
-	buffer, _ := json.Marshal(&args)
-	return string(buffer)
+	args.Params = []byte(text)
+
+	buffer, err := json.Marshal(&args)
+	if err != nil {
+		fmt.Println(err)
+	}
+	r = string(buffer)
+	return
 }
 
 //ScriptPool 创建ScriptPool
@@ -124,6 +132,11 @@ func (s *ScriptPool) NewDB(name string) (bind *db.DBScriptBind, err error) {
 	return
 }
 
+//NewHTTPClient http client
+func (s *ScriptPool) NewHTTPClient() *net.HTTPClient {
+	return net.NewHTTPClient()
+}
+
 //bindGlobalLibs 绑定lib
 func (s *ScriptPool) bindGlobalLibs(extlibs map[string]interface{}) (funs map[string]interface{}) {
 	funs = map[string]interface{}{
@@ -131,12 +144,14 @@ func (s *ScriptPool) bindGlobalLibs(extlibs map[string]interface{}) (funs map[st
 		"printf":        s.Log.Infof,
 		"error":         s.Log.Error,
 		"errorf":        s.Log.Errorf,
+		"NewGUID":       utility.GetGUID,
 		"NewRPC":        s.NewRPCClient,
 		"NewMQProducer": s.NewMQProducer,
 		"NewElastic":    s.NewElastic,
 		"NewInfluxDB":   s.NewInfluxDB,
 		"NewMemcached":  s.NewMemcached,
 		"NewDB":         s.NewDB,
+		"NewXHttp":      s.NewHTTPClient,
 	}
 	for i, v := range extlibs {
 		funs[i] = v

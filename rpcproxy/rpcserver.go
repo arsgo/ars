@@ -120,10 +120,10 @@ func (r *RPCHandlerProxy) getDomain(name string) string {
 //getTaskItem 根据名称获取一个分组
 func (r *RPCHandlerProxy) getTaskItem(name string) (item cluster.TaskItem, err error) {
 
-//	all := r.tasks.Services.GetAll()
-//	for i, v := range all {
-		//fmt.Printf("getTaskItem:%s,%v\n", i, v.(cluster.TaskItem).IP)
-//	}
+	//	all := r.tasks.Services.GetAll()
+	//	for i, v := range all {
+	//fmt.Printf("getTaskItem:%s,%v\n", i, v.(cluster.TaskItem).IP)
+	//	}
 
 	//r.Log.Info("get1:", name)
 	group := r.tasks.Services.Get(name)

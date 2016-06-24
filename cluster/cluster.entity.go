@@ -12,10 +12,12 @@ type RPCPoolSetting struct {
 	MaxSize int `json:"max"`
 }
 type ServerRouteConfig struct {
-	Path   string `json:"path"`
-	Method string `json:"method"`
-	Script string `json:"script"`
-	Params string `json:"params"`
+	Path    string `json:"path"`
+	Method  string `json:"method"`
+	Script  string `json:"script"`
+	Params  string `json:"params"`
+	MinSize int    `json:"min"`
+	MaxSize int    `json:"max"`
 }
 type ServerConfig struct {
 	Address    string               `json:"address"`
