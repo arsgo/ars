@@ -23,25 +23,24 @@ type client interface {
 type process struct {
 	clients      client
 	startChan    chan int
+	cfg          *config
 	finishChan   chan *response
 	totalRequest int
 	concurrent   int
 	timeout      int
 	sleep        int
-	address      string
 }
 
-func NewProcesss(totalRequest int, concurrent int,
-	address string, timeout int, sleep int) (bool, *process) {
+func NewProcesss(totalRequest int, concurrent int, timeout int, sleep int, config *config) (bool, *process) {
 	p := &process{totalRequest: totalRequest, concurrent: concurrent,
-		address: address, timeout: timeout, sleep: sleep}
+		timeout: timeout, sleep: sleep, cfg: config}
 	p.startChan = make(chan int, concurrent)
 	p.finishChan = make(chan *response, concurrent)
 	return p.init(), p
 }
 
 func (p *process) init() bool {
-	if strings.EqualFold(p.address, "") {
+	if strings.EqualFold(p.cfg.Address, "") {
 		flag.Usage()
 		return false
 	}
@@ -53,7 +52,7 @@ func (p *process) init() bool {
 	}
 
 	//创建http clients
-	p.clients =  NewHTCPClients(p.concurrent, p.address)
+	p.clients = NewHTCPClients(p.concurrent, p.cfg)
 
 	for i := 0; i < p.concurrent && ((p.totalRequest > 0 && i < p.totalRequest) || p.totalRequest == 0); i++ {
 		go p.run(p.startChan, p.finishChan)
@@ -73,7 +72,7 @@ func (p *process) Start() ([]*response, int) {
 	flowStartTime := time.Now()
 	for index := 0; index < p.concurrent; index++ {
 		p.startChan <- index
-	}	
+	}
 	timePiker := time.NewTicker(time.Second)
 loop:
 	for {
@@ -96,7 +95,7 @@ loop:
 			{
 				passTime++
 				//if passTime%2 == 0 && len(finishResponse) > 0 {
-					fmt.Printf("完成请求数:%d\r\n", len(finishResponse))
+				fmt.Printf("完成请求数:%d\r\n", len(finishResponse))
 				//}
 
 				if passTime >= p.timeout && p.timeout > 0 {
@@ -119,6 +118,6 @@ func (p *process) run(startNotify chan int, finishNotify chan *response) {
 	index := <-startNotify
 	finishNotify <- p.clients.RunNow(index)
 }
-func (p *process)Close(){
+func (p *process) Close() {
 	p.clients.Close()
 }

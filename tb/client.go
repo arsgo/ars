@@ -13,12 +13,14 @@ type resultCode struct {
 }
 
 type TCPClient struct {
-	client  *rpcservice.RPCClient
-	address string
+	client      *rpcservice.RPCClient
+	address     string
+	params      string
+	commandName string
 }
 
-func NewTCPClient(address string) *TCPClient {
-	client := &TCPClient{address: address}
+func NewTCPClient(address string, commandName string, params string) *TCPClient {
+	client := &TCPClient{address: address, params: params, commandName: commandName}
 	client.client = rpcservice.NewRPCClientTimeout(address, time.Second*5)
 	err := client.client.Open()
 	if err != nil {
@@ -46,7 +48,7 @@ func (c *TCPClient) Reqeust() (resp *response) {
 		return
 	}*/
 	c.client.Open()
-	result, err := c.client.Request("save_logger@grs.core", "{}")
+	result, err := c.client.Request(c.commandName, c.params)
 	defer c.client.Close()
 	if err != nil {
 		Log.Print(err)
