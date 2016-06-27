@@ -8,7 +8,7 @@ import (
 )
 
 //BindJobScheduler 绑定RC服务器的JOB任务
-func (rc *RCServer) BindJobScheduler(jobs map[string]cluster.TaskItem, err error) {
+func (rc *RCServer) BindJobScheduler(jobs map[string]cluster.JobItem, err error) {
 	if err != nil {
 		rc.Log.Error(err)
 		return
@@ -26,7 +26,7 @@ func (rc *RCServer) BindJobScheduler(jobs map[string]cluster.TaskItem, err error
 		}
 		jobCount++
 		scheduler.AddTask(v.Trigger, scheduler.NewTask(v, func(v interface{}) {
-			task := v.(cluster.TaskItem)
+			task := v.(cluster.JobItem)
 			consumers := rc.clusterClient.GetJobConsumers(task.Name)
 			total := jobs[task.Name].Concurrency
 			index := 0
@@ -43,17 +43,19 @@ func (rc *RCServer) BindJobScheduler(jobs map[string]cluster.TaskItem, err error
 					continue
 				}
 				if !rpcproxy.ResultIsSuccess(result) {
-					rc.Log.Infof("call job(%s - %v) failed %s", task.Name, consumers[i], result)
+					rc.Log.Infof(" ->call job(%s - %v) failed %s", task.Name, consumers[i], result)
 					continue
 				} else {
-					rc.Log.Infof("call job(%s - %s) success", task.Name, consumers[i])
+					rc.Log.Infof(" ->call job(%s - %s) success", task.Name, consumers[i])
 				}
 				index++
 				if index >= total {
 					continue
 				}
 			}
-			rc.Log.Infof("job(%s) has executed (%d/%d),consumers:%d", task.Name, index, total, len(consumers))
+			if index < total {
+				rc.Log.Infof("job(%s) has executed (%d/%d),consumers:%d", task.Name, index, total, len(consumers))
+			}
 
 		}))
 	}

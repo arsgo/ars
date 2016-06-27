@@ -3,10 +3,13 @@ package cluster
 import "encoding/json"
 
 //WatchJobConfigChange 监控JOB配置变化
-func (client *ClusterClient) WatchJobConfigChange(callback func(config map[string]TaskItem, err error)) {
+func (client *ClusterClient) WatchJobConfigChange(callback func(config map[string]JobItem, err error)) {
 	client.WaitClusterPathExists(client.jobConfigPath, client.timeout, func(exists bool) {
 		if exists {
-			go callback(client.GetJobConfig())
+			go func() {
+				defer client.recover()
+				callback(client.GetJobConfig())
+			}()
 		} else {
 			client.Log.Info("job config path not exists")
 		}
@@ -18,8 +21,8 @@ func (client *ClusterClient) WatchJobConfigChange(callback func(config map[strin
 	})
 }
 
-//GetJobConfigs 获取JOB配置信息
-func (client *ClusterClient) GetJobConfig() (items map[string]TaskItem, err error) {
+//GetJobConfig 获取JOB配置信息
+func (client *ClusterClient) GetJobConfig() (items map[string]JobItem, err error) {
 	path := client.jobConfigPath
 	if !client.handler.Exists(path) {
 		return
@@ -28,8 +31,8 @@ func (client *ClusterClient) GetJobConfig() (items map[string]TaskItem, err erro
 	if err != nil {
 		return
 	}
-	jobs := []TaskItem{}
-	items = make(map[string]TaskItem)
+	jobs := []JobItem{}
+	items = make(map[string]JobItem)
 	err = json.Unmarshal([]byte(value), &jobs)
 	if err != nil {
 		return
@@ -64,7 +67,7 @@ func (client *ClusterClient) GetJobConsumers(jobName string) (jobs []string) {
 			client.Log.Error(err)
 			continue
 		}
-		jobs = append(jobs, consumer.Address)
+		jobs = append(jobs, consumer.Server)
 	}
 	return
 }

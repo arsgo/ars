@@ -25,11 +25,16 @@ func (sp *SPServer) rebindService() {
 	sp.Log.Info("rpc pool size min:", task.RPCPoolSetting.MinSize, ",max:", task.RPCPoolSetting.MaxSize)
 	sp.rpcClient.SetPoolSize(task.RPCPoolSetting.MinSize, task.RPCPoolSetting.MaxSize)
 	sp.rpcServer.UpdateTasks(task.Tasks)
+	err = sp.mqService.UpdateTasks(task.Tasks)
+	if err != nil {
+		sp.Log.Error(err)
+		return
+	}
 }
 
 //OnSPServiceCreate 服务创建时同时创建集群节点
 func (sp *SPServer) OnSPServiceCreate(task cluster.TaskItem) (path string) {
-	sp.Log.Info("script:", task.Script, ",minSize:", task.MinSize, ",maxSize:", task.MaxSize)
+	sp.Log.Info("::start script:", task.Script, ",minSize:", task.MinSize, ",maxSize:", task.MaxSize)
 	sp.scriptPool.Pool.PreLoad(task.Script, task.MinSize, task.MaxSize)
 	path, err := sp.clusterClient.CreateServiceProvider(task.Name, sp.rpcServer.Address,
 		sp.snap.GetSnap(task.Name))

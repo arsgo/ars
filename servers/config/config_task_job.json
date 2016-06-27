@@ -1,9 +1,7 @@
 [
     {
-        "name": "auto_build_bill",
+        "name": "auto_send_message",
         "trigger": "0/30 * * * * ?",
-        "script": "./scripts/save_logger.lua",
-        "params": "mq=kafka/kafka01",
         "concurrency": 1
     }
 ]

@@ -1,16 +1,10 @@
 package main
 
-import (
-	"fmt"
-	"strings"
-
-	"github.com/colinyl/ars/cluster"
-	"github.com/colinyl/ars/httpserver"
-	"github.com/colinyl/lib4go/scheduler"
-)
+import "github.com/colinyl/ars/cluster"
 
 //BindRCServer 绑定RPC调用服务
 func (a *AppServer) BindRCServer(configs []*cluster.RCServerItem, err error) error {
+	defer a.recover()
 	var tasks []string
 	for _, v := range configs {
 		tasks = append(tasks, v.Address)
@@ -24,81 +18,31 @@ func (a *AppServer) BindRCServer(configs []*cluster.RCServerItem, err error) err
 
 //BindTask 绑定本地任务
 func (a *AppServer) BindTask(config *cluster.AppServerStartupConfig, err error) (er error) {
+	defer a.recover()
 	a.Log.Info("rpc pool size min:", config.RPCPoolSetting.MinSize, ",max:", config.RPCPoolSetting.MaxSize)
 	a.rpcClient.SetPoolSize(config.RPCPoolSetting.MinSize, config.RPCPoolSetting.MaxSize)
 	a.scriptPool.Pool.SetPoolSize(config.RPCPoolSetting.MinSize, config.RPCPoolSetting.MaxSize)
 	a.ResetAPPSnap()
-	scheduler.Stop()
-	for _, v := range config.Tasks {
-		a.Log.Info("::start script:", v.Script)
-		er = a.scriptPool.Pool.PreLoad(v.Script, v.MinSize, v.MaxSize)
-		if er != nil {
-			a.Log.Error("load task`s script error in:", v.Script, ",", er)
-			continue
-		}
-		scheduler.AddTask(v.Trigger, scheduler.NewTask(v.Script, func(name interface{}) {
-			a.Log.Infof("start:%s", name)
-			rtvalues, err := a.scriptPool.Call(name.(string), "{}", "{}")
-			if err != nil {
-				a.Log.Error(err)
-			} else {
-				a.Log.Infof("result:%d,%s", len(rtvalues), strings.Join(rtvalues, ","))
-			}
-
-		}))
-	}
-	if len(config.Tasks) > 0 {
-		scheduler.Start()
-	} else {
-		scheduler.Stop()
-	}
-	if a.httpServer != nil {
-		a.httpServer.Stop()
-	}
-	for _, v := range config.Server.Routes {
-		er = a.scriptPool.Pool.PreLoad(v.Script, v.MinSize, v.MaxSize)
-		if er != nil {
-			a.Log.Error("load script error in:", v.Script, ",", er)		
-		} else {
-			a.Log.Info("::start script ", v.Script)
-		}
-	}
-
-	if config.Server != nil && len(config.Server.Routes) > 0 &&
-		strings.EqualFold(strings.ToLower(config.Server.ServerType), "http") {
-		a.httpServer, err = httpserver.NewHttpScriptServer(config.Server.Address, config.Server.Routes, a.scriptPool.Call)
-		if err == nil {
-			a.httpServer.Start()
-			a.snap.Server = fmt.Sprint(a.snap.ip, a.httpServer.Address)
-		} else {
-			a.Log.Error(err)
-		}
-	}
-	if len(config.Jobs) > 0 {
-		a.jobConsumerRPCServer.Stop()
-		a.jobConsumerRPCServer.Start()
-		a.snap.Address = fmt.Sprint(a.snap.ip, a.jobConsumerRPCServer.Address)
-		a.jobConsumerRPCServer.UpdateTasks(config.Jobs)
-	} else {
-		a.jobConsumerRPCServer.Stop()
-	}
-	return nil
+	a.BindHttpServer(config.Server)
+	a.BindLocalJobs(config.LocalJobs)
+	a.BindLocalTask(config.Tasks)
+	return
 }
 
 //OnJobCreate  创建JOB服务
 func (a *AppServer) OnJobCreate(task cluster.TaskItem) (path string) {
-	path, err := a.clusterClient.CreateJobConsumer(task.Name, a.snap.GetSnap())
+	path, err := a.clusterClient.CreateJobConsumer(task.Name, a.snap.GetJobSnap(a.jobConsumerRPCServer.Address))
 	if err != nil {
 		a.Log.Error(err)
 		return
 	}
-	a.Log.Info("::start job service:", task.Name)
+	a.Log.Infof("::start job consumer:[%s] %s", task.Name, task.Script)
 	return
 }
 
 //OnJobClose 关闭JOB服务
-func (app *AppServer) OnJobClose(task cluster.TaskItem, path string) {
-	err := app.clusterClient.CloseJobConsumer(path)
+func (a *AppServer) OnJobClose(task cluster.TaskItem, path string) {
+	err := a.clusterClient.CloseJobConsumer(path)
 	if err != nil {
 		return
 	}

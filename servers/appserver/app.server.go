@@ -5,6 +5,7 @@ import (
 
 	"github.com/colinyl/ars/cluster"
 	"github.com/colinyl/ars/httpserver"
+	"github.com/colinyl/ars/mqservice"
 	"github.com/colinyl/ars/rpcproxy"
 	"github.com/colinyl/ars/servers/config"
 	"github.com/colinyl/lib4go/logger"
@@ -21,6 +22,7 @@ type AppServer struct {
 	scriptPool               *rpcproxy.ScriptPool       //脚本池,用于缓存JOB Consumer脚本和本地task任务执行脚本
 	lk                       sync.Mutex
 	httpServer               *httpserver.HttpScriptServer
+	mqService                *mqservice.MQConsumerService
 	snap                     AppSnap
 }
 
@@ -51,20 +53,21 @@ func (app *AppServer) init() (err error) {
 	app.jobConsumerScriptHandler.OnOpenTask = app.OnJobCreate
 	app.jobConsumerScriptHandler.OnCloseTask = app.OnJobClose
 	app.jobConsumerRPCServer = rpcproxy.NewRPCServer(app.jobConsumerScriptHandler)
-
+	app.mqService, err = mqservice.NewMQConsumerService(app.clusterClient, mqservice.NewMQScriptHandler(app.scriptPool))
 	return
 }
 
 //Start 启动服务器
 func (app *AppServer) Start() (err error) {
 	if err = app.init(); err != nil {
+		app.Log.Error(err)
 		return
 	}
-	app.clusterClient.WatchRCServerChange(func(config []*cluster.RCServerItem, err error) {
+	app.clusterClient.WatchRCServerChange(func(config []*cluster.RCServerItem, err error) {		
 		app.BindRCServer(config, err)
 	})
 
-	app.clusterClient.WatchAppTaskChange(func(config *cluster.AppServerStartupConfig, err error) error {
+	app.clusterClient.WatchAppTaskChange(func(config *cluster.AppServerStartupConfig, err error) error {	
 		app.BindTask(config, err)
 		return nil
 	})

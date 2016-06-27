@@ -24,7 +24,7 @@ func (rc *RCServer) BindRCServer() (err error) {
 			rc.snap.Server = SERVER_MASTER
 			rc.Log.Info("::current server is ", rc.snap.Server)
 
-			go rc.clusterClient.WatchJobConfigChange(func(config map[string]cluster.TaskItem, err error) {
+			go rc.clusterClient.WatchJobConfigChange(func(config map[string]cluster.JobItem, err error) {
 				rc.BindJobScheduler(config, err)
 			})
 			go rc.clusterClient.WatchServiceProviderChange(func(lst cluster.ServiceProviderList, err error) {

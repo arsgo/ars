@@ -1,11 +1,10 @@
 package mqservice
 
 import (
-	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/colinyl/ars/cluster"
+	"github.com/colinyl/lib4go/concurrent"
 	"github.com/colinyl/lib4go/logger"
 )
 
@@ -19,9 +18,14 @@ type MQConsumerService struct {
 	clusterClient cluster.IClusterClient
 	handler       MQHandler
 	tasks         []cluster.TaskItem
-	consumers     map[string]*MQConsumer
-	lock          sync.Mutex
+	consumers     concurrent.ConcurrentMap //map[string]*MQConsumer
 	Log           *logger.Logger
+}
+
+func (mq *MQConsumerService) recover() {
+	if r := recover(); r != nil {
+		mq.Log.Fatal(r)
+	}
 }
 
 //NewMQConsumerService 创建MQ
@@ -30,35 +34,38 @@ func NewMQConsumerService(client cluster.IClusterClient, handler MQHandler) (mq 
 	mq.clusterClient = client
 	mq.handler = handler
 	mq.Log, err = logger.New("mq consumer", true)
+	mq.consumers = concurrent.NewConcurrentMap()
 	return
 }
 
 //UpdateTasks 更新MQ Consumer服务
 func (mq *MQConsumerService) UpdateTasks(tasks []cluster.TaskItem) (err error) {
 	consumers := mq.getTasks(tasks)
-	mq.lock.Lock()
-	defer mq.lock.Unlock()
-
 	//关闭已启动的服务
-	for k, v := range mq.consumers {
+	currentConsumers := mq.consumers.GetAll()
+	for k, v := range currentConsumers {
 		if _, ok := consumers[k]; !ok {
-			v.Stop()
-			delete(mq.consumers, k)
+			v.(*MQConsumer).Stop()
+			mq.consumers.Delete(k)
 		}
 	}
 
 	//启动已添加的服务
 	for k, v := range consumers {
-		if _, ok := mq.consumers[k]; !ok {
-			mq.consumers[k], err = NewMQConsumer(v, mq.clusterClient, func(msg string) bool {
+		if c := mq.consumers.Get(k); c == nil {
+			current, err := NewMQConsumer(v, mq.clusterClient, func(msg string) bool {
 				return mq.handler.Handle(v, msg)
 			})
 			if err != nil {
 				mq.Log.Fatal("mq create error:", err)
 				continue
 			}
-			fmt.Println("::Start MQ Consumer:", v.Name)
-			go mq.consumers[k].Start()
+			mq.Log.Infof("::start mq consumer:[%s] %s", v.Name, v.Script)
+			mq.consumers.Set(k, current)
+			go func() {
+				mq.recover()
+				current.Start()
+			}()
 		}
 	}
 	return
@@ -69,7 +76,10 @@ func (mq *MQConsumerService) UpdateTasks(tasks []cluster.TaskItem) (err error) {
 func (mq *MQConsumerService) getTasks(tasks []cluster.TaskItem) (consumers map[string]cluster.TaskItem) {
 	consumers = make(map[string]cluster.TaskItem)
 	for _, v := range tasks {
-		if task, ok := consumers[v.Name]; !ok && strings.EqualFold(strings.ToLower(task.Type), "mq") && strings.EqualFold(strings.ToLower(task.Method), "consumer") {
+		if _, ok := consumers[v.Name]; ok {
+			continue
+		}
+		if strings.EqualFold(strings.ToLower(v.Type), "mq") && strings.EqualFold(strings.ToLower(v.Method), "consume") {
 			consumers[v.Name] = v
 		}
 	}

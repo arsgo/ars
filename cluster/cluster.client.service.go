@@ -11,13 +11,19 @@ func (client *ClusterClient) WatchRPCServiceChange(callback func(services map[st
 		if !exists {
 			client.Log.Info("service publish config not exists")
 		} else {
-			go callback(client.GetRPCService())
+			go func() {
+				defer client.recover()
+				callback(client.GetRPCService())
+			}()
 		}
 	})
 	client.Log.Info("::watch for service config changes ")
 	client.WatchClusterValueChange(client.rpcPublishPath, func() {
 		client.Log.Info(" -> rpc serivce has changed")
-		go callback(client.GetRPCService())
+		go func() {
+			defer client.recover()
+			callback(client.GetRPCService())
+		}()
 	})
 }
 

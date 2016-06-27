@@ -11,6 +11,11 @@ import (
 	"github.com/colinyl/lib4go/net"
 )
 
+func (n *RPCServer) recover() {
+	if r := recover(); r != nil {
+		n.log.Fatal(r)
+	}
+}
 func (r *RPCServer) Serve() (er error) {
 	transportFactory := thrift.NewTFramedTransportFactory(thrift.NewTTransportFactory())
 	protocolFactory := thrift.NewTBinaryProtocolFactoryDefault()
@@ -25,6 +30,7 @@ func (r *RPCServer) Serve() (er error) {
 
 	r.log.Infof("::start rpc server %s", r.Address)
 	go func(r *RPCServer) {
+		defer r.recover()
 		er = r.server.Serve()
 		if er != nil {
 			r.log.Error(er)

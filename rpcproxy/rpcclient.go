@@ -16,6 +16,7 @@ import (
 	"github.com/colinyl/ars/cluster"
 	"github.com/colinyl/ars/rpcservice"
 	"github.com/colinyl/lib4go/concurrent"
+	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/utility"
 )
 
@@ -43,6 +44,7 @@ type RPCClient struct {
 	services concurrent.ConcurrentMap
 	client   cluster.IClusterClient
 	mutex    sync.RWMutex
+	Log      *logger.Logger
 }
 
 //NewRPCClient 创建RPC Client
@@ -52,6 +54,7 @@ func NewRPCClient(cli cluster.IClusterClient) *RPCClient {
 	client.pool = rpcservice.NewRPCServerPool(5, 10)
 	client.services = concurrent.NewConcurrentMap()
 	client.queues = concurrent.NewConcurrentMap()
+	client.Log, _ = logger.New("rpc client", true)
 	return client
 }
 
@@ -65,6 +68,12 @@ func (r *RPCClient) SetPoolSize(minSize int, maxSize int) {
 //Close 关闭连接池
 func (r *RPCClient) Close() {
 	r.pool.Close()
+}
+
+func (rc *RPCClient) recover() {
+	if r := recover(); r != nil {
+		rc.Log.Fatal(r)
+	}
 }
 
 //ResetRPCServer 重置所有RPC服务器
@@ -188,11 +197,12 @@ func (r *RPCClient) Get(cmd string, input string) (result string, err error) {
 }
 
 //AsyncRequest 发送异步Request请求
-func (r *RPCClient) AsyncRequest(name string, input string) (session string) {
+func (r *RPCClient) AsyncRequest(name string, input string) (session string, err error) {
 	session = utility.GetGUID()
 	queueChan := make(chan []interface{}, 1)
 	r.queues.Set(session, queueChan)
 	go func(queueChan chan []interface{}, r *RPCClient, name string, input string) {
+		defer r.recover()
 		result, err := r.Request(name, input)
 		if err != nil {
 			queueChan <- []interface{}{result, err.Error()}
@@ -210,6 +220,7 @@ func (r *RPCClient) AsyncSend(name string, input string, data string) (session s
 	queueChan := make(chan []interface{}, 1)
 	r.queues.Set(session, queueChan)
 	go func(queue chan []interface{}, r *RPCClient, name string, input string, data string) {
+		defer r.recover()
 		result, err := r.Send(name, input, data)
 		if err != nil {
 			queue <- []interface{}{result, err.Error()}
@@ -227,6 +238,7 @@ func (r *RPCClient) AsyncGet(name string, input string) (session string) {
 	queueChan := make(chan []interface{}, 1)
 	r.queues.Set(session, queueChan)
 	go func(queue chan []interface{}, r *RPCClient, name string, input string) {
+		defer r.recover()
 		result, err := r.Get(name, input)
 		if err != nil {
 			queue <- []interface{}{result, err.Error()}

@@ -30,6 +30,7 @@ func (rs RCSnap) GetSnap() string {
 
 //StartRefreshSnap 启动定时刷新
 func (rc *RCServer) StartRefreshSnap() {
+	defer rc.recover()
 	tp := time.NewTicker(time.Second * 60)
 	for {
 		select {

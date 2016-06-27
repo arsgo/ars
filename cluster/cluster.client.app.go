@@ -2,19 +2,32 @@ package cluster
 
 import "encoding/json"
 
+//recover 从异常中恢复
+func (client *ClusterClient) recover() {
+	if r := recover(); r != nil {
+		client.Log.Fatal(r)
+	}
+}
+
 //WatchAppTaskChange 监控APP Server的配置文件变化
 func (client *ClusterClient) WatchAppTaskChange(callback func(config *AppServerStartupConfig, err error) error) {
 	client.WaitClusterPathExists(client.appServerTaskPath, client.timeout, func(exists bool) {
 		if !exists {
 			client.Log.Infof("app config not exists:%s", client.appServerTaskPath)
 		} else {
-			go callback(client.GetAppServerStartupConfig(client.appServerTaskPath))
+			go func() {
+				defer client.recover()
+				callback(client.GetAppServerStartupConfig(client.appServerTaskPath))
+			}()
 		}
 	})
 	client.Log.Info("::watch for app config changes")
 	client.WatchClusterValueChange(client.appServerTaskPath, func() {
 		client.Log.Info(" -> app config has changed")
-		go callback(client.GetAppServerStartupConfig(client.appServerTaskPath))
+		go func() {
+			defer client.recover()
+			callback(client.GetAppServerStartupConfig(client.appServerTaskPath))
+		}()
 	})
 }
 
@@ -29,7 +42,7 @@ func (client *ClusterClient) GetAppServerStartupConfig(path string) (config *App
 	if err != nil {
 		return
 	}
-	jobs, err := client.GetJobConfig()
+	/*jobs, err := client.GetJobConfig()
 	if err != nil {
 		return
 	}
@@ -37,6 +50,6 @@ func (client *ClusterClient) GetAppServerStartupConfig(path string) (config *App
 		if _, ok := jobs[v]; ok {
 			config.Jobs = append(config.Jobs, jobs[v])
 		}
-	}
+	}*/
 	return
 }

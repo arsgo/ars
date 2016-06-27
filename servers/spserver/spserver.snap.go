@@ -40,6 +40,7 @@ func (sp *SPServer) ResetSPSnap() {
 
 //StartRefreshSnap 启动快照刷新服务
 func (sp *SPServer) StartRefreshSnap() {
+	defer sp.recover()
 	tp := time.NewTicker(time.Second * 60)
 	defer tp.Stop()
 	for {
@@ -49,4 +50,9 @@ func (sp *SPServer) StartRefreshSnap() {
 		}
 	}
 
+}
+func (sp *SPServer) recover() {
+	if r := recover(); r != nil {
+		sp.Log.Fatal(r)
+	}
 }

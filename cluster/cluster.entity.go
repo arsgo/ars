@@ -1,11 +1,15 @@
 package cluster
 
 //----------------app server-------------------------------
-type TaskConfig struct {
-	Trigger string `json:"trigger"`
-	Script  string `json:"script"`
-	MinSize int    `json:"min"`
-	MaxSize int    `json:"max"`
+type JobItem struct {
+	Name        string `json:"name"`
+	Trigger     string `json:"trigger"`
+	Params      string `json:"params"`
+	Script      string `json:"script"`
+	MinSize     int    `json:"min"`
+	MaxSize     int    `json:"max"`
+	Concurrency int    `json:"concurrency"`
+	Enable      bool   `json:"enable"`
 }
 type RPCPoolSetting struct {
 	MinSize int `json:"min"`
@@ -25,10 +29,9 @@ type ServerConfig struct {
 	Routes     []*ServerRouteConfig `json:"routes"`
 }
 type AppServerStartupConfig struct {
-	Status         string        `json:"status"`
-	Tasks          []*TaskConfig `json:"tasks"`
-	JobNames       []string      `json:"jobs"`
-	Jobs           []TaskItem
+	Status         string         `json:"status"`
+	LocalJobs      []JobItem      `json:"jobs"`
+	Tasks          []TaskItem     `json:"tasks"`
 	Server         *ServerConfig  `json:"server"`
 	RPCPoolSetting RPCPoolSetting `json:"rpc-pool"`
 }
@@ -45,7 +48,7 @@ type RCServerItem struct {
 //---------------------------------------------------------
 //----------------job server-------------------------------
 type JobConsumerValue struct {
-	Address string `json:"address"`
+	Server string `json:"server"`
 }
 type ServiceProviderList map[string][]string
 
@@ -53,17 +56,16 @@ type ServiceProviderList map[string][]string
 
 //----------------sp server-------------------------------
 type TaskItem struct {
-	Name        string `json:"name"`
-	IP          string `json:"ip"`
-	Mode        string `json:"mode"`
-	Type        string `json:"type"`
-	Method      string `json:"method"`
-	Script      string `json:"script"`
-	Params      string `json:"params"`
-	Trigger     string `json:"trigger"`
-	Concurrency int    `json:"concurrency"`
-	MinSize     int    `json:"min"`
-	MaxSize     int    `json:"max"`
+	Name    string `json:"name"`
+	IP      string `json:"ip"`
+	Mode    string `json:"mode"`
+	Type    string `json:"type"`
+	Method  string `json:"method"`
+	Script  string `json:"script"`
+	Params  string `json:"params"`
+	Trigger string `json:"trigger"`
+	MinSize int    `json:"min"`
+	MaxSize int    `json:"max"`
 }
 type ServiceProviderTask struct {
 	RPCPoolSetting RPCPoolSetting `json:"rpc-pool"`

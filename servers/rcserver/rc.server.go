@@ -54,11 +54,16 @@ func (rc *RCServer) init() (err error) {
 	rc.rcRPCServer = rpcproxy.NewRPCServer(rc.rcRPCProxyHandler)
 	return nil
 }
-
+func (rc *RCServer) recover() {
+	if r := recover(); r != nil {
+		rc.Log.Fatal(r)
+	}
+}
 //Start 启动服务
 func (rc *RCServer) Start() (err error) {
 	rc.Log.Info("start rc server...")
 	if err = rc.init(); err != nil {
+		rc.Log.Error(err)
 		return
 	}
 	//启动RPC服务,供APP,SP调用

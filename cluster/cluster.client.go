@@ -102,12 +102,16 @@ CHECKER:
 //WatchClusterValueChange 等待集群指定路径的值的变化
 func (client *ClusterClient) WatchClusterValueChange(path string, callback func()) {
 	changes := make(chan string, 10)
-	go client.handler.WatchValue(path, changes)
+	go func() {
+		defer client.recover()
+		client.handler.WatchValue(path, changes)
+	}()
 	go func() {
 		for {
 			select {
 			case <-changes:
 				{
+					defer client.recover()
 					callback()
 				}
 			}
@@ -119,11 +123,16 @@ func (client *ClusterClient) WatchClusterValueChange(path string, callback func(
 func (client *ClusterClient) WatchClusterChildrenChange(path string, callback func()) {
 	changes := make(chan []string, 10)
 	go func() {
-		go client.handler.WatchChildren(path, changes)
+
+		go func() {
+			defer client.recover()
+			client.handler.WatchChildren(path, changes)
+		}()
 		for {
 			select {
 			case <-changes:
 				{
+					defer client.recover()
 					callback()
 				}
 			}

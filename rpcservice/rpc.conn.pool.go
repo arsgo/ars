@@ -54,7 +54,11 @@ func NewConnPool() (conn *connPool) {
 	conn.Log, _ = logger.New("conn pool", true)
 	return
 }
-
+func (n *connPool) recover() {
+	if r := recover(); r != nil {
+		n.Log.Fatal(r)
+	}
+}
 func (n *connPool) Subscribe(address string, notify chan *RpcClientConn) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
@@ -65,7 +69,10 @@ func (n *connPool) Subscribe(address string, notify chan *RpcClientConn) {
 		wkr.subscribers = make(chan *subscriber, 100)
 		wkr.status <- true
 		n.workers[address] = wkr
-		go wkr.doWork()
+		go func() {
+			n.recover()
+			wkr.doWork()
+		}()
 	}
 	wkr.subscribers <- &subscriber{notify: notify}
 }

@@ -14,8 +14,7 @@ const (
 
 //ResultEntity 结果实体
 type ResultEntity struct {
-	Code string
-	Msg  string
+	Code string `json:"code"`
 }
 
 //ResultIsSuccess 检查当前result是否为成功
@@ -25,7 +24,7 @@ func ResultIsSuccess(content string) bool {
 	if err != nil {
 		return false
 	}
-	return strings.EqualFold(entity.Msg, "success")
+	return strings.EqualFold(strings.ToLower(entity.Code), "success")
 }
 
 func GetErrorResult(code string, msg ...interface{}) string {

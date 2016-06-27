@@ -13,34 +13,49 @@ func (client *ClusterClient) WatchSPTaskChange(callback func()) {
 			client.Log.Info("sp server config not exists")
 
 		} else {
-			go callback()
+			go func() {
+				defer client.recover()
+				callback()
+			}()
 		}
 	})
 	client.Log.Info("::watch for provider config change")
 	client.WatchClusterValueChange(client.spConfigPath, func() {
 		client.Log.Info(" -> service provider task has changed")
-		go callback()
+		go func() {
+			defer client.recover()
+			callback()
+		}()
 	})
 }
 
 //WatchServiceProviderChange 监控RPC服务提供方变化
-func (client *ClusterClient) WatchServiceProviderChange(changed func(ServiceProviderList,error)) (err error) {
+func (client *ClusterClient) WatchServiceProviderChange(changed func(ServiceProviderList, error)) (err error) {
 	client.Log.Info("::watch for service providers changes")
 	client.WaitClusterPathExists(client.rpcProviderRootPath, client.timeout, func(exists bool) {
 		if !exists {
 			client.Log.Info("service provider node not exists")
-		} else {		
-			go changed(client.GetServiceProviderPaths())
+		} else {
+			go func() {
+				defer client.recover()
+				changed(client.GetServiceProviderPaths())
+			}()
 		}
 	})
 	client.WatchClusterChildrenChange(client.rpcProviderRootPath, func() {
-		go changed(client.GetServiceProviderPaths())
+		go func() {
+			defer client.recover()
+			changed(client.GetServiceProviderPaths())
+		}()
 	})
 	lst, err := client.GetAllServiceProviderNamePath()
 	for _, v := range lst {
 		for _, p := range v {
 			client.WatchClusterChildrenChange(p, func() {
-				go changed(client.GetServiceProviderPaths())
+				go func() {
+					defer client.recover()
+					changed(client.GetServiceProviderPaths())
+				}()
 			})
 		}
 	}

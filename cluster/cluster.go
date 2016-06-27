@@ -40,8 +40,8 @@ type IClusterClient interface {
 	WatchRCTaskChange(callback func(RCServerTask, error))
 
 	//job server/consumer........
-	WatchJobConfigChange(callback func(items map[string]TaskItem, err error))
-	GetJobConfig() (items map[string]TaskItem, err error)
+	WatchJobConfigChange(callback func(items map[string]JobItem, err error))
+	GetJobConfig() (items map[string]JobItem, err error)
 	GetJobConsumers(jobName string) (consumers []string)
 	CreateJobConsumer(jobName string, value string) (string, error)
 	UpdateJobConsumerPath(path string, value string) error

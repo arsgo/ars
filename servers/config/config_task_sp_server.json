@@ -1,28 +1,30 @@
 {
     "rpc-pool": {
-        "min": 10,
-        "max": 50
+        "min": 1,
+        "max": 2
     },
     "tasks": [
         {
             "name": "get_pay_order",
-            "ip": "192.168.0.245,192.168.101.182",
+            "ip": "*",
             "mode": "share",
             "type": "rpc",
             "method": "request",
             "script": "./scripts/md5.lua",
-            "params": "mq=kafka/kafka01"
+            "params": "mq=kafka/kafka01",
+            "min": 1,
+            "max": 2
         },
         {
-            "name": "save_logger",
-            "ip": "192.168.0.245,192.168.101.182",
+            "name": "mq_consumer",
+            "ip": "*",
             "mode": "share",
-            "type": "rpc",
+            "type": "mq",
             "method": "request",
-            "script": "./scripts/md5.lua",
-            "params": "elastic=logger&mq=kafka01&queue=delivery",
-            "min": 5,
-            "max": 30
+            "script": "./scripts/mq_consumer.lua",
+            "params": "mq=stomp&queue=delivery",
+            "min": 1,
+            "max": 2
         }
     ]
 }

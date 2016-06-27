@@ -84,7 +84,6 @@ func NewRPCHandlerProxy(h RPCHandler) *RPCHandlerProxy {
 
 //UpdateTasks 更新服务列表
 func (r *RPCHandlerProxy) UpdateTasks(tasks []cluster.TaskItem) {
-	//r.Log.Infof("UpdateTasks:%d", len(tasks))
 
 	tks := make(map[string]cluster.TaskItem)
 	for _, v := range tasks {

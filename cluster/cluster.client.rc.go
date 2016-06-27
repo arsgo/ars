@@ -11,13 +11,19 @@ func (client *ClusterClient) WatchRCServerChange(callback func([]*RCServerItem, 
 		if !exists {
 			client.Log.Infof("rc server not exists:%s", client.rcServerRoot)
 		} else {
-			go callback(client.GetAllRCServerValues())
+			go func() {
+				defer client.recover()
+				callback(client.GetAllRCServerValues())
+			}()
 		}
 	})
 	client.Log.Info("::watch for rc server changes")
 	client.WatchClusterChildrenChange(client.rcServerRoot, func() {
 		client.Log.Info(" -> rc server has changed")
-		go callback(client.GetAllRCServerValues())
+		go func() {
+			defer client.recover()
+			callback(client.GetAllRCServerValues())
+		}()
 	})
 }
 
@@ -70,12 +76,18 @@ func (client *ClusterClient) WatchRCTaskChange(callback func(RCServerTask, error
 		if !exists {
 			client.Log.Infof("rc server config not exists:%s", client.rcServerRoot)
 		} else {
-			go callback(client.GetRCServerTasks())
+			go func() {
+				defer client.recover()
+				callback(client.GetRCServerTasks())
+			}()
 		}
 	})
 	client.Log.Info("::watch for rc server config changes")
 	client.WatchClusterValueChange(client.rcServerConfig, func() {
 		client.Log.Info(" -> rc server config has changed")
-		go callback(client.GetRCServerTasks())
+		go func() {
+			defer client.recover()
+			callback(client.GetRCServerTasks())
+		}()
 	})
 }

@@ -4,22 +4,27 @@ import (
 	"strings"
 
 	"github.com/colinyl/ars/cluster"
-	"github.com/colinyl/ars/scriptpool"
+	"github.com/colinyl/ars/rpcproxy"
+	"github.com/colinyl/lib4go/logger"
 )
 
 //MQScriptHandler 脚本处理程序
 type MQScriptHandler struct {
-	pool *scriptpool.ScriptPool
+	pool *rpcproxy.ScriptPool
+	Log  *logger.Logger
 }
 
 //NewMQScriptHandler 创建新的脚本处理程序
-func NewMQScriptHandler(pool *scriptpool.ScriptPool) (mq *MQScriptHandler) {
-	return *MQScriptHandler{pool: pool}
+func NewMQScriptHandler(pool *rpcproxy.ScriptPool) (mq *MQScriptHandler) {
+	mq = &MQScriptHandler{pool: pool}
+	mq.Log, _ = logger.New("mq consumer handler", true)
+	return
 }
 
 //Handle 处理MQ消息
-func (mq *MQScriptHandler) Handle(task cluster.TaskItem, msg string) bool {
-	result, err := mq.pool.Call(task.Name, msg, task.Params)
+func (mq *MQScriptHandler) Handle(task cluster.TaskItem, input string) bool {
+	mq.Log.Info(" -> recv mq message:", input)
+	result, err := mq.pool.Call(task.Name, input, task.Params)
 	if err != nil {
 		return false
 	}

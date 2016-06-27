@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/colinyl/ars/cluster"
+	"github.com/colinyl/ars/mqservice"
 	"github.com/colinyl/ars/rpcproxy"
 	"github.com/colinyl/ars/servers/config"
 	"github.com/colinyl/lib4go/logger"
@@ -21,6 +22,7 @@ type SPServer struct {
 	lk             sync.Mutex
 	mode           string
 	serviceConfig  string
+	mqService      *mqservice.MQConsumerService
 	rpcClient      *rpcproxy.RPCClient
 	rpcServer      *rpcproxy.RPCServer        //RPC 服务器
 	rpcScriptProxy *rpcproxy.RPCScriptHandler //RPC Server 脚本处理程序
@@ -63,12 +65,14 @@ func (sp *SPServer) init() (err error) {
 	sp.rpcScriptProxy.OnOpenTask = sp.OnSPServiceCreate
 	sp.rpcScriptProxy.OnCloseTask = sp.OnSPServiceClose
 	sp.rpcServer = rpcproxy.NewRPCServer(sp.rpcScriptProxy)
+	sp.mqService,err = mqservice.NewMQConsumerService(sp.clusterClient, mqservice.NewMQScriptHandler(sp.scriptPool))
 	return
 }
 
 //Start 启动SP Server服务器
 func (sp *SPServer) Start() (err error) {
 	if err = sp.init(); err != nil {
+		sp.Log.Error(err)
 		return
 	}
 
