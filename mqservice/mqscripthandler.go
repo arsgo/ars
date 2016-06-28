@@ -24,7 +24,7 @@ func NewMQScriptHandler(pool *rpcproxy.ScriptPool) (mq *MQScriptHandler) {
 //Handle 处理MQ消息
 func (mq *MQScriptHandler) Handle(task cluster.TaskItem, input string) bool {
 	mq.Log.Info(" -> recv mq message:", input)
-	result, err := mq.pool.Call(task.Name, input, task.Params)
+	result, _, err := mq.pool.Call(task.Name, input, task.Params)
 	if err != nil {
 		return false
 	}

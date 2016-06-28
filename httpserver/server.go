@@ -19,7 +19,7 @@ type HttpScriptServer struct {
 	routes  []*cluster.ServerRouteConfig
 	server  *webserver.WebServer
 	Log     *logger.Logger
-	call    func(script string, input string, params string) ([]string, error)
+	call    func(script string, input string, params string) ([]string,map[string]string,error)
 }
 
 //httpScriptController controller
@@ -29,7 +29,7 @@ type HttpScriptController struct {
 }
 
 //NewHttpScriptServer 创建基于LUA的HTTP服务器
-func NewHttpScriptServer(Address string, routes []*cluster.ServerRouteConfig, call func(name string, input string, params string) ([]string, error)) (server *HttpScriptServer, err error) {
+func NewHttpScriptServer(Address string, routes []*cluster.ServerRouteConfig, call func(name string, input string, params string) ([]string,map[string]string, error)) (server *HttpScriptServer, err error) {
 	server = &HttpScriptServer{}
 	server.routes = routes
 	server.Address = Address
@@ -80,7 +80,8 @@ func (r *HttpScriptController) Handle(ctx *web.Context) {
 		r.setResponse(ctx, 500, err.Error())
 		return
 	}
-	result, err := r.server.call(r.config.Script, string(data), r.config.Params)
+	result,output, err := r.server.call(r.config.Script, string(data), r.config.Params)
+	r.setHeader(ctx,output)
 	if err != nil {
 		r.setResponse(ctx, 500, err.Error())
 		return
@@ -100,6 +101,11 @@ func (r *HttpScriptController) Handle(ctx *web.Context) {
 	}
 	return
 
+}
+func (r *HttpScriptController) setHeader(ctx *web.Context,input map[string]string){
+	for i,v:=range input{
+		ctx.SetHeader(i,v,true)
+	}
 }
 func (r *HttpScriptController) setResponse(ctx *web.Context, code int, msg string) {
 

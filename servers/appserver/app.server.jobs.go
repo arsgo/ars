@@ -23,10 +23,10 @@ func (a *AppServer) BindLocalJobs(jobs []cluster.JobItem) {
 			a.Log.Error("load task`s script error in:", v.Script, ",", er)
 			continue
 		}
-		scheduler.AddTask(v.Trigger, scheduler.NewTask(v, func(job interface{}) {			
+		scheduler.AddTask(v.Trigger, scheduler.NewTask(v, func(job interface{}) {
 			item := job.(cluster.JobItem)
 			a.Log.Infof(" -> run job [%s] %s", item.Name, item.Script)
-			_, err := a.scriptPool.Call(item.Script, "{}", item.Params)
+			_, _, err := a.scriptPool.Call(item.Script, "{}", item.Params)
 			if err != nil {
 				a.Log.Error(err)
 			}

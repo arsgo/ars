@@ -2,6 +2,7 @@ package rpcproxy
 
 import (
 	"encoding/json"
+
 	"github.com/yuin/gopher-lua"
 )
 
@@ -30,6 +31,13 @@ func (b *RPCBinder) AsyncRequest(name string, tb *lua.LTable) (s string, err err
 	input, err := luaTable2Json(tb)
 	if err != nil {
 		return
-	}  
+	}
 	return b.client.AsyncRequest(name, input)
+}
+func (b *RPCBinder) Request(name string, tb *lua.LTable) (s string, err error) {
+	input, err := luaTable2Json(tb)
+	if err != nil {
+		return
+	}
+	return b.client.Request(name, input)
 }

@@ -40,7 +40,7 @@ func main() {
 	if !s {
 		return
 	}
-	defer p.Close()
+	p.Close()
 	calculateKPI(p.Start())
 
 }

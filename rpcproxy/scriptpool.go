@@ -57,9 +57,9 @@ func NewScriptPool(clusterClient cluster.IClusterClient, rpcclient *RPCClient, e
 }
 
 //Call 执行脚本
-func (s *ScriptPool) Call(name string, input string, params string) ([]string, error) {
+func (s *ScriptPool) Call(name string, input string, params string) ([]string, map[string]string, error) {
 	if strings.EqualFold(name, "") {
-		return nil, errors.New("script is nil")
+		return nil, nil, errors.New("script is nil")
 	}
 	script := name
 	if !strings.HasPrefix(name, "./") {

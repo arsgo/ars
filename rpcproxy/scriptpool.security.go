@@ -6,15 +6,21 @@ import (
 	"github.com/colinyl/lib4go/security/des"
 	"github.com/colinyl/lib4go/security/md5"
 	"github.com/colinyl/lib4go/security/sha1"
+	"github.com/colinyl/lib4go/security/weixin"
 )
 
 //BindSecurity 安全绑定函数
 type BindSecurity struct {
 }
 
-//BindSecurity 创建用于加解密的绑定函数
+//NewBindSecurity 创建用于加解密的绑定函数
 func (s *ScriptPool) NewBindSecurity() BindSecurity {
 	return BindSecurity{}
+}
+
+//MD5 MD5加密
+func (b BindSecurity) MD5(input string) string {
+	return md5.Encrypt(input)
 }
 
 //DESEncrypt DES加密
@@ -55,4 +61,19 @@ func (b BindSecurity) SHA1Encrypt(input string) string {
 //MD5Encrypt md5加密
 func (b BindSecurity) MD5Encrypt(input string) string {
 	return md5.Encrypt(input)
+}
+
+//WXDecrypt 微信报文解密
+func (b BindSecurity) WXDecrypt(content string) (r string, err error) {
+	return weixin.Decrypt(content)
+}
+
+//WXEncrypt 微信报文加密
+func (b BindSecurity) WXEncrypt(fromUserName, toUserName, content, nonce, timestamp string) (r string, err error) {
+	return weixin.Encrypt(fromUserName, toUserName, content, nonce, timestamp)
+}
+
+//WXMakeSign 微信生成签名
+func (b BindSecurity) WXMakeSign(timestamp, nonce, msgEncrypt string) string {
+	return weixin.MakeSign(timestamp, nonce, msgEncrypt)
 }

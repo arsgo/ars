@@ -62,7 +62,7 @@ func (c *TCPClient) Reqeust() (resp *response) {
 	var isSuccess bool
 	if err != nil {
 		Log.Print(err, "[", result, "]")
-	} else if !strings.EqualFold(code.Code, "100") {
+	} else if !strings.EqualFold(code.Code, "success") {
 		Log.Print(result)
 	} else {
 		isSuccess = true

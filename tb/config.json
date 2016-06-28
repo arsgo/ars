@@ -2,12 +2,10 @@
     "address": "127.0.0.1:10160",
     "requests": [
         {
-            "command": "get_stations",
-            "params": {}
-        },
-        {
-            "command": "user_register",
-            "params": {}
+            "command": "system.md5@grs.core",
+            "params": {
+                "id": "abc"
+            }
         }
     ]
 }

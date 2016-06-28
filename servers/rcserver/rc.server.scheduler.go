@@ -15,13 +15,13 @@ func (rc *RCServer) BindJobScheduler(jobs map[string]cluster.JobItem, err error)
 	}
 
 	scheduler.Stop()
-	rc.Log.Infof("job config has changed:%d", len(jobs))
+
 	if len(jobs) == 0 {
 		return
 	}
 	var jobCount int
 	for _, v := range jobs {
-		if v.Concurrency <= 0 {
+		if v.Concurrency <= 0 || !v.Enable {
 			continue
 		}
 		jobCount++
@@ -60,6 +60,7 @@ func (rc *RCServer) BindJobScheduler(jobs map[string]cluster.JobItem, err error)
 		}))
 	}
 	if jobCount > 0 {
+		rc.Log.Infof("job config has changed:%d", jobCount)
 		scheduler.Start()
 	}
 

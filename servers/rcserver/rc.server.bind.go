@@ -33,8 +33,12 @@ func (rc *RCServer) BindRCServer() (err error) {
 				rc.PublishNow()
 			})
 			go rc.clusterClient.WatchRCTaskChange(func(task cluster.RCServerTask, err error) {
+				if err != nil {
+					rc.Log.Error(err)
+					return
+				}
 				rc.spRPCClient.SetPoolSize(task.RPCPoolSetting.MinSize, task.RPCPoolSetting.MaxSize)
-			//	rc.BindCrossAccess(task)
+				rc.BindCrossAccess(task)
 			})
 		} else if !isMaster {
 			rc.IsMaster = false
@@ -51,7 +55,7 @@ func (rc *RCServer) BindRCServer() (err error) {
 		if er != nil {
 			rc.Log.Error(er)
 			return
-		}		
+		}
 		rc.Log.Infof("rpc services:len(%d)%s ", len(tasks), ip)
 		rc.rcRPCServer.UpdateTasks(tasks)
 	})
@@ -128,7 +132,7 @@ func (rc *RCServer) WatchCrossDomain(task cluster.RCServerTask) {
 	if len(task.CrossDomainAccess) == 0 {
 		return
 	}
-	rc.Log.Info("::watch cross domain")
+
 	//关闭域
 	currentCluster := rc.crossDomain.GetAll()
 	for domain, clt := range currentCluster {
@@ -159,9 +163,9 @@ func (rc *RCServer) WatchCrossDomain(task cluster.RCServerTask) {
 
 			//监控外部RC服务器变化,变化后更新本地服务
 			go func(domain string) {
-				rc.Log.Infof("::watch [%s] rc server change", domain)
+				rc.Log.Infof("::watch cross domain [%s] rc server change", domain)
 				clusterClient.WatchRCServerChange(func(items []*cluster.RCServerItem, err error) {
-					rc.Log.Infof("::rc server changed:%s", domain)
+					rc.Log.Infof("::cross domain [%s] rc server changed", domain)
 					var ips = []string{}
 					for _, v := range items {
 						ips = append(ips, v.Address)

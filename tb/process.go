@@ -118,6 +118,6 @@ func (p *process) run(startNotify chan int, finishNotify chan *response) {
 	index := <-startNotify
 	finishNotify <- p.clients.RunNow(index)
 }
-func (p *process) Close() {
+func (p *process) Close() {	
 	p.clients.Close()
 }

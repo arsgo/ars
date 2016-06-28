@@ -44,6 +44,9 @@ func GetDataResult(data string) string {
 	if strings.HasPrefix(data, "[{") && strings.HasSuffix(data, "}]") {
 		return data
 	}
+	if strings.HasPrefix(data, "<?xml") || strings.HasPrefix(data, "<html>") {
+		return data
+	}
 	return fmt.Sprintf(result_data_format, data)
 
 }

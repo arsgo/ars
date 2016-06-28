@@ -58,7 +58,7 @@ func (h *RPCScriptHandler) CloseTask(ti cluster.TaskItem) {
 
 //Request 执行Request请求
 func (h *RPCScriptHandler) Request(ti cluster.TaskItem, input string) (result string, err error) {
-	result, er := h.getResult(h.scriptPool.Call(ti.Script, input, ti.Params))
+	result, _, er := h.getResult(h.scriptPool.Call(ti.Script, input, ti.Params))
 	if er != nil {
 		result = GetErrorResult("500", er.Error())
 	} else {
@@ -76,7 +76,7 @@ func (h *RPCScriptHandler) Send(ti cluster.TaskItem, input string, data []byte) 
 func (h *RPCScriptHandler) Get(ti cluster.TaskItem, input string) ([]byte, error) {
 	return nil, errors.New("job consumer not support get method")
 }
-func (h *RPCScriptHandler) getResult(result []string, er error) (r string, err error) {
+func (h *RPCScriptHandler) getResult(result []string, params map[string]string, er error) (r string, p map[string]string, err error) {
 	err = er
 	if err != nil {
 		return
@@ -84,5 +84,6 @@ func (h *RPCScriptHandler) getResult(result []string, er error) (r string, err e
 	if len(result) > 0 {
 		r = result[0]
 	}
+	p = params
 	return
 }
