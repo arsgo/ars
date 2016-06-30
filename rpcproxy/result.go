@@ -34,7 +34,10 @@ func GetSuccessResult() string {
 	return result_success_format
 }
 
-func GetDataResult(data string) string {
+func GetDataResult(data string, redirect bool) string {
+	if redirect {
+		return data
+	}
 	if strings.EqualFold(data, "") || strings.EqualFold(strings.ToLower(data), "nil") || strings.EqualFold(strings.ToLower(data), "null") {
 		return result_success_format
 	}

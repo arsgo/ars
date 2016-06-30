@@ -8,6 +8,7 @@ import (
 	"github.com/colinyl/ars/mqservice"
 	"github.com/colinyl/ars/rpcproxy"
 	"github.com/colinyl/ars/servers/config"
+	"github.com/colinyl/lib4go/concurrent"
 	"github.com/colinyl/lib4go/logger"
 )
 
@@ -28,6 +29,7 @@ type SPServer struct {
 	rpcScriptProxy *rpcproxy.RPCScriptHandler //RPC Server 脚本处理程序
 	clusterClient  cluster.IClusterClient
 	scriptPool     *rpcproxy.ScriptPool //脚本引擎池
+	dbPool         concurrent.ConcurrentMap
 	snap           SPSnap
 }
 
@@ -58,7 +60,8 @@ func (sp *SPServer) init() (err error) {
 	sp.rpcScriptProxy.OnOpenTask = sp.OnSPServiceCreate
 	sp.rpcScriptProxy.OnCloseTask = sp.OnSPServiceClose
 	sp.rpcServer = rpcproxy.NewRPCServer(sp.rpcScriptProxy)
-	sp.mqService,err = mqservice.NewMQConsumerService(sp.clusterClient, mqservice.NewMQScriptHandler(sp.scriptPool))
+	sp.mqService, err = mqservice.NewMQConsumerService(sp.clusterClient, mqservice.NewMQScriptHandler(sp.scriptPool))
+	sp.dbPool = concurrent.NewConcurrentMap()
 	return
 }
 

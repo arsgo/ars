@@ -17,17 +17,18 @@ type rpcServerService struct {
 }
 
 type RPCServerPool struct {
-	pool    *pool.ObjectPool
-	servers concurrent.ConcurrentMap
-	Log     *logger.Logger
-	MinSize int
-	MaxSize int
+	pool     *pool.ObjectPool
+	servers  concurrent.ConcurrentMap
+	Log      *logger.Logger
+	MaxRetry int
+	MinSize  int
+	MaxSize  int
 }
 
 //NewRPCServerPool 创建RPC连接池
 func NewRPCServerPool(minSize int, maxSize int) *RPCServerPool {
 	var err error
-	pl := &RPCServerPool{MinSize: minSize, MaxSize: maxSize}
+	pl := &RPCServerPool{MinSize: minSize, MaxSize: maxSize, MaxRetry: 10}
 	pl.pool = pool.New()
 	pl.servers = concurrent.NewConcurrentMap()
 	pl.Log, err = logger.New("rc server", true)
@@ -46,7 +47,7 @@ func (s *RPCServerPool) ResetAllPoolSize(minSize int, maxSize int) {
 
 //Close 关闭连接池
 func (s *RPCServerPool) Close() {
-   s.pool.Close()
+	s.pool.Close()
 }
 
 //Register 注册服务列表
@@ -84,6 +85,12 @@ func (p *RPCServerPool) Request(group string, svName string, input string) (resu
 		err = errors.New("not find rpc server and name cant be nil")
 		return
 	}
+	execute := 0
+START:
+	execute++
+	if execute >= p.MaxRetry {
+		return
+	}
 	o, err := p.pool.Get(group)
 	if err != nil {
 		err = fmt.Errorf("not find rpc server:%s/%s,%s", group, svName, err)
@@ -93,12 +100,13 @@ func (p *RPCServerPool) Request(group string, svName string, input string) (resu
 	err = obj.Open()
 	if err != nil {
 		p.pool.Unusable(svName, obj)
-		return
+		goto START
 	}
 	defer obj.Close()
 	result, err = obj.Request(svName, input)
 	if err != nil {
 		p.pool.Unusable(svName, obj)
+		goto START
 	} else {
 		p.pool.Recycle(group, o)
 	}

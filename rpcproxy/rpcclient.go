@@ -174,7 +174,7 @@ func (r *RPCClient) Request(cmd string, input string) (result string, err error)
 	if er != nil {
 		result = GetErrorResult("500", er.Error())
 	} else {
-		result = GetDataResult(result)
+		result = GetDataResult(result, false)
 	}
 	return
 }

@@ -34,6 +34,10 @@ func (b *RPCBinder) AsyncRequest(name string, tb *lua.LTable) (s string, err err
 	}
 	return b.client.AsyncRequest(name, input)
 }
+
+func (b *RPCBinder) GetAsyncResult(session string) (s interface{}, err interface{}) {
+	return b.client.GetAsyncResult(session)
+}
 func (b *RPCBinder) Request(name string, tb *lua.LTable) (s string, err error) {
 	input, err := luaTable2Json(tb)
 	if err != nil {

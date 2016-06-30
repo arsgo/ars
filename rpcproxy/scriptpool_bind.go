@@ -42,19 +42,25 @@ func (s *ScriptPool) NewHTTPClient() *net.HTTPClient {
 	return net.NewHTTPClient()
 }
 
+//NewHTTPClientCert http client
+func (s *ScriptPool) NewHTTPClientCert(certFile string, keyFile string, caFile string) (*net.HTTPClient, error) {
+	return net.NewHTTPClientCert(certFile, keyFile, caFile)
+}
+
 //bindGlobalLibs 绑定lib
 func (s *ScriptPool) bindGlobalLibs(extlibs map[string]interface{}) (funs map[string]interface{}) {
 	funs = map[string]interface{}{
-		"print":         s.Log.Info,
-		"printf":        s.Log.Infof,
-		"error":         s.Log.Error,
-		"errorf":        s.Log.Errorf,
-		"NewGUID":       utility.GetGUID,
-		"NewRPC":        s.NewRPCClient,
-		"NewMQProducer": s.NewMQProducer,
-		"NewMemcached":  s.NewMemcached,
-		"NewXHttp":      s.NewHTTPClient,
-		"NewSecurity":   s.NewBindSecurity,
+		"print":             s.Log.Info,
+		"printf":            s.Log.Infof,
+		"error":             s.Log.Error,
+		"errorf":            s.Log.Errorf,
+		"NewGUID":           utility.GetGUID,
+		"NewRPC":            s.NewRPCClient,
+		"NewMQProducer":     s.NewMQProducer,
+		"NewMemcached":      s.NewMemcached,
+		"NewXHttp":          s.NewHTTPClient,
+		"NewHTTPClientCert": s.NewHTTPClientCert,
+		"NewSecurity":       s.NewBindSecurity,
 	}
 	for i, v := range extlibs {
 		funs[i] = v
