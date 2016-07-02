@@ -8,7 +8,7 @@ import (
 //BindLocalJobs 绑定本地JOB
 func (a *AppServer) BindLocalJobs(jobs []cluster.JobItem) {
 	scheduler.Stop()
-	if len(jobs) == 0 {
+	if jobs == nil || len(jobs) == 0 {
 		return
 	}
 	aliveJob := 0
@@ -26,7 +26,7 @@ func (a *AppServer) BindLocalJobs(jobs []cluster.JobItem) {
 		scheduler.AddTask(v.Trigger, scheduler.NewTask(v, func(job interface{}) {
 			item := job.(cluster.JobItem)
 			a.Log.Infof(" -> run job [%s] %s", item.Name, item.Script)
-			_, _, err := a.scriptPool.Call(item.Script, "{}", item.Params)
+			_, _, err := a.scriptPool.Call(item.Script, "{}", item.Params,"")
 			if err != nil {
 				a.Log.Error(err)
 			}

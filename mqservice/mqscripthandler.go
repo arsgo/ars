@@ -11,22 +11,22 @@ import (
 //MQScriptHandler 脚本处理程序
 type MQScriptHandler struct {
 	pool *rpcproxy.ScriptPool
-	Log  *logger.Logger
+	Log  logger.ILogger
 }
 
 //NewMQScriptHandler 创建新的脚本处理程序
-func NewMQScriptHandler(pool *rpcproxy.ScriptPool) (mq *MQScriptHandler) {
+func NewMQScriptHandler(pool *rpcproxy.ScriptPool, loggerName string) (mq *MQScriptHandler) {
 	mq = &MQScriptHandler{pool: pool}
-	mq.Log, _ = logger.New("mq consumer handler", true)
+	mq.Log, _ = logger.Get(loggerName, true)
 	return
 }
 
 //Handle 处理MQ消息
 func (mq *MQScriptHandler) Handle(task cluster.TaskItem, input string) bool {
-	mq.Log.Info(" -> recv mq message:", input)
-	result, _, err := mq.pool.Call(task.Name, input, task.Params)
+	mq.Log.Infof(" -> recv mq message:%s", input)
+	result, _, err := mq.pool.Call(task.Script, input, task.Params,"")
 	if err != nil {
 		return false
 	}
-	return len(result) > 0 && strings.EqualFold(strings.ToLower(result[0]), "true")
+	return len(result) > 0 && (strings.EqualFold(strings.ToLower(result[0]), "true") || strings.EqualFold(strings.ToLower(result[0]), "success"))
 }

@@ -19,7 +19,7 @@ type MQConsumerService struct {
 	handler       MQHandler
 	tasks         []cluster.TaskItem
 	consumers     concurrent.ConcurrentMap //map[string]*MQConsumer
-	Log           *logger.Logger
+	Log           logger.ILogger
 }
 
 func (mq *MQConsumerService) recover() {
@@ -29,11 +29,11 @@ func (mq *MQConsumerService) recover() {
 }
 
 //NewMQConsumerService 创建MQ
-func NewMQConsumerService(client cluster.IClusterClient, handler MQHandler) (mq *MQConsumerService, err error) {
+func NewMQConsumerService(client cluster.IClusterClient, handler MQHandler, loggerName string) (mq *MQConsumerService, err error) {
 	mq = &MQConsumerService{}
 	mq.clusterClient = client
 	mq.handler = handler
-	mq.Log, err = logger.New("mq consumer", true)
+	mq.Log, err = logger.Get(loggerName, true)
 	mq.consumers = concurrent.NewConcurrentMap()
 	return
 }
@@ -51,10 +51,10 @@ func (mq *MQConsumerService) UpdateTasks(tasks []cluster.TaskItem) (err error) {
 	}
 
 	//启动已添加的服务
-	for k, v := range consumers {
+	for k, v := range consumers {	
 		if c := mq.consumers.Get(k); c == nil {
-			current, err := NewMQConsumer(v, mq.clusterClient, func(msg string) bool {
-				return mq.handler.Handle(v, msg)
+			current, err := NewMQConsumer(v, mq.clusterClient, func(msg string, tk cluster.TaskItem) bool {
+				return mq.handler.Handle(tk, msg)
 			})
 			if err != nil {
 				mq.Log.Fatal("mq create error:", err)
@@ -62,10 +62,10 @@ func (mq *MQConsumerService) UpdateTasks(tasks []cluster.TaskItem) (err error) {
 			}
 			mq.Log.Infof("::start mq consumer:[%s] %s", v.Name, v.Script)
 			mq.consumers.Set(k, current)
-			go func() {
+			go func(mq *MQConsumerService, current *MQConsumer) {
 				mq.recover()
 				current.Start()
-			}()
+			}(mq, current)
 		}
 	}
 	return

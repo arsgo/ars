@@ -6,6 +6,7 @@ import (
 	"github.com/colinyl/lib4go/mem"
 	"github.com/colinyl/lib4go/mq"
 	"github.com/colinyl/lib4go/net"
+	"github.com/colinyl/lib4go/security/weixin"
 	"github.com/colinyl/lib4go/utility"
 )
 
@@ -47,6 +48,11 @@ func (s *ScriptPool) NewHTTPClientCert(certFile string, keyFile string, caFile s
 	return net.NewHTTPClientCert(certFile, keyFile, caFile)
 }
 
+//NewWechat 创建微信加解密对象
+func (s *ScriptPool) NewWechat(appid string, token string, encodingAESKey string) (weixin.Wechat, error) {
+	return weixin.NewWechat(appid, token, encodingAESKey)
+}
+
 //bindGlobalLibs 绑定lib
 func (s *ScriptPool) bindGlobalLibs(extlibs map[string]interface{}) (funs map[string]interface{}) {
 	funs = map[string]interface{}{
@@ -61,6 +67,7 @@ func (s *ScriptPool) bindGlobalLibs(extlibs map[string]interface{}) (funs map[st
 		"NewXHttp":          s.NewHTTPClient,
 		"NewHTTPClientCert": s.NewHTTPClientCert,
 		"NewSecurity":       s.NewBindSecurity,
+		"NewWechat":         s.NewWechat,
 	}
 	for i, v := range extlibs {
 		funs[i] = v

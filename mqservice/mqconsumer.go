@@ -14,16 +14,18 @@ import (
 type MQConsumer struct {
 	service queue.IMQService
 	param   map[string]interface{}
-	handler func(string) bool
+	handler func(string, cluster.TaskItem) bool
 	queue   string
 	setting string
 	Message string
+	task    cluster.TaskItem
 }
 
 //NewMQConsumer 创建新的MQ消费者
-func NewMQConsumer(task cluster.TaskItem, clusterClient cluster.IClusterClient, handler func(string) bool) (mq *MQConsumer, err error) {
+func NewMQConsumer(task cluster.TaskItem, clusterClient cluster.IClusterClient, handler func(string, cluster.TaskItem) bool) (mq *MQConsumer, err error) {
 	mq = &MQConsumer{}
 	mq.handler = handler
+	mq.task = task
 	mq.param, err = utility.GetParamsMap(task.Params)
 	if err != nil {
 		return
@@ -57,7 +59,7 @@ func (mq *MQConsumer) Start() {
 	}
 	mq.service.Consume(mq.queue, func(h queue.MsgHandler) {
 		msg := h.GetMessage()
-		if mq.handler(msg) {
+		if mq.handler(msg, mq.task) {
 			h.Ack()
 		} else {
 			h.Nack()

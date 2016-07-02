@@ -14,7 +14,7 @@ import (
 //AppServer app server服务器
 type AppServer struct {
 	JobAddress               map[string]string
-	Log                      *logger.Logger
+	Log                      logger.ILogger
 	clusterClient            cluster.IClusterClient
 	jobConsumerScriptHandler *rpcproxy.RPCScriptHandler //本地JOB Consumer提供的RPC接口,使用的代理处理程序为脚本处理
 	jobConsumerRPCServer     *rpcproxy.RPCServer        //接收JOB事件调用,改事件将触发脚本执行
@@ -24,50 +24,55 @@ type AppServer struct {
 	httpServer               *httpserver.HttpScriptServer
 	mqService                *mqservice.MQConsumerService
 	snap                     AppSnap
+	loggerName               string
 }
 
 //NewAPPServer 创建APP Server服务器
 func NewAPPServer() *AppServer {
-	app := &AppServer{}
+	app := &AppServer{loggerName: "app.server"}
 	app.JobAddress = make(map[string]string)
-	app.Log, _ = logger.New("app server", true)
+	app.Log, _ = logger.Get(app.loggerName, true)
 	return app
 }
 
 //init 初始化服务器
 func (app *AppServer) init() (err error) {
+	defer app.recover()
+	app.Log.Info(" -> 初始化AppServer...")
 	cfg, err := config.Get()
 	if err != nil {
 		return
 	}
-	app.clusterClient, err = cluster.GetClusterClient(cfg.Domain, cfg.IP, cfg.ZKServers...)
+	app.clusterClient, err = cluster.GetClusterClient(cfg.Domain, cfg.IP, app.loggerName, cfg.ZKServers...)
 	if err != nil {
 		return
 	}
 
 	app.snap = AppSnap{ip: cfg.IP}
-	app.rpcClient = rpcproxy.NewRPCClient(app.clusterClient)
+	app.rpcClient = rpcproxy.NewRPCClient(app.clusterClient, app.loggerName)
 	app.snap.Address = cfg.IP
-	app.scriptPool, err = rpcproxy.NewScriptPool(app.clusterClient, app.rpcClient, make(map[string]interface{}))
-	app.jobConsumerScriptHandler = rpcproxy.NewRPCScriptHandler(app.clusterClient, app.scriptPool)
+	app.scriptPool, err = rpcproxy.NewScriptPool(app.clusterClient, app.rpcClient, make(map[string]interface{}), app.loggerName)
+	app.jobConsumerScriptHandler = rpcproxy.NewRPCScriptHandler(app.clusterClient, app.scriptPool, app.loggerName)
 	app.jobConsumerScriptHandler.OnOpenTask = app.OnJobCreate
 	app.jobConsumerScriptHandler.OnCloseTask = app.OnJobClose
-	app.jobConsumerRPCServer = rpcproxy.NewRPCServer(app.jobConsumerScriptHandler)
-	app.mqService, err = mqservice.NewMQConsumerService(app.clusterClient, mqservice.NewMQScriptHandler(app.scriptPool))
+	app.jobConsumerRPCServer = rpcproxy.NewRPCServer(app.jobConsumerScriptHandler, app.loggerName)
+	app.mqService, err = mqservice.NewMQConsumerService(app.clusterClient, mqservice.NewMQScriptHandler(app.scriptPool, app.loggerName), app.loggerName)
 	return
 }
 
 //Start 启动服务器
 func (app *AppServer) Start() (err error) {
+	defer app.recover()
+	app.Log.Info(" -> 启动APP Server...")
 	if err = app.init(); err != nil {
 		app.Log.Error(err)
 		return
 	}
-	app.clusterClient.WatchRCServerChange(func(config []*cluster.RCServerItem, err error) {		
+	app.clusterClient.WatchRCServerChange(func(config []*cluster.RCServerItem, err error) {
 		app.BindRCServer(config, err)
 	})
 
-	app.clusterClient.WatchAppTaskChange(func(config *cluster.AppServerStartupConfig, err error) error {	
+	app.clusterClient.WatchAppTaskChange(func(config *cluster.AppServerStartupConfig, err error) error {
 		app.BindTask(config, err)
 		return nil
 	})
@@ -77,9 +82,8 @@ func (app *AppServer) Start() (err error) {
 
 //Stop 停止服务器
 func (app *AppServer) Stop() error {
-	defer func() {
-		recover()
-	}()
+	defer app.recover()
+	app.Log.Info(" -> 退出AppServer...")
 	app.clusterClient.Close()
 	app.rpcClient.Close()
 	app.jobConsumerRPCServer.Stop()

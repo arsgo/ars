@@ -39,25 +39,26 @@ func getScriptInputArgs(input string, params string) (r string) {
 //ScriptPool 创建ScriptPool
 type ScriptPool struct {
 	Pool          *script.LuaPool
-	Log           *logger.Logger
+	Log           logger.ILogger
 	clusterClient cluster.IClusterClient
 	rpcclient     *RPCClient
 }
 
 //NewScriptPool 创建脚本POOl
-func NewScriptPool(clusterClient cluster.IClusterClient, rpcclient *RPCClient, extlibs map[string]interface{}) (p *ScriptPool, err error) {
+func NewScriptPool(clusterClient cluster.IClusterClient, rpcclient *RPCClient, extlibs map[string]interface{},
+	loggerName string) (p *ScriptPool, err error) {
 	p = &ScriptPool{}
 	p.clusterClient = clusterClient
 	p.rpcclient = rpcclient
 	p.Pool = script.NewLuaPool()
 	p.Pool.SetPackages(`./scripts/xlib`, `./scripts`)
-	p.Log, err = logger.New("script", true)
+	p.Log, err = logger.Get(loggerName, true)
 	p.Pool.RegisterLibs(p.bindGlobalLibs(extlibs))
 	return
 }
 
 //Call 执行脚本
-func (s *ScriptPool) Call(name string, input string, params string) ([]string, map[string]string, error) {
+func (s *ScriptPool) Call(name string, input string, params string, body string) ([]string, map[string]string, error) {
 	if strings.EqualFold(name, "") {
 		return nil, nil, errors.New("script is nil")
 	}
@@ -65,5 +66,5 @@ func (s *ScriptPool) Call(name string, input string, params string) ([]string, m
 	if !strings.HasPrefix(name, "./") {
 		script = "./" + strings.TrimLeft(name, "/")
 	}
-	return s.Pool.Call(script, getScriptInputArgs(input, params))
+	return s.Pool.Call(script, getScriptInputArgs(input, params),body)
 }

@@ -18,19 +18,19 @@ type RPCProxyHandler struct {
 	tasks         concurrent.ConcurrentMap
 	clusterClient cluster.IClusterClient
 	client        *RPCClient
-	Log           *logger.Logger
+	Log           logger.ILogger
 	snap          ISnap
 	lock          sync.RWMutex
 }
 
 //NewRPCProxyHandler 构建JOB consumer处理对象
-func NewRPCProxyHandler(client cluster.IClusterClient, rpcClient *RPCClient, snap ISnap) *RPCProxyHandler {
+func NewRPCProxyHandler(client cluster.IClusterClient, rpcClient *RPCClient, snap ISnap, loggerName string) *RPCProxyHandler {
 	job := &RPCProxyHandler{}
 	job.clusterClient = client
 	job.client = rpcClient
 	job.snap = snap
 	job.tasks = concurrent.NewConcurrentMap()
-	job.Log, _ = logger.New("rpc proxy", true)
+	job.Log, _ = logger.Get(loggerName, true)
 	return job
 }
 
@@ -57,8 +57,10 @@ func (h *RPCProxyHandler) CloseTask(ti cluster.TaskItem) {
 }
 
 //Request 执行Request请求
-func (h *RPCProxyHandler) Request(ti cluster.TaskItem, input string) (string, error) {
-	return h.client.Request(ti.Name, input)
+func (h *RPCProxyHandler) Request(ti cluster.TaskItem, input string) (r string, err error) {
+	defer h.recover()
+	r, _ = h.client.Request(ti.Name, input)
+	return
 }
 
 //Send 暂不支持
@@ -83,4 +85,10 @@ func (h *RPCProxyHandler) getResult(result []string, er error) (r string, err er
 		r = result[0]
 	}
 	return
+}
+
+func (h *RPCProxyHandler) recover() {
+	if r := recover(); r != nil {
+		h.Log.Fatal(r)
+	}
 }

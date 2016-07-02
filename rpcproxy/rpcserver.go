@@ -20,7 +20,8 @@ type RPCServer struct {
 	Address       string
 	serverHandler *RPCHandlerProxy
 	server        *rpcservice.RPCServer
-	Log           *logger.Logger
+	Log           logger.ILogger
+	loggerName    string
 }
 
 //Tasks 任务列表
@@ -38,10 +39,10 @@ type RPCHandler interface {
 }
 
 //NewRPCServer 创建RPC服务器
-func NewRPCServer(handler RPCHandler) (server *RPCServer) {
-	server = &RPCServer{}
-	server.serverHandler = NewRPCHandlerProxy(handler)
-	server.Log, _ = logger.New("rpc server", true)
+func NewRPCServer(handler RPCHandler, loggerName string) (server *RPCServer) {
+	server = &RPCServer{loggerName: loggerName}
+	server.serverHandler = NewRPCHandlerProxy(handler, loggerName)
+	server.Log, _ = logger.Get(loggerName, true)
 	return server
 }
 
@@ -53,7 +54,7 @@ func (r *RPCServer) UpdateTasks(tasks []cluster.TaskItem) {
 //Start 启动RPC服务器
 func (r *RPCServer) Start() {
 	r.Address = rpcservice.GetLocalRandomAddress()
-	r.server = rpcservice.NewRPCServer(r.Address, r.serverHandler)
+	r.server = rpcservice.NewRPCServer(r.Address, r.serverHandler, r.loggerName)
 	r.server.Serve()
 	time.Sleep(time.Second * 2)
 }
@@ -69,16 +70,16 @@ func (r *RPCServer) Stop() {
 type RPCHandlerProxy struct {
 	tasks   Tasks
 	handler RPCHandler
-	Log     *logger.Logger
+	Log     logger.ILogger
 }
 
 //NewRPCHandlerProxy 创建RPC默认处理程序
-func NewRPCHandlerProxy(h RPCHandler) *RPCHandlerProxy {
+func NewRPCHandlerProxy(h RPCHandler, loggerName string) *RPCHandlerProxy {
 	handler := &RPCHandlerProxy{}
 	handler.tasks = Tasks{}
 	handler.handler = h
 	handler.tasks.Services = concurrent.NewConcurrentMap() //make(map[string]cluster.TaskItem)
-	handler.Log, _ = logger.New("rpc server", true)
+	handler.Log, _ = logger.Get(loggerName, true)
 	return handler
 }
 
@@ -90,7 +91,6 @@ func (r *RPCHandlerProxy) UpdateTasks(tasks []cluster.TaskItem) {
 		tks[v.Name] = v
 	}
 	services := r.tasks.Services.GetAll()
-
 	for i, v := range services {
 		if _, ok := tks[i]; !ok {
 			r.handler.CloseTask(v.(cluster.TaskItem))
@@ -156,6 +156,9 @@ func (r *RPCHandlerProxy) Request(name string, input string) (result string, err
 		result = GetErrorResult("500", currentErr.Error())
 	} else {
 		result, currentErr = r.handler.Request(task, input)
+	}
+	if currentErr != nil {
+		r.Log.Error(currentErr)
 	}
 	r.Log.Info(result)
 	return

@@ -31,7 +31,7 @@ func (rc *RCServer) BindJobScheduler(jobs map[string]cluster.JobItem, err error)
 			total := jobs[task.Name].Concurrency
 			index := 0
 			for i := 0; i < len(consumers); i++ {
-				client := rpcservice.NewRPCClient(consumers[i])
+				client := rpcservice.NewRPCClient(consumers[i], rc.loggerName)
 				if client.Open() != nil {
 					rc.Log.Infof("open rpc server(%s) error ", consumers[i])
 					continue

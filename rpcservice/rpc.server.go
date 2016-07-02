@@ -17,6 +17,7 @@ func (n *RPCServer) recover() {
 	}
 }
 func (r *RPCServer) Serve() (er error) {
+	defer r.recover()
 	transportFactory := thrift.NewTFramedTransportFactory(thrift.NewTTransportFactory())
 	protocolFactory := thrift.NewTBinaryProtocolFactoryDefault()
 	serverTransport, er := thrift.NewTServerSocketTimeout(r.Address, time.Hour*24*31)
@@ -40,15 +41,16 @@ func (r *RPCServer) Serve() (er error) {
 	return
 }
 func (r *RPCServer) Stop() {
+	defer r.recover()
 	if r.server != nil {
 		r.server.Stop()
 	}
 
 }
-func NewRPCServer(address string, handler rpcHandler) *RPCServer {
+func NewRPCServer(address string, handler rpcHandler, loggerName string) *RPCServer {
 	var err error
 	rpcs := &RPCServer{Address: address, Handler: handler}
-	rpcs.log, err = logger.New("rpc server", true)
+	rpcs.log, err = logger.Get(loggerName, true)
 	if err != nil {
 		log.Println(err)
 	}

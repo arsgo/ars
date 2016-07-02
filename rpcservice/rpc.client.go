@@ -18,28 +18,28 @@ type RPCClient struct {
 	client    *rpc.ServiceProviderClient
 	isFatal   bool
 	timeout   time.Duration
-	Log       *logger.Logger
+	Log      logger.ILogger
 }
 
-func NewRPCClient(address string) (client *RPCClient) {
-	return NewRPCClientTimeout(address, time.Second*3)
+func NewRPCClient(address string, loggerName string) (client *RPCClient) {
+	return NewRPCClientTimeout(address, time.Second*3, loggerName)
 }
-func NewRPCClientTimeout(address string, timeout time.Duration) (client *RPCClient) {
+func NewRPCClientTimeout(address string, timeout time.Duration, loggerName string) (client *RPCClient) {
 	addr := address
 	if !strings.Contains(address, ":") {
 		addr = net.JoinHostPort(address, "1016")
 	}
 	client = &RPCClient{Address: addr, timeout: timeout}
-	client.Log, _ = logger.New("rpc client", true)
+	client.Log, _ = logger.Get(loggerName, true)
 	return
 }
-
+func (n *RPCClient) recover() {
+	if r := recover(); r != nil {
+		n.Log.Fatal(r)
+	}
+}
 func (client *RPCClient) Open() (err error) {
-	defer func() {
-		if er := recover(); er != nil {
-			err = er.(error)
-		}
-	}()
+	defer client.recover()
 	client.transport, err = thrift.NewTSocketTimeout(client.Address, client.timeout)
 	if err != nil {
 		return errors.New(fmt.Sprint("new client error:", client.Address, ",", err.Error()))
@@ -57,20 +57,22 @@ func (client *RPCClient) Open() (err error) {
 	return nil
 }
 
-func (j *RPCClient) Request(name string, input string) (string, error) {
-	return j.client.Request(name, input)
+func (j *RPCClient) Request(name string, input string) (r string, e error) {
+	defer j.recover()
+	r, _ = j.client.Request(name, input)
+	return
 }
 
 func (j *RPCClient) Send(name string, input string, data []byte) (string, error) {
+	defer j.recover()
 	return j.client.Send(name, input, data)
 }
 func (j *RPCClient) Get(name string, input string) ([]byte, error) {
+	defer j.recover()
 	return j.client.Get(name, input)
 }
 func (j *RPCClient) Close() {
-	defer func() {
-		recover()
-	}()
+	defer j.recover()
 	if j.transport != nil {
 		j.transport.Close()
 	}

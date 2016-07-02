@@ -15,6 +15,6 @@ type rpcHandler interface {
 type RPCServer struct {
 	Address string
 	Handler rpcHandler
-	log     *logger.Logger
+	log     logger.ILogger
 	server  *thrift.TSimpleServer
 }

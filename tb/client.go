@@ -21,7 +21,7 @@ type TCPClient struct {
 
 func NewTCPClient(address string, commandName string, params string) *TCPClient {
 	client := &TCPClient{address: address, params: params, commandName: commandName}
-	client.client = rpcservice.NewRPCClientTimeout(address, time.Second*5)
+	client.client = rpcservice.NewRPCClientTimeout(address, time.Second*5,"tb")
 	err := client.client.Open()
 	if err != nil {
 		Log.Fatal(err)

@@ -44,17 +44,17 @@ type RPCClient struct {
 	services concurrent.ConcurrentMap
 	client   cluster.IClusterClient
 	mutex    sync.RWMutex
-	Log      *logger.Logger
+	Log      logger.ILogger
 }
 
 //NewRPCClient 创建RPC Client
-func NewRPCClient(cli cluster.IClusterClient) *RPCClient {
+func NewRPCClient(cli cluster.IClusterClient, loggerName string) *RPCClient {
 	client := &RPCClient{}
 	client.client = cli
-	client.pool = rpcservice.NewRPCServerPool(5, 10)
+	client.pool = rpcservice.NewRPCServerPool(5, 10, loggerName)
 	client.services = concurrent.NewConcurrentMap()
 	client.queues = concurrent.NewConcurrentMap()
-	client.Log, _ = logger.New("rpc client", true)
+	client.Log, _ = logger.Get(loggerName, true)
 	return client
 }
 
@@ -164,6 +164,7 @@ func (r *RPCClient) getGroupName(name string) string {
 
 //Request 发送Request请求
 func (r *RPCClient) Request(cmd string, input string) (result string, err error) {
+	defer r.recover()
 	name := r.client.GetServiceFullPath(cmd)
 	group := r.getGroupName(name)
 	if strings.EqualFold(group, "") {
@@ -182,14 +183,14 @@ func (r *RPCClient) Request(cmd string, input string) (result string, err error)
 //Send 发送Send请求
 func (r *RPCClient) Send(cmd string, input string, data string) (result string, err error) {
 	name := r.client.GetServiceFullPath(cmd)
-	result, err = r.pool.Send(r.getGroupName(name), name, input, []byte(data))
+	result, _ = r.pool.Send(r.getGroupName(name), name, input, []byte(data))
 	return
 }
 
 //Get 发送Gety请求
 func (r *RPCClient) Get(cmd string, input string) (result string, err error) {
 	name := r.client.GetServiceFullPath(cmd)
-	data, err := r.pool.Get(r.getGroupName(name), name, input)
+	data, _ := r.pool.Get(r.getGroupName(name), name, input)
 	if err != nil {
 		result = string(data)
 	}

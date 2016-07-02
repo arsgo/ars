@@ -44,13 +44,13 @@ type ClusterClient struct {
 	appServerPath       string
 	spServerTaskPath    string
 	handler             IClusterHandler
-	Log                 *logger.Logger
+	Log                 logger.ILogger
 	timeout             time.Duration
 	dataMap             utility.DataMap
 	IP                  string
 }
 
-func NewClusterClient(domain string, ip string, handler IClusterHandler) (client *ClusterClient, err error) {
+func NewClusterClient(domain string, ip string, handler IClusterHandler,loggerName string) (client *ClusterClient, err error) {
 	client = &ClusterClient{}
 	client.domain = "/" + strings.TrimLeft(strings.Replace(domain, ".", "/", -1), "/")
 	client.domainPath = "@" + strings.Replace(strings.TrimLeft(client.domain, "/"), "/", ".", -1)
@@ -67,7 +67,7 @@ func NewClusterClient(domain string, ip string, handler IClusterHandler) (client
 	client.jobConfigPath = client.dataMap.Translate(p_jobTaskConfig)
 	client.appServerPath = client.dataMap.Translate(p_appServerPath)
 	client.spServerTaskPath = client.dataMap.Translate(p_spTaskConfig)
-	client.Log, err = logger.New("cluster.client", true)
+	client.Log, err = logger.Get(loggerName, true)
 	client.timeout = time.Hour * 10000
 	client.handler = handler
 	return

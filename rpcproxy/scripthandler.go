@@ -14,18 +14,18 @@ type RPCScriptHandler struct {
 	tasks         concurrent.ConcurrentMap
 	clusterClient cluster.IClusterClient
 	scriptPool    *ScriptPool
-	Log           *logger.Logger
+	Log           logger.ILogger
 	OnOpenTask    func(task cluster.TaskItem) string
 	OnCloseTask   func(task cluster.TaskItem, path string)
 }
 
 //NewRPCScriptHandler 构建JOB consumer处理对象
-func NewRPCScriptHandler(client cluster.IClusterClient, pool *ScriptPool) *RPCScriptHandler {
+func NewRPCScriptHandler(client cluster.IClusterClient, pool *ScriptPool, loggerName string) *RPCScriptHandler {
 	job := &RPCScriptHandler{}
 	job.clusterClient = client
 	job.scriptPool = pool
 	job.tasks = concurrent.NewConcurrentMap()
-	job.Log, _ = logger.New("job consumer", true)
+	job.Log, _ = logger.Get(loggerName, true)
 	return job
 }
 
@@ -59,7 +59,8 @@ func (h *RPCScriptHandler) CloseTask(ti cluster.TaskItem) {
 
 //Request 执行Request请求
 func (h *RPCScriptHandler) Request(ti cluster.TaskItem, input string) (result string, err error) {
-	sresult, smap, err := h.scriptPool.Call(ti.Script, input, ti.Params)
+	defer h.recover()
+	sresult, smap, err := h.scriptPool.Call(ti.Script, input, ti.Params, "")
 	result, _, er := h.getResult(sresult, smap, err)
 	if er != nil {
 		result = GetErrorResult("500", er.Error())
@@ -88,4 +89,9 @@ func (h *RPCScriptHandler) getResult(result []string, params map[string]string, 
 	}
 	p = params
 	return
+}
+func (h *RPCScriptHandler) recover() {
+	if r := recover(); r != nil {
+		h.Log.Fatal(r)
+	}
 }

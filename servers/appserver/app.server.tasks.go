@@ -7,7 +7,9 @@ import (
 )
 
 func (a *AppServer) getMQConsumerTask(tasks []cluster.TaskItem) (tks []cluster.TaskItem) {
-	tks = make([]cluster.TaskItem, 0)
+	if tasks == nil {
+		tasks = make([]cluster.TaskItem, 0)
+	}
 	for _, v := range tasks {
 		if strings.EqualFold(strings.ToLower(v.Type), "mq") &&
 			strings.EqualFold(strings.ToLower(v.Method), "consume") {
@@ -17,8 +19,7 @@ func (a *AppServer) getMQConsumerTask(tasks []cluster.TaskItem) (tks []cluster.T
 	return
 }
 
-func (a *AppServer) getJobConsumerTask(tasks []cluster.TaskItem) (tks []cluster.TaskItem) {
-	tks = make([]cluster.TaskItem, 0)
+func (a *AppServer) getJobConsumerTask(tasks []cluster.TaskItem) (tks []cluster.TaskItem) {	
 	for _, v := range tasks {
 		if strings.EqualFold(strings.ToLower(v.Type), "job") &&
 			strings.EqualFold(strings.ToLower(v.Method), "consume") {

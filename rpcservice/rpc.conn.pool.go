@@ -22,21 +22,23 @@ type RpcClientConn struct {
 }
 
 type subscriber struct {
-	notify chan *RpcClientConn
+	notify     chan *RpcClientConn
+	loggerName string
 }
 type worker struct {
 	address     string
 	status      chan bool
 	connect     int
 	subscribers chan *subscriber
-	Log         *logger.Logger
+	loggerName  string
+	Log         logger.ILogger
 }
 
 type connPool struct {
-	workers map[string]*worker
-	mutex   sync.Mutex
-	status  bool
-	Log     *logger.Logger
+	workers    map[string]*worker
+	mutex      sync.Mutex
+	status     bool
+	loggerName string
 }
 
 var globalPool *connPool
@@ -45,27 +47,28 @@ func init() {
 	globalPool = NewConnPool()
 }
 
-func Subscribe(address string, notify chan *RpcClientConn) {
-	globalPool.Subscribe(address, notify)
+func Subscribe(address string, notify chan *RpcClientConn, loggerName string) {
+	globalPool.Subscribe(address, notify, loggerName)
 }
 
 func NewConnPool() (conn *connPool) {
 	conn = &connPool{workers: make(map[string]*worker)}
-	conn.Log, _ = logger.New("conn pool", true)
+	
 	return
 }
 func (n *connPool) recover() {
 	if r := recover(); r != nil {
-		n.Log.Fatal(r)
+		log, _ := logger.Get("sys/conn.pool", true)
+		log.Fatal(r)
 	}
 }
-func (n *connPool) Subscribe(address string, notify chan *RpcClientConn) {
+func (n *connPool) Subscribe(address string, notify chan *RpcClientConn, loggerName string) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 	wkr, ok := n.workers[address]
 	if !ok {
-		wkr = &worker{address: address, status: make(chan bool, 1)}
-		wkr.Log = n.Log
+		wkr = &worker{address: address, status: make(chan bool, 1), loggerName: loggerName}
+		wkr.Log, _ = logger.Get(loggerName, true)
 		wkr.subscribers = make(chan *subscriber, 100)
 		wkr.status <- true
 		n.workers[address] = wkr
@@ -74,7 +77,7 @@ func (n *connPool) Subscribe(address string, notify chan *RpcClientConn) {
 			wkr.doWork()
 		}()
 	}
-	wkr.subscribers <- &subscriber{notify: notify}
+	wkr.subscribers <- &subscriber{notify: notify, loggerName: loggerName}
 }
 func (w *worker) doWork() {
 	tp := time.NewTicker(time.Second * 3)
@@ -86,7 +89,7 @@ func (w *worker) doWork() {
 					sub.notify <- &RpcClientConn{Err: fmt.Errorf("cant connect server:%s", w.address)}
 				} else {
 					//w.Log.Info(" -> connect to:", w.address)
-					client := NewRPCClientTimeout(w.address, time.Second*3)
+					client := NewRPCClientTimeout(w.address, time.Second*3, sub.loggerName)
 					err := client.Open()
 					if err == nil {
 						w.connect = c_connecdted
@@ -100,7 +103,7 @@ func (w *worker) doWork() {
 		case <-tp.C:
 			if w.connect == c_cant_connect {
 				w.Log.Info(" -> 定时重连:", w.address)
-				client := NewRPCClient(w.address)
+				client := NewRPCClient(w.address, w.loggerName)
 				err := client.Open()
 				if err == nil {
 					w.connect = c_connecdted

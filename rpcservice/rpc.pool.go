@@ -17,21 +17,22 @@ type rpcServerService struct {
 }
 
 type RPCServerPool struct {
-	pool     *pool.ObjectPool
-	servers  concurrent.ConcurrentMap
-	Log      *logger.Logger
-	MaxRetry int
-	MinSize  int
-	MaxSize  int
+	pool       *pool.ObjectPool
+	servers    concurrent.ConcurrentMap
+	Log        logger.ILogger
+	loggerName string
+	MaxRetry   int
+	MinSize    int
+	MaxSize    int
 }
 
 //NewRPCServerPool 创建RPC连接池
-func NewRPCServerPool(minSize int, maxSize int) *RPCServerPool {
+func NewRPCServerPool(minSize int, maxSize int, loggerName string) *RPCServerPool {
 	var err error
-	pl := &RPCServerPool{MinSize: minSize, MaxSize: maxSize, MaxRetry: 10}
+	pl := &RPCServerPool{MinSize: minSize, MaxSize: maxSize, MaxRetry: 10, loggerName: loggerName}
 	pl.pool = pool.New()
 	pl.servers = concurrent.NewConcurrentMap()
-	pl.Log, err = logger.New("rc server", true)
+	pl.Log, err = logger.Get(loggerName, true)
 	if err != nil {
 		log.Println(err)
 	}
@@ -57,7 +58,10 @@ func (s *RPCServerPool) Register(svs map[string]string) {
 	for ip := range servers {
 		if _, ok := svs[ip]; !ok {
 			s.servers.Delete(ip)
-			go s.pool.UnRegister(ip)
+			go func() {
+				defer s.recover()
+				s.pool.UnRegister(ip)
+			}()
 		}
 	}
 	//*
@@ -65,7 +69,8 @@ func (s *RPCServerPool) Register(svs map[string]string) {
 	for ip := range svs {
 		if _, ok := servers[ip]; !ok {
 			go func(ip string) {
-				err := s.pool.Register(ip, newRPCClientFactory(ip, s.Log), s.MinSize, s.MaxSize)
+				defer s.recover()
+				err := s.pool.Register(ip, newRPCClientFactory(ip, s.loggerName), s.MinSize, s.MaxSize)
 				if err != nil {
 					s.Log.Error(err)
 				}
@@ -77,10 +82,7 @@ func (s *RPCServerPool) Register(svs map[string]string) {
 }
 
 func (p *RPCServerPool) Request(group string, svName string, input string) (result string, err error) {
-	defer func() {
-		if ex := recover(); ex != nil {
-		}
-	}()
+	defer p.recover()
 	if strings.EqualFold(group, "") {
 		err = errors.New("not find rpc server and name cant be nil")
 		return
@@ -113,11 +115,7 @@ START:
 	return
 }
 func (p *RPCServerPool) Send(group string, svName string, input string, data []byte) (result string, err error) {
-	defer func() {
-		if ex := recover(); ex != nil {
-			//err = ex.(error)
-		}
-	}()
+	defer p.recover()
 	if strings.EqualFold(group, "") {
 		err = errors.New("not find rpc server and name cant be nil")
 		return
@@ -139,11 +137,7 @@ func (p *RPCServerPool) Send(group string, svName string, input string, data []b
 }
 
 func (p *RPCServerPool) Get(group string, svName string, input string) (result []byte, err error) {
-	defer func() {
-		if ex := recover(); ex != nil {
-			//err = ex.(error)
-		}
-	}()
+	defer p.recover()
 	if strings.EqualFold(group, "") {
 		err = errors.New("not find rpc server and name cant be nil")
 		return
@@ -162,4 +156,9 @@ func (p *RPCServerPool) Get(group string, svName string, input string) (result [
 		p.pool.Recycle(group, o)
 	}
 	return
+}
+func (n *RPCServerPool) recover() {
+	if r := recover(); r != nil {
+		n.Log.Fatal(r)
+	}
 }
