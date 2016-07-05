@@ -126,6 +126,9 @@ func (r *HttpScriptController) Handle(ctx http.ResponseWriter, request *http.Req
 }
 func (r *HttpScriptController) setHeader(ctx http.ResponseWriter, input map[string]string) {
 	for i, v := range input {
+		if strings.HasPrefix(i, "_") {
+			continue
+		}
 		ctx.Header().Set(i, v)
 	}
 }
@@ -134,10 +137,10 @@ func (r *HttpScriptController) setResponse(ctx http.ResponseWriter, config map[s
 	switch code {
 	case 200:
 		{
-			responseContent = rpcproxy.GetDataResult(msg, strings.EqualFold(config["Content-Type"], "text/plain"))
+			responseContent = rpcproxy.GetDataResult(msg, rpcproxy.IsRaw(config))
 			ctx.Write([]byte(responseContent))
 		}
-	case 500:
+	case 500:	
 		{
 			responseContent = rpcproxy.GetErrorResult(string(code), msg)
 			ctx.WriteHeader(500)

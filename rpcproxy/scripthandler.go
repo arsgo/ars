@@ -2,7 +2,6 @@ package rpcproxy
 
 import (
 	"errors"
-	"strings"
 
 	"github.com/colinyl/ars/cluster"
 	"github.com/colinyl/lib4go/concurrent"
@@ -65,7 +64,7 @@ func (h *RPCScriptHandler) Request(ti cluster.TaskItem, input string) (result st
 	if er != nil {
 		result = GetErrorResult("500", er.Error())
 	} else {
-		result = GetDataResult(result, strings.EqualFold(smap["Content-Type"], "text/plain"))
+		result = GetDataResult(result, IsRaw(smap))
 	}
 	return
 }

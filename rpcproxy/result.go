@@ -34,10 +34,15 @@ func GetSuccessResult() string {
 	return result_success_format
 }
 
-func GetDataResult(data string, redirect bool) string {
+func IsRaw(types map[string]string) bool {
+	return types["_original"] == "true"
+}
+
+func GetDataResult(cdata string, redirect bool) string {
 	if redirect {
-		return data
+		return cdata
 	}
+	data := strings.Trim(cdata, " ")
 	if strings.EqualFold(data, "") || strings.EqualFold(strings.ToLower(data), "nil") || strings.EqualFold(strings.ToLower(data), "null") {
 		return result_success_format
 	}
@@ -47,7 +52,7 @@ func GetDataResult(data string, redirect bool) string {
 	if strings.HasPrefix(data, "[{") && strings.HasSuffix(data, "}]") {
 		return data
 	}
-	if strings.HasPrefix(data, "<?xml") || strings.HasPrefix(data, "<html>") {
+	if strings.HasPrefix(data, "<?xml") || strings.HasPrefix(data, "<html>") || strings.HasPrefix(data, "<xml") {
 		return data
 	}
 	return fmt.Sprintf(result_data_format, data)
