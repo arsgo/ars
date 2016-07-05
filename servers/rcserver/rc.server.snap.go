@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"runtime/debug"
 	"time"
 
 	"github.com/colinyl/ars/monitor"
@@ -32,10 +33,14 @@ func (rs RCSnap) GetSnap() string {
 func (rc *RCServer) StartRefreshSnap() {
 	defer rc.recover()
 	tp := time.NewTicker(time.Second * 60)
+	free := time.NewTicker(time.Second * 120)
 	for {
 		select {
 		case <-tp.C:
 			rc.clusterClient.ResetSnap(rc.snap.Path, rc.snap.GetSnap())
+		case <-free.C:
+			debug.FreeOSMemory()
+
 		}
 	}
 

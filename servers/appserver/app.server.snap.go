@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"runtime/debug"
 	"time"
 
 	"github.com/colinyl/ars/monitor"
@@ -46,11 +47,14 @@ func (app *AppServer) recover() {
 func (app *AppServer) StartRefreshSnap() {
 	defer app.recover()
 	tp := time.NewTicker(time.Second * 60)
+	free := time.NewTicker(time.Second * 120)
 	for {
 		select {
 		case <-tp.C:
 			app.ResetAPPSnap()
 			app.ResetJobSnap()
+		case <-free.C:
+			debug.FreeOSMemory()
 		}
 	}
 }

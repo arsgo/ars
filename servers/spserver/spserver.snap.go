@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -42,11 +43,15 @@ func (sp *SPServer) ResetSPSnap() {
 func (sp *SPServer) StartRefreshSnap() {
 	defer sp.recover()
 	tp := time.NewTicker(time.Second * 60)
+	free := time.NewTicker(time.Second * 120)
 	defer tp.Stop()
 	for {
 		select {
 		case <-tp.C:
 			sp.ResetSPSnap()
+		case <-free.C:
+			sp.Log.Info("清理内存...")
+			debug.FreeOSMemory()
 		}
 	}
 
