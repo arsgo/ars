@@ -11,12 +11,14 @@ import (
 
 //SPSnap sp server快照信息
 type SPSnap struct {
-	Address string                  `json:"address"`
-	Service string                  `json:"service"`
-	Last    string                  `json:"last"`
-	Sys     *monitor.SysMonitorInfo `json:"sys"`
-	ip      string
-	mutex   sync.Mutex
+	Address    string                  `json:"address"`
+	Service    string                  `json:"service"`
+	Last       string                  `json:"last"`
+	Sys        *monitor.SysMonitorInfo `json:"sys"`
+	ScriptSnap json.RawMessage         `json:"scriptSnap"`
+	RPCSnap    json.RawMessage         `json:"rpcSnap"`
+	ip         string
+	mutex      sync.Mutex
 }
 
 //GetSnap 获取指定服务的快照信息
@@ -34,6 +36,8 @@ func (sn SPSnap) GetSnap(service string) string {
 //ResetSPSnap 重置SP server 快照
 func (sp *SPServer) ResetSPSnap() {
 	services := sp.rpcScriptProxy.GetTasks()
+	sp.snap.RPCSnap, _ = json.Marshal(sp.rpcClient.GetSnap().Snaps)
+	sp.snap.ScriptSnap, _ = json.Marshal(sp.scriptPool.GetSnap().Snaps)
 	for k, v := range services {
 		sp.clusterClient.ResetSnap(v, sp.snap.GetSnap(k))
 	}
@@ -48,6 +52,7 @@ func (sp *SPServer) StartRefreshSnap() {
 	for {
 		select {
 		case <-tp.C:
+			sp.Log.Info("更新sp server快照信息")
 			sp.ResetSPSnap()
 		case <-free.C:
 			sp.Log.Info("清理内存...")

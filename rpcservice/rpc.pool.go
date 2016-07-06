@@ -58,10 +58,10 @@ func (s *RPCServerPool) Register(svs map[string]string) {
 	for ip := range servers {
 		if _, ok := svs[ip]; !ok {
 			s.servers.Delete(ip)
-			go func() {
+			go func(ip string) {
 				defer s.recover()
 				s.pool.UnRegister(ip)
-			}()
+			}(ip)
 		}
 	}
 	//*
@@ -73,6 +73,7 @@ func (s *RPCServerPool) Register(svs map[string]string) {
 				err := s.pool.Register(ip, newRPCClientFactory(ip, s.loggerName), s.MinSize, s.MaxSize)
 				if err != nil {
 					s.Log.Error(err)
+					return
 				}
 				s.servers.Set(ip, &rpcServerService{IP: ip, Status: true})
 
@@ -134,6 +135,11 @@ func (p *RPCServerPool) Send(group string, svName string, input string, data []b
 		p.pool.Recycle(group, o)
 	}
 	return
+}
+
+//GetSnap 获取当前RPC客户端的连接池快照信息
+func (p *RPCServerPool) GetSnap() pool.ObjectPoolSnap {
+	return p.pool.GetSnap()
 }
 
 func (p *RPCServerPool) Get(group string, svName string, input string) (result []byte, err error) {

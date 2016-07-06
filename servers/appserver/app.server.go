@@ -47,16 +47,15 @@ func (app *AppServer) init() (err error) {
 	if err != nil {
 		return
 	}
-
-	app.snap = AppSnap{ip: cfg.IP}
 	app.rpcClient = rpcproxy.NewRPCClient(app.clusterClient, app.loggerName)
-	app.snap.Address = cfg.IP
 	app.scriptPool, err = rpcproxy.NewScriptPool(app.clusterClient, app.rpcClient, make(map[string]interface{}), app.loggerName)
 	app.jobConsumerScriptHandler = rpcproxy.NewRPCScriptHandler(app.clusterClient, app.scriptPool, app.loggerName)
 	app.jobConsumerScriptHandler.OnOpenTask = app.OnJobCreate
 	app.jobConsumerScriptHandler.OnCloseTask = app.OnJobClose
 	app.jobConsumerRPCServer = rpcproxy.NewRPCServer(app.jobConsumerScriptHandler, app.loggerName)
 	app.mqService, err = mqservice.NewMQConsumerService(app.clusterClient, mqservice.NewMQScriptHandler(app.scriptPool, app.loggerName), app.loggerName)
+	app.snap = AppSnap{ip: cfg.IP, appserver: app}
+	app.snap.Address = cfg.IP
 	return
 }
 

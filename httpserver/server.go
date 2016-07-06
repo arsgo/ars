@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/colinyl/ars/cluster"
@@ -82,13 +83,25 @@ func (r *HttpScriptController) getBodyText(request *http.Request) string {
 	}
 	return string(body)
 }
+func (r *HttpScriptController) getPostValues(body string) (rt map[string]string) {
+	rt = make(map[string]string)
+	values, err := url.ParseQuery(body)
+	if err != nil {
+		return
+	}
+	for i, v := range values {
+		if len(v) > 0 && !strings.EqualFold(v[0], "") {
+			rt[i] = v[0]
+		}
+	}
+	return rt
+}
 
 //Handle 脚本处理程序(r *HttpScriptController) Handle(ctx *web.Context)
 func (r *HttpScriptController) Handle(ctx http.ResponseWriter, request *http.Request) {
-	r.server.Log.Info("api.start:", r.config.Script)
 	body := r.getBodyText(request)
 	request.ParseForm()
-	params := make(map[string]string)
+	params := r.getPostValues(body)
 	if len(request.Form) > 0 {
 		for k, v := range request.Form {
 			if len(v) > 0 {
@@ -101,7 +114,7 @@ func (r *HttpScriptController) Handle(ctx http.ResponseWriter, request *http.Req
 		r.setResponse(ctx, make(map[string]string), 500, err.Error())
 		return
 	}
-
+	r.server.Log.Info("api.start:", params)
 	result, output, err := r.server.call(r.config.Script, string(data), r.config.Params, body)
 	r.setHeader(ctx, output)
 	if err != nil {
@@ -140,7 +153,7 @@ func (r *HttpScriptController) setResponse(ctx http.ResponseWriter, config map[s
 			responseContent = rpcproxy.GetDataResult(msg, rpcproxy.IsRaw(config))
 			ctx.Write([]byte(responseContent))
 		}
-	case 500:	
+	case 500:
 		{
 			responseContent = rpcproxy.GetErrorResult(string(code), msg)
 			ctx.WriteHeader(500)

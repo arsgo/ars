@@ -11,11 +11,14 @@ import (
 
 //AppSnap  app server快照信息
 type AppSnap struct {
-	Address string                  `json:"address"`
-	Server  string                  `json:"server"`
-	Last    string                  `json:"last"`
-	Sys     *monitor.SysMonitorInfo `json:"sys"`
-	ip      string
+	appserver  *AppServer
+	Address    string                  `json:"address"`
+	Server     string                  `json:"server"`
+	Last       string                  `json:"last"`
+	Sys        *monitor.SysMonitorInfo `json:"sys"`
+	ScriptSnap json.RawMessage         `json:"scriptSnap"`
+	RPCSnap    json.RawMessage         `json:"rpcSnap"`
+	ip         string
 }
 
 //GetSnap 获取快照信息
@@ -23,8 +26,11 @@ func (as AppSnap) GetSnap() string {
 	snap := as
 	snap.Last = time.Now().Format("20060102150405")
 	snap.Sys, _ = monitor.GetSysMonitorInfo()
+	snap.RPCSnap, _ = json.Marshal(as.appserver.rpcClient.GetSnap().Snaps)
+	snap.ScriptSnap, _ = json.Marshal(as.appserver.scriptPool.GetSnap().Snaps)
 	buffer, _ := json.Marshal(&snap)
-	return string(buffer)
+	r := string(buffer)
+	return r
 }
 
 //GetJobSnap 获取快照信息
@@ -51,9 +57,11 @@ func (app *AppServer) StartRefreshSnap() {
 	for {
 		select {
 		case <-tp.C:
+			app.Log.Info("更新app server快照信息")
 			app.ResetAPPSnap()
 			app.ResetJobSnap()
 		case <-free.C:
+			app.Log.Info("清理内存...")
 			debug.FreeOSMemory()
 		}
 	}

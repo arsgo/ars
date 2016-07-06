@@ -8,6 +8,7 @@ import (
 
 	"github.com/colinyl/ars/cluster"
 	"github.com/colinyl/lib4go/logger"
+	"github.com/colinyl/lib4go/pool"
 	"github.com/colinyl/lib4go/script"
 	"github.com/colinyl/lib4go/utility"
 )
@@ -66,5 +67,10 @@ func (s *ScriptPool) Call(name string, input string, params string, body string)
 	if !strings.HasPrefix(name, "./") {
 		script = "./" + strings.TrimLeft(name, "/")
 	}
-	return s.Pool.Call(script, getScriptInputArgs(input, params),body)
+	return s.Pool.Call(script, getScriptInputArgs(input, params), body)
+}
+
+//GetSnap 获取当前脚本
+func (s *ScriptPool) GetSnap() pool.ObjectPoolSnap {
+	return s.Pool.GetSnap()
 }

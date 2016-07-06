@@ -46,14 +46,14 @@ func (rc *RCServer) init() (err error) {
 	if err != nil {
 		return
 	}
-	rc.clusterClient, err = cluster.GetClusterClient(cfg.Domain, cfg.IP,rc.loggerName, cfg.ZKServers...)
+	rc.clusterClient, err = cluster.GetClusterClient(cfg.Domain, cfg.IP, rc.loggerName, cfg.ZKServers...)
 	if err != nil {
 		return
 	}
-	rc.snap = RCSnap{Domain: cfg.Domain, Server: SERVER_SLAVE, ip: cfg.IP}
-	rc.spRPCClient = rpcproxy.NewRPCClient(rc.clusterClient,rc.loggerName)
-	rc.rcRPCProxyHandler = rpcproxy.NewRPCProxyHandler(rc.clusterClient, rc.spRPCClient, rc.snap,rc.loggerName)
-	rc.rcRPCServer = rpcproxy.NewRPCServer(rc.rcRPCProxyHandler,rc.loggerName)
+	rc.spRPCClient = rpcproxy.NewRPCClient(rc.clusterClient, rc.loggerName)
+	rc.snap = RCSnap{Domain: cfg.Domain, Server: SERVER_SLAVE, ip: cfg.IP, rcServer: rc}
+	rc.rcRPCProxyHandler = rpcproxy.NewRPCProxyHandler(rc.clusterClient, rc.spRPCClient, rc.snap, rc.loggerName)
+	rc.rcRPCServer = rpcproxy.NewRPCServer(rc.rcRPCProxyHandler, rc.loggerName)
 	return nil
 }
 func (rc *RCServer) recover() {

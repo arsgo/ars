@@ -17,6 +17,7 @@ import (
 	"github.com/colinyl/ars/rpcservice"
 	"github.com/colinyl/lib4go/concurrent"
 	"github.com/colinyl/lib4go/logger"
+	"github.com/colinyl/lib4go/pool"
 	"github.com/colinyl/lib4go/utility"
 )
 
@@ -249,4 +250,9 @@ func (r *RPCClient) AsyncGet(name string, input string) (session string) {
 
 	}(queueChan, r, name, input)
 	return
+}
+
+//GetSnap 获取RPC客户端的连接池
+func (r *RPCClient) GetSnap() pool.ObjectPoolSnap {
+	return r.pool.GetSnap()
 }
