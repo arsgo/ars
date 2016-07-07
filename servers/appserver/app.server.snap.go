@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"runtime"
 	"runtime/debug"
 	"time"
 
@@ -15,6 +16,7 @@ type AppSnap struct {
 	Address    string                  `json:"address"`
 	Server     string                  `json:"server"`
 	Last       string                  `json:"last"`
+	Mem        uint64                  `json:"mem"`
 	Sys        *monitor.SysMonitorInfo `json:"sys"`
 	ScriptSnap json.RawMessage         `json:"scriptSnap"`
 	RPCSnap    json.RawMessage         `json:"rpcSnap"`
@@ -28,6 +30,9 @@ func (as AppSnap) GetSnap() string {
 	snap.Sys, _ = monitor.GetSysMonitorInfo()
 	snap.RPCSnap, _ = json.Marshal(as.appserver.rpcClient.GetSnap().Snaps)
 	snap.ScriptSnap, _ = json.Marshal(as.appserver.scriptPool.GetSnap().Snaps)
+	var mem runtime.MemStats
+	runtime.ReadMemStats(&mem)
+	snap.Mem = mem.Alloc >> 20
 	buffer, _ := json.Marshal(&snap)
 	r := string(buffer)
 	return r
