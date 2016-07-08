@@ -107,6 +107,7 @@ START:
 	}
 	defer obj.Close()
 	result, err = obj.Request(svName, input)
+	p.Log.Infof("rpc.pool.request.result:%s,%s",svName, result)
 	if err != nil {
 		p.pool.Unusable(svName, obj)
 		goto START

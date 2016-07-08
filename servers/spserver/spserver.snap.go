@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/colinyl/ars/monitor"
+	"github.com/colinyl/lib4go/sysinfo"
 )
 
 //SPSnap sp server快照信息
@@ -14,6 +15,7 @@ type SPSnap struct {
 	Address    string                  `json:"address"`
 	Service    string                  `json:"service"`
 	Last       string                  `json:"last"`
+	Mem        uint64                  `json:"mem"`
 	Sys        *monitor.SysMonitorInfo `json:"sys"`
 	ScriptSnap json.RawMessage         `json:"scriptSnap"`
 	RPCSnap    json.RawMessage         `json:"rpcSnap"`
@@ -38,6 +40,7 @@ func (sp *SPServer) ResetSPSnap() {
 	services := sp.rpcScriptProxy.GetTasks()
 	sp.snap.RPCSnap, _ = json.Marshal(sp.rpcClient.GetSnap().Snaps)
 	sp.snap.ScriptSnap, _ = json.Marshal(sp.scriptPool.GetSnap().Snaps)
+	sp.snap.Mem = sysinfo.GetAPPMemory()
 	for k, v := range services {
 		sp.clusterClient.ResetSnap(v, sp.snap.GetSnap(k))
 	}
@@ -55,7 +58,7 @@ func (sp *SPServer) StartRefreshSnap() {
 			sp.Log.Info("更新sp server快照信息")
 			sp.ResetSPSnap()
 		case <-free.C:
-			sp.Log.Info("清理内存...")
+			sp.Log.Infof("清理内存...%dM", sysinfo.GetAPPMemory())
 			debug.FreeOSMemory()
 		}
 	}

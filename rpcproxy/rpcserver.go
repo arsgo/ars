@@ -159,7 +159,7 @@ func (r *RPCHandlerProxy) Request(name string, input string) (result string, err
 	if currentErr != nil {
 		r.Log.Error(currentErr)
 	}
-	r.Log.Info(result)
+	r.Log.Infof(" <-%s response:%s", name, result)
 	return
 }
 

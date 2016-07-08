@@ -18,18 +18,18 @@ type RPCClient struct {
 	client    *rpc.ServiceProviderClient
 	isFatal   bool
 	timeout   time.Duration
-	Log      logger.ILogger
+	Log       logger.ILogger
 }
 
 func NewRPCClient(address string, loggerName string) (client *RPCClient) {
-	return NewRPCClientTimeout(address, time.Second*3, loggerName)
+	return NewRPCClientTimeout(address, time.Second*10, loggerName)
 }
 func NewRPCClientTimeout(address string, timeout time.Duration, loggerName string) (client *RPCClient) {
 	addr := address
 	if !strings.Contains(address, ":") {
 		addr = net.JoinHostPort(address, "1016")
 	}
-	client = &RPCClient{Address: addr, timeout: timeout}
+	client = &RPCClient{Address: addr, timeout: time.Second * 10}
 	client.Log, _ = logger.Get(loggerName, true)
 	return
 }

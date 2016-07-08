@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/colinyl/ars/monitor"
+	"github.com/colinyl/lib4go/sysinfo"
 )
 
 //RCSnap RC server快照信息
@@ -16,6 +17,7 @@ type RCSnap struct {
 	Address  string                  `json:"address"`
 	Server   string                  `json:"server"`
 	Last     string                  `json:"last"`
+	Mem      uint64                  `json:"mem"`
 	Sys      *monitor.SysMonitorInfo `json:"sys"`
 	RPCSnap  json.RawMessage         `json:"rpcSnap"`
 	ip       string
@@ -27,6 +29,7 @@ func (rs RCSnap) GetSnap() string {
 	snap.Last = time.Now().Format("20060102150405")
 	snap.Sys, _ = monitor.GetSysMonitorInfo()
 	snap.RPCSnap, _ = json.Marshal(rs.rcServer.spRPCClient.GetSnap().Snaps)
+	snap.Mem = sysinfo.GetAPPMemory()
 	buffer, _ := json.Marshal(&snap)
 	return string(buffer)
 }
@@ -48,7 +51,7 @@ func (rc *RCServer) StartRefreshSnap() {
 			rc.Log.Info("更新RC Server快照信息")
 			rc.RefreshSnap()
 		case <-free.C:
-			rc.Log.Info("清理内存...")
+			rc.Log.Infof("清理内存...%dM", sysinfo.GetAPPMemory())
 			debug.FreeOSMemory()
 
 		}

@@ -45,7 +45,6 @@ func (r *RPCServer) Stop() {
 	if r.server != nil {
 		r.server.Stop()
 	}
-
 }
 func NewRPCServer(address string, handler rpcHandler, loggerName string) *RPCServer {
 	var err error

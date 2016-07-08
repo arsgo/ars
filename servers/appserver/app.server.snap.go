@@ -3,11 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"runtime"
 	"runtime/debug"
 	"time"
 
 	"github.com/colinyl/ars/monitor"
+	"github.com/colinyl/lib4go/sysinfo"
 )
 
 //AppSnap  app server快照信息
@@ -30,9 +30,7 @@ func (as AppSnap) GetSnap() string {
 	snap.Sys, _ = monitor.GetSysMonitorInfo()
 	snap.RPCSnap, _ = json.Marshal(as.appserver.rpcClient.GetSnap().Snaps)
 	snap.ScriptSnap, _ = json.Marshal(as.appserver.scriptPool.GetSnap().Snaps)
-	var mem runtime.MemStats
-	runtime.ReadMemStats(&mem)
-	snap.Mem = mem.Alloc >> 20
+	snap.Mem = sysinfo.GetAPPMemory()
 	buffer, _ := json.Marshal(&snap)
 	r := string(buffer)
 	return r
@@ -66,7 +64,7 @@ func (app *AppServer) StartRefreshSnap() {
 			app.ResetAPPSnap()
 			app.ResetJobSnap()
 		case <-free.C:
-			app.Log.Info("清理内存...")
+			app.Log.Infof("清理内存...%dM", sysinfo.GetAPPMemory())
 			debug.FreeOSMemory()
 		}
 	}
