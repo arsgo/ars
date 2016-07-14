@@ -55,7 +55,7 @@ func NewScriptPool(clusterClient cluster.IClusterClient, rpcclient *RPCClient, e
 	p.clusterClient = clusterClient
 	p.rpcclient = rpcclient
 	p.Pool = script.NewLuaPool()
-	p.Pool.SetPackages(`/scripts/xlib`, `/scripts`,`./scripts/xlib`, `./scripts`)
+	p.Pool.SetPackages(`/scripts/xlib`, `/scripts`, `./scripts/xlib`, `./scripts`)
 	p.Log, err = logger.Get(loggerName, true)
 	p.Pool.RegisterLibs(p.bindGlobalLibs(extlibs))
 	p.Pool.RegisterModules(p.bindModules())
@@ -74,9 +74,9 @@ func (s *ScriptPool) Call(name string, context base.InvokeContext) ([]string, ma
 		return nil, nil, errors.New("script is nil")
 	}
 	script := name
-	if !strings.HasPrefix(name, "./") {
-		script = "./" + strings.TrimLeft(name, "/")
-	}
+	//if !strings.HasPrefix(name, "./") {
+	//script = "./" + strings.TrimLeft(name, "/")
+	//}
 	defer s.setLifeTime(script, time.Now())
 	return s.Pool.Call(script, context.Session, getScriptInputArgs(context.Input, context.Params), context.Body)
 }
