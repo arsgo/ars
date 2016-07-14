@@ -1,14 +1,31 @@
 package cluster
 
 func (client *ClusterClient) GetSourceConfig(typeName string, name string) (config string, err error) {
+
 	dataMap := client.dataMap.Copy()
 	dataMap.Set("type", typeName)
 	dataMap.Set("name", name)
-	values, err := client.handler.GetValue(dataMap.Translate(p_varConfig))
+	path := dataMap.Translate(p_varConfig)
+
+	cfg := client.configCache.Get(path)
+	if cfg != nil {
+		config = cfg.(string)
+		return
+	}
+	values, err := client.handler.GetValue(path)
 	if err != nil {
 		return
 	}
 	config = string(values)
+	client.configCache.Set(path, config)
+	client.WatchClusterValueChange(path, func() {
+		values, err := client.handler.GetValue(path)
+		if err != nil {
+			return
+		}
+		client.configCache.Set(path, string(values))
+	})
+
 	return
 }
 

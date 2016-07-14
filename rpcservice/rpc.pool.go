@@ -29,7 +29,7 @@ type RPCServerPool struct {
 //NewRPCServerPool 创建RPC连接池
 func NewRPCServerPool(minSize int, maxSize int, loggerName string) *RPCServerPool {
 	var err error
-	pl := &RPCServerPool{MinSize: minSize, MaxSize: maxSize, MaxRetry: 10, loggerName: loggerName}
+	pl := &RPCServerPool{MinSize: minSize, MaxSize: maxSize, MaxRetry: 1, loggerName: loggerName}
 	pl.pool = pool.New()
 	pl.servers = concurrent.NewConcurrentMap()
 	pl.Log, err = logger.Get(loggerName, true)
@@ -76,13 +76,12 @@ func (s *RPCServerPool) Register(svs map[string]string) {
 					return
 				}
 				s.servers.Set(ip, &rpcServerService{IP: ip, Status: true})
-
 			}(ip)
 		}
 	}
 }
 
-func (p *RPCServerPool) Request(group string, svName string, input string) (result string, err error) {
+func (p *RPCServerPool) Request(group string, svName string, input string,session string) (result string, err error) {
 	defer p.recover()
 	if strings.EqualFold(group, "") {
 		err = errors.New("not find rpc server and name cant be nil")
@@ -91,7 +90,7 @@ func (p *RPCServerPool) Request(group string, svName string, input string) (resu
 	execute := 0
 START:
 	execute++
-	if execute >= p.MaxRetry {
+	if execute > p.MaxRetry {
 		return
 	}
 	o, err := p.pool.Get(group)
@@ -102,18 +101,13 @@ START:
 	obj := o.(*RPCClient)
 	err = obj.Open()
 	if err != nil {
+		p.Log.Error("当前服务不可用:", svName, err)
 		p.pool.Unusable(svName, obj)
 		goto START
 	}
 	defer obj.Close()
-	result, err = obj.Request(svName, input)
-	p.Log.Infof("rpc.pool.request.result:%s,%s",svName, result)
-	if err != nil {
-		p.pool.Unusable(svName, obj)
-		goto START
-	} else {
-		p.pool.Recycle(group, o)
-	}
+	defer p.pool.Recycle(group, o)
+	result, err = obj.Request(svName, input,session)
 	return
 }
 func (p *RPCServerPool) Send(group string, svName string, input string, data []byte) (result string, err error) {

@@ -89,7 +89,7 @@ func (w *worker) doWork() {
 					sub.notify <- &RpcClientConn{Err: fmt.Errorf("cant connect server:%s", w.address)}
 				} else {
 					//w.Log.Info(" -> connect to:", w.address)
-					client := NewRPCClientTimeout(w.address, time.Second*3, sub.loggerName)
+					client := NewRPCClientTimeout(w.address, time.Second*5, sub.loggerName)
 					err := client.Open()
 					if err == nil {
 						w.connect = c_connecdted

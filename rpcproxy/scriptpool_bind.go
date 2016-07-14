@@ -2,6 +2,7 @@ package rpcproxy
 
 import (
 	"errors"
+	"time"
 
 	"github.com/colinyl/lib4go/mem"
 	"github.com/colinyl/lib4go/mq"
@@ -53,9 +54,15 @@ func (s *ScriptPool) NewWechat(appid string, token string, encodingAESKey string
 	return weixin.NewWechat(appid, token, encodingAESKey)
 }
 
+//Sleep 休息指定时间
+func (s *ScriptPool) Sleep(r int) {
+	time.Sleep(time.Second * time.Duration(r))
+}
+
 //bindGlobalLibs 绑定lib
 func (s *ScriptPool) bindGlobalLibs(extlibs map[string]interface{}) (funs map[string]interface{}) {
 	funs = map[string]interface{}{
+		"sleep":             s.Sleep,
 		"print":             s.Log.Info,
 		"printf":            s.Log.Infof,
 		"error":             s.Log.Error,

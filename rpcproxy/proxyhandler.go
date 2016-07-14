@@ -57,9 +57,9 @@ func (h *RPCProxyHandler) CloseTask(ti cluster.TaskItem) {
 }
 
 //Request 执行Request请求
-func (h *RPCProxyHandler) Request(ti cluster.TaskItem, input string) (r string, err error) {
+func (h *RPCProxyHandler) Request(ti cluster.TaskItem, input string,session string) (r string, err error) {
 	defer h.recover()
-	r, _ = h.client.Request(ti.Name, input)
+	r, _ = h.client.Request(ti.Name, input,session)
 	return
 }
 

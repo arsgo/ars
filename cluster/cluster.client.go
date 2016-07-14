@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/colinyl/lib4go/concurrent"
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/utility"
 )
@@ -43,6 +44,7 @@ type ClusterClient struct {
 	rpcProviderRootPath string
 	appServerPath       string
 	spServerTaskPath    string
+	configCache         concurrent.ConcurrentMap
 	handler             IClusterHandler
 	Log                 logger.ILogger
 	timeout             time.Duration
@@ -50,8 +52,8 @@ type ClusterClient struct {
 	IP                  string
 }
 
-func NewClusterClient(domain string, ip string, handler IClusterHandler,loggerName string) (client *ClusterClient, err error) {
-	client = &ClusterClient{}
+func NewClusterClient(domain string, ip string, handler IClusterHandler, loggerName string) (client *ClusterClient, err error) {
+	client = &ClusterClient{configCache: concurrent.NewConcurrentMap()}
 	client.domain = "/" + strings.TrimLeft(strings.Replace(domain, ".", "/", -1), "/")
 	client.domainPath = "@" + strings.Replace(strings.TrimLeft(client.domain, "/"), "/", ".", -1)
 	client.IP = ip

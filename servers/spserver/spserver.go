@@ -49,21 +49,21 @@ func (sp *SPServer) init() (err error) {
 	if err != nil {
 		return
 	}
-	sp.clusterClient, err = cluster.GetClusterClient(cfg.Domain, cfg.IP,sp.loggerName, cfg.ZKServers...)
+	sp.clusterClient, err = cluster.GetClusterClient(cfg.Domain, cfg.IP, sp.loggerName, cfg.ZKServers...)
 	if err != nil {
 		return
 	}
 	sp.snap = SPSnap{ip: cfg.IP}
-	sp.rpcClient = rpcproxy.NewRPCClient(sp.clusterClient,sp.loggerName)
-	sp.scriptPool, err = rpcproxy.NewScriptPool(sp.clusterClient, sp.rpcClient, sp.GetScriptBinder(),sp.loggerName)
+	sp.rpcClient = rpcproxy.NewRPCClient(sp.clusterClient, sp.loggerName)
+	sp.scriptPool, err = rpcproxy.NewScriptPool(sp.clusterClient, sp.rpcClient, sp.GetScriptBinder(), sp.loggerName)
 	if err != nil {
 		return
 	}
-	sp.rpcScriptProxy = rpcproxy.NewRPCScriptHandler(sp.clusterClient, sp.scriptPool,sp.loggerName)
+	sp.rpcScriptProxy = rpcproxy.NewRPCScriptHandler(sp.clusterClient, sp.scriptPool, sp.loggerName)
 	sp.rpcScriptProxy.OnOpenTask = sp.OnSPServiceCreate
 	sp.rpcScriptProxy.OnCloseTask = sp.OnSPServiceClose
-	sp.rpcServer = rpcproxy.NewRPCServer(sp.rpcScriptProxy,sp.loggerName)
-	sp.mqService, err = mqservice.NewMQConsumerService(sp.clusterClient, mqservice.NewMQScriptHandler(sp.scriptPool,sp.loggerName),sp.loggerName)
+	sp.rpcServer = rpcproxy.NewRPCServer(sp.rpcScriptProxy, sp.loggerName)
+	sp.mqService, err = mqservice.NewMQConsumerService(sp.clusterClient, mqservice.NewMQScriptHandler(sp.scriptPool, sp.loggerName), sp.loggerName)
 	sp.dbPool = concurrent.NewConcurrentMap()
 	return
 }

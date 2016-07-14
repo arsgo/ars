@@ -3,6 +3,7 @@ package mqservice
 import (
 	"strings"
 
+	"github.com/colinyl/ars/base"
 	"github.com/colinyl/ars/cluster"
 	"github.com/colinyl/ars/rpcproxy"
 	"github.com/colinyl/lib4go/logger"
@@ -22,9 +23,9 @@ func NewMQScriptHandler(pool *rpcproxy.ScriptPool, loggerName string) (mq *MQScr
 }
 
 //Handle 处理MQ消息
-func (mq *MQScriptHandler) Handle(task cluster.TaskItem, input string) bool {
+func (mq *MQScriptHandler) Handle(task cluster.TaskItem, input string, session string) bool {
 	mq.Log.Infof(" -> recv mq message:%s", input)
-	result, _, err := mq.pool.Call(task.Script, input, task.Params,"")
+	result, _, err := mq.pool.Call(task.Script, base.NewInvokeContext("", input, task.Params, ""))
 	if err != nil {
 		return false
 	}

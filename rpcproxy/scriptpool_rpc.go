@@ -3,6 +3,7 @@ package rpcproxy
 import (
 	"encoding/json"
 
+	"github.com/colinyl/lib4go/utility"
 	"github.com/yuin/gopher-lua"
 )
 
@@ -12,7 +13,7 @@ type RPCBinder struct {
 
 func luaTable2Json(tb *lua.LTable) (s string, err error) {
 	data := make(map[string]interface{})
-	tb.ForEach(func(key lua.LValue, value lua.LValue) {	
+	tb.ForEach(func(key lua.LValue, value lua.LValue) {
 		data[key.String()] = value.String()
 	})
 	buffer, err := json.Marshal(&data)
@@ -32,7 +33,7 @@ func (b *RPCBinder) AsyncRequest(name string, tb *lua.LTable) (s string, err err
 	if err != nil {
 		return
 	}
-	return b.client.AsyncRequest(name, input)
+	return b.client.AsyncRequest(name, input, utility.GetSessionID())
 }
 
 func (b *RPCBinder) GetAsyncResult(session string) (s interface{}, err interface{}) {
@@ -43,5 +44,5 @@ func (b *RPCBinder) Request(name string, tb *lua.LTable) (s string, err error) {
 	if err != nil {
 		return
 	}
-	return b.client.Request(name, input)
+	return b.client.Request(name, input, utility.GetSessionID())
 }

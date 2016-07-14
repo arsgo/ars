@@ -17,9 +17,8 @@ func (client *ClusterClient) WatchRPCServiceChange(callback func(services map[st
 			}()
 		}
 	})
-	client.Log.Info("::watch for service config changes ")
+	client.Log.Info("::watch for service config changes ", client.rpcPublishPath)
 	client.WatchClusterValueChange(client.rpcPublishPath, func() {
-		client.Log.Info(" -> rpc serivce has changed")
 		go func() {
 			defer client.recover()
 			callback(client.GetRPCService())

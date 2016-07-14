@@ -22,6 +22,7 @@ type RPCServer struct {
 	server        *rpcservice.RPCServer
 	Log           logger.ILogger
 	loggerName    string
+	snap          *ServerSnap
 }
 
 //Tasks 任务列表
@@ -33,15 +34,15 @@ type Tasks struct {
 type RPCHandler interface {
 	OpenTask(cluster.TaskItem)
 	CloseTask(cluster.TaskItem)
-	Request(cluster.TaskItem, string) (string, error)
+	Request(cluster.TaskItem, string, string) (string, error)
 	Send(cluster.TaskItem, string, []byte) (string, error)
 	Get(cluster.TaskItem, string) ([]byte, error)
 }
 
 //NewRPCServer 创建RPC服务器
 func NewRPCServer(handler RPCHandler, loggerName string) (server *RPCServer) {
-	server = &RPCServer{loggerName: loggerName}
-	server.serverHandler = NewRPCHandlerProxy(handler, loggerName)
+	server = &RPCServer{loggerName: loggerName, snap: &ServerSnap{}}
+	server.serverHandler = NewRPCHandlerProxy(handler, loggerName, server.snap)
 	server.Log, _ = logger.Get(loggerName, true)
 	return server
 }
@@ -66,16 +67,23 @@ func (r *RPCServer) Stop() {
 	}
 }
 
+//GetSnap 获取当前服务器快照信息
+func (r *RPCServer) GetSnap() ServerSnap {
+	return *r.snap
+}
+
 //RPCHandlerProxy RPCHandler代理程序
 type RPCHandlerProxy struct {
-	tasks   Tasks
-	handler RPCHandler
-	Log     logger.ILogger
+	tasks      Tasks
+	handler    RPCHandler
+	Log        logger.ILogger
+	snap       *ServerSnap
+	loggerName string
 }
 
 //NewRPCHandlerProxy 创建RPC默认处理程序
-func NewRPCHandlerProxy(h RPCHandler, loggerName string) *RPCHandlerProxy {
-	handler := &RPCHandlerProxy{}
+func NewRPCHandlerProxy(h RPCHandler, loggerName string, snap *ServerSnap) *RPCHandlerProxy {
+	handler := &RPCHandlerProxy{snap: snap, loggerName: loggerName}
 	handler.tasks = Tasks{}
 	handler.handler = h
 	handler.tasks.Services = concurrent.NewConcurrentMap() //make(map[string]cluster.TaskItem)
@@ -139,27 +147,25 @@ func (r *RPCHandlerProxy) getTaskItem(name string) (item cluster.TaskItem, err e
 		item.Name = name
 		return
 	}
-	total := r.tasks.Services.GetAll()
-	for i, v := range total {
-		r.Log.Info(i, v.(cluster.TaskItem).IP)
-	}
 	err = fmt.Errorf("not find service:%s", name)
 	return
 }
 
 //Request 执行RPC Request服务
-func (r *RPCHandlerProxy) Request(name string, input string) (result string, err error) {
-	r.Log.Info("-> recv request:", name)
+func (r *RPCHandlerProxy) Request(name string, input string, session string) (result string, err error) {
+	defer r.snap.Add(time.Now())
+	log, _ := logger.NewSession(r.loggerName, session, true)
+	log.Info("-> recv request:", name)
 	task, currentErr := r.getTaskItem(name)
 	if currentErr != nil {
 		result = GetErrorResult("500", currentErr.Error())
 	} else {
-		result, currentErr = r.handler.Request(task, input)
+		result, currentErr = r.handler.Request(task, input, session)
 	}
 	if currentErr != nil {
 		r.Log.Error(currentErr)
 	}
-	r.Log.Infof(" <-%s response:%s", name, result)
+	log.Infof(" <-%s response:%s", name, result)
 	return
 }
 
@@ -185,7 +191,7 @@ func (r *RPCHandlerProxy) Get(name string, input string) (buffer []byte, err err
 	r.Log.Info("-> recv get:", name)
 	task, er := r.getTaskItem(name)
 	if er != nil {
-		return []byte(GetErrorResult("500", "not find service:", name)), nil
+		return []byte(GetErrorResult("500", er.Error())), nil
 	}
 	buffer, er = r.handler.Get(task, input)
 	if er != nil {

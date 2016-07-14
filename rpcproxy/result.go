@@ -42,13 +42,11 @@ func GetDataResult(cdata string, redirect bool) string {
 	if redirect {
 		return cdata
 	}
-	fmt.Println("cdata:",cdata)
+	fmt.Println("data:",cdata)
 	data := strings.Trim(cdata, " ")
-	fmt.Println("data:",data)
 	if strings.EqualFold(data, "") || strings.EqualFold(strings.ToLower(data), "nil") || strings.EqualFold(strings.ToLower(data), "null") {
 		return result_success_format
 	}
-		fmt.Println("data2:",data)
 	if strings.HasPrefix(data, "{") && strings.HasSuffix(data, "}") {
 		return data
 	}

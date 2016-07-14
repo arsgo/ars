@@ -22,14 +22,14 @@ type RPCClient struct {
 }
 
 func NewRPCClient(address string, loggerName string) (client *RPCClient) {
-	return NewRPCClientTimeout(address, time.Second*10, loggerName)
+	return NewRPCClientTimeout(address, time.Second*30, loggerName)
 }
 func NewRPCClientTimeout(address string, timeout time.Duration, loggerName string) (client *RPCClient) {
 	addr := address
 	if !strings.Contains(address, ":") {
 		addr = net.JoinHostPort(address, "1016")
 	}
-	client = &RPCClient{Address: addr, timeout: time.Second * 10}
+	client = &RPCClient{Address: addr, timeout: time.Second * 30}
 	client.Log, _ = logger.Get(loggerName, true)
 	return
 }
@@ -57,9 +57,12 @@ func (client *RPCClient) Open() (err error) {
 	return nil
 }
 
-func (j *RPCClient) Request(name string, input string) (r string, e error) {
+func (j *RPCClient) Request(name string, input string, session string) (r string, e error) {
 	defer j.recover()
-	r, _ = j.client.Request(name, input)
+	r, er := j.client.Request(name, input, session)
+	if er != nil {
+		r = er.Error()
+	}
 	return
 }
 

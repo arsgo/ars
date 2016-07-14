@@ -38,20 +38,24 @@ func (s *SPServer) NewElastic(name string) (es *elastic.ElasticSearch, err error
 
 //NewDB NewDB
 func (s *SPServer) NewDB(name string) (bind *db.DBScriptBind, err error) {
+	s.Log.Info("spserver.db.get.config")
 	config, err := s.clusterClient.GetDBConfig(name)
 	if err != nil {
 		return
 	}
+	s.Log.Info("spserver.db get from pool")
 	p := s.dbPool.Get(name)
 	if p != nil {
 		bind = p.(*db.DBScriptBind)
 		bind.ResetPoolSize(config)
 		return
 	}
+	s.Log.Info("spserver.db create new")
 	bind, err = db.NewDBScriptBind(config)
 	if err != nil {
 		return
 	}
+	s.Log.Info("spserver.db add to pool")
 	s.dbPool.Set(name, bind)
 	return
 }

@@ -49,7 +49,8 @@ func (rc *RCServer) BindRCServer() (err error) {
 			})
 		}
 	})
-	rc.clusterClient.WatchRPCServiceChange(func(services map[string][]string, err error) {
+	go rc.clusterClient.WatchRPCServiceChange(func(services map[string][]string, err error) {
+		rc.Log.Info(" |-> rpc server changed")
 		ip := rc.spRPCClient.ResetRPCServer(services)
 		tasks, er := rc.clusterClient.FilterRPCService(services)
 		if er != nil {
@@ -58,7 +59,6 @@ func (rc *RCServer) BindRCServer() (err error) {
 		}
 		rc.Log.Infof("rpc services:len(%d)%s ", len(tasks), ip)
 		rc.rcRPCServer.UpdateTasks(tasks)
-		rc.RefreshSnap()
 	})
 	return
 }

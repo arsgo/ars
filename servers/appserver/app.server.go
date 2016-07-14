@@ -21,7 +21,7 @@ type AppServer struct {
 	rpcClient                *rpcproxy.RPCClient        //RPC远程调用客户端,调用RC Server提供的RPC服务
 	scriptPool               *rpcproxy.ScriptPool       //脚本池,用于缓存JOB Consumer脚本和本地task任务执行脚本
 	lk                       sync.Mutex
-	httpServer               *httpserver.HttpScriptServer
+	httpServer               *httpserver.HTTPScriptServer
 	mqService                *mqservice.MQConsumerService
 	snap                     AppSnap
 	loggerName               string
@@ -85,6 +85,7 @@ func (app *AppServer) Stop() error {
 	app.Log.Info(" -> 退出AppServer...")
 	app.clusterClient.Close()
 	app.rpcClient.Close()
+	app.scriptPool.Close()
 	app.jobConsumerRPCServer.Stop()
 	if app.httpServer != nil {
 		app.httpServer.Stop()

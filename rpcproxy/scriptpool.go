@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/colinyl/ars/base"
 	"github.com/colinyl/ars/cluster"
+	"github.com/colinyl/lib4go/concurrent"
 	"github.com/colinyl/lib4go/logger"
-	"github.com/colinyl/lib4go/pool"
 	"github.com/colinyl/lib4go/script"
 	"github.com/colinyl/lib4go/utility"
 )
@@ -43,23 +45,31 @@ type ScriptPool struct {
 	Log           logger.ILogger
 	clusterClient cluster.IClusterClient
 	rpcclient     *RPCClient
+	snaps         concurrent.ConcurrentMap
 }
 
 //NewScriptPool 创建脚本POOl
 func NewScriptPool(clusterClient cluster.IClusterClient, rpcclient *RPCClient, extlibs map[string]interface{},
 	loggerName string) (p *ScriptPool, err error) {
-	p = &ScriptPool{}
+	p = &ScriptPool{snaps: concurrent.NewConcurrentMap()}
 	p.clusterClient = clusterClient
 	p.rpcclient = rpcclient
 	p.Pool = script.NewLuaPool()
 	p.Pool.SetPackages(`./scripts/xlib`, `./scripts`)
 	p.Log, err = logger.Get(loggerName, true)
 	p.Pool.RegisterLibs(p.bindGlobalLibs(extlibs))
+	p.Pool.RegisterModules(p.bindModules())
 	return
+}
+func (s *ScriptPool) setLifeTime(name string, start time.Time) {
+	ss := &ProxySnap{}
+	ss.ElapsedTime = ServerSnap{}
+	snap := s.snaps.GetOrAdd(name, ss)
+	snap.(*ProxySnap).ElapsedTime.Add(start)
 }
 
 //Call 执行脚本
-func (s *ScriptPool) Call(name string, input string, params string, body string) ([]string, map[string]string, error) {
+func (s *ScriptPool) Call(name string, context base.InvokeContext) ([]string, map[string]string, error) {
 	if strings.EqualFold(name, "") {
 		return nil, nil, errors.New("script is nil")
 	}
@@ -67,10 +77,18 @@ func (s *ScriptPool) Call(name string, input string, params string, body string)
 	if !strings.HasPrefix(name, "./") {
 		script = "./" + strings.TrimLeft(name, "/")
 	}
-	return s.Pool.Call(script, getScriptInputArgs(input, params), body)
+	defer s.setLifeTime(script, time.Now())
+	return s.Pool.Call(script, context.Session, getScriptInputArgs(context.Input, context.Params), context.Body)
 }
 
 //GetSnap 获取当前脚本
-func (s *ScriptPool) GetSnap() pool.ObjectPoolSnap {
-	return s.Pool.GetSnap()
+func (s *ScriptPool) GetSnap() (r []interface{}) {
+	poolSnaps := s.Pool.GetSnap()
+	snaps := s.snaps.GetAll()
+	return getProxySnap(poolSnaps, snaps)
+}
+
+//Close 关闭脚本引擎
+func (s *ScriptPool) Close() {
+	s.Pool.Close()
 }

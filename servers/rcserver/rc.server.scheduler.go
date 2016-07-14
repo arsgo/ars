@@ -5,6 +5,7 @@ import (
 	"github.com/colinyl/ars/rpcproxy"
 	"github.com/colinyl/ars/rpcservice"
 	"github.com/colinyl/lib4go/scheduler"
+	"github.com/colinyl/lib4go/utility"
 )
 
 //BindJobScheduler 绑定RC服务器的JOB任务
@@ -36,7 +37,7 @@ func (rc *RCServer) BindJobScheduler(jobs map[string]cluster.JobItem, err error)
 					rc.Log.Infof("open rpc server(%s) error ", consumers[i])
 					continue
 				}
-				result, err := client.Request(task.Name, "{}")
+				result, err := client.Request(task.Name, "{}", utility.GetSessionID())
 				client.Close()
 				if err != nil {
 					rc.Log.Error(err)

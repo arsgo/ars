@@ -18,7 +18,8 @@ type ServiceProvider interface {
 	// Parameters:
 	//  - Name
 	//  - Input
-	Request(name string, input string) (r string, err error)
+	//  - Session
+	Request(name string, input string, session string) (r string, err error)
 	// Parameters:
 	//  - Name
 	//  - Input
@@ -59,14 +60,15 @@ func NewServiceProviderClientProtocol(t thrift.TTransport, iprot thrift.TProtoco
 // Parameters:
 //  - Name
 //  - Input
-func (p *ServiceProviderClient) Request(name string, input string) (r string, err error) {
-	if err = p.sendRequest(name, input); err != nil {
+//  - Session
+func (p *ServiceProviderClient) Request(name string, input string, session string) (r string, err error) {
+	if err = p.sendRequest(name, input, session); err != nil {
 		return
 	}
 	return p.recvRequest()
 }
 
-func (p *ServiceProviderClient) sendRequest(name string, input string) (err error) {
+func (p *ServiceProviderClient) sendRequest(name string, input string, session string) (err error) {
 	oprot := p.OutputProtocol
 	if oprot == nil {
 		oprot = p.ProtocolFactory.GetProtocol(p.Transport)
@@ -77,6 +79,7 @@ func (p *ServiceProviderClient) sendRequest(name string, input string) (err erro
 	args0 := NewRequestArgs()
 	args0.Name = name
 	args0.Input = input
+	args0.Session = session
 	err = args0.Write(oprot)
 	oprot.WriteMessageEnd()
 	oprot.Flush()
@@ -304,7 +307,7 @@ func (p *serviceProviderProcessorRequest) Process(seqId int32, iprot, oprot thri
 	}
 	iprot.ReadMessageEnd()
 	result := NewRequestResult()
-	if result.Success, err = p.handler.Request(args.Name, args.Input); err != nil {
+	if result.Success, err = p.handler.Request(args.Name, args.Input, args.Session); err != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Request: "+err.Error())
 		oprot.WriteMessageBegin("Request", thrift.EXCEPTION, seqId)
 		x.Write(oprot)
@@ -419,8 +422,9 @@ func (p *serviceProviderProcessorGet) Process(seqId int32, iprot, oprot thrift.T
 // HELPER FUNCTIONS AND STRUCTURES
 
 type RequestArgs struct {
-	Name  string `thrift:"name,1"`
-	Input string `thrift:"input,2"`
+	Name    string `thrift:"name,1"`
+	Input   string `thrift:"input,2"`
+	Session string `thrift:"session,3"`
 }
 
 func NewRequestArgs() *RequestArgs {
@@ -446,6 +450,10 @@ func (p *RequestArgs) Read(iprot thrift.TProtocol) error {
 			}
 		case 2:
 			if err := p.readField2(iprot); err != nil {
+				return err
+			}
+		case 3:
+			if err := p.readField3(iprot); err != nil {
 				return err
 			}
 		default:
@@ -481,6 +489,15 @@ func (p *RequestArgs) readField2(iprot thrift.TProtocol) error {
 	return nil
 }
 
+func (p *RequestArgs) readField3(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadString(); err != nil {
+		return fmt.Errorf("error reading field 3: %s")
+	} else {
+		p.Session = v
+	}
+	return nil
+}
+
 func (p *RequestArgs) Write(oprot thrift.TProtocol) error {
 	if err := oprot.WriteStructBegin("Request_args"); err != nil {
 		return fmt.Errorf("%T write struct begin error: %s", p, err)
@@ -489,6 +506,9 @@ func (p *RequestArgs) Write(oprot thrift.TProtocol) error {
 		return err
 	}
 	if err := p.writeField2(oprot); err != nil {
+		return err
+	}
+	if err := p.writeField3(oprot); err != nil {
 		return err
 	}
 	if err := oprot.WriteFieldStop(); err != nil {
@@ -522,6 +542,19 @@ func (p *RequestArgs) writeField2(oprot thrift.TProtocol) (err error) {
 	}
 	if err := oprot.WriteFieldEnd(); err != nil {
 		return fmt.Errorf("%T write field end error 2:input: %s", p, err)
+	}
+	return err
+}
+
+func (p *RequestArgs) writeField3(oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin("session", thrift.STRING, 3); err != nil {
+		return fmt.Errorf("%T write field begin error 3:session: %s", p, err)
+	}
+	if err := oprot.WriteString(string(p.Session)); err != nil {
+		return fmt.Errorf("%T.session (3) field write error: %s", p)
+	}
+	if err := oprot.WriteFieldEnd(); err != nil {
+		return fmt.Errorf("%T write field end error 3:session: %s", p, err)
 	}
 	return err
 }

@@ -17,7 +17,6 @@ import (
 	"github.com/colinyl/ars/rpcservice"
 	"github.com/colinyl/lib4go/concurrent"
 	"github.com/colinyl/lib4go/logger"
-	"github.com/colinyl/lib4go/pool"
 	"github.com/colinyl/lib4go/utility"
 )
 
@@ -46,12 +45,14 @@ type RPCClient struct {
 	client   cluster.IClusterClient
 	mutex    sync.RWMutex
 	Log      logger.ILogger
+	snaps    concurrent.ConcurrentMap
 }
 
 //NewRPCClient 创建RPC Client
 func NewRPCClient(cli cluster.IClusterClient, loggerName string) *RPCClient {
 	client := &RPCClient{}
 	client.client = cli
+	client.snaps = concurrent.NewConcurrentMap()
 	client.pool = rpcservice.NewRPCServerPool(5, 10, loggerName)
 	client.services = concurrent.NewConcurrentMap()
 	client.queues = concurrent.NewConcurrentMap()
@@ -162,22 +163,31 @@ func (r *RPCClient) getGroupName(name string) string {
 	}
 	return ""
 }
+func (r *RPCClient) setLifeTime(name string, start time.Time) {
+	ss := &ProxySnap{}
+	ss.ElapsedTime = ServerSnap{}
+	snap := r.snaps.GetOrAdd(name, ss)
+	snap.(*ProxySnap).ElapsedTime.Add(start)
+}
 
 //Request 发送Request请求
-func (r *RPCClient) Request(cmd string, input string) (result string, err error) {
+func (r *RPCClient) Request(cmd string, input string, session string) (result string, err error) {
 	defer r.recover()
+	r.Log.Info("-----rpc.request:", cmd, input, session)
 	name := r.client.GetServiceFullPath(cmd)
 	group := r.getGroupName(name)
 	if strings.EqualFold(group, "") {
 		result = GetErrorResult("500", "not find rpc server: ", name, " in service list")
 		return
 	}
-	result, er := r.pool.Request(group, name, input)
+	defer r.setLifeTime(group, time.Now())
+	result, er := r.pool.Request(group, name, input, session)
 	if er != nil {
 		result = GetErrorResult("500", er.Error())
 	} else {
 		result = GetDataResult(result, false)
 	}
+	r.Log.Info("-----rpc.response:", cmd, result, session)
 	return
 }
 
@@ -199,20 +209,20 @@ func (r *RPCClient) Get(cmd string, input string) (result string, err error) {
 }
 
 //AsyncRequest 发送异步Request请求
-func (r *RPCClient) AsyncRequest(name string, input string) (session string, err error) {
+func (r *RPCClient) AsyncRequest(name string, input string, contextSession string) (session string, err error) {
 	session = utility.GetGUID()
 	queueChan := make(chan []interface{}, 1)
 	r.queues.Set(session, queueChan)
-	go func(queueChan chan []interface{}, r *RPCClient, name string, input string) {
+	go func(queueChan chan []interface{}, r *RPCClient, name string, input string, csession string) {
 		defer r.recover()
-		result, err := r.Request(name, input)
+		result, err := r.Request(name, input, csession)
 		if err != nil {
 			queueChan <- []interface{}{result, err.Error()}
 		} else {
 			queueChan <- []interface{}{result, ""}
 		}
 
-	}(queueChan, r, name, input)
+	}(queueChan, r, name, input, contextSession)
 	return
 }
 
@@ -253,6 +263,8 @@ func (r *RPCClient) AsyncGet(name string, input string) (session string) {
 }
 
 //GetSnap 获取RPC客户端的连接池
-func (r *RPCClient) GetSnap() pool.ObjectPoolSnap {
-	return r.pool.GetSnap()
+func (r *RPCClient) GetSnap() []interface{} {
+	poolSnaps := r.pool.GetSnap()
+	snaps := r.snaps.GetAll()
+	return getProxySnap(poolSnaps, snaps)
 }

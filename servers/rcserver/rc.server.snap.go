@@ -9,6 +9,11 @@ import (
 	"github.com/colinyl/lib4go/sysinfo"
 )
 
+type ExtSnap struct {
+	Server json.RawMessage `json:"server"`
+	RPC    json.RawMessage `json:"rpc"`
+}
+
 //RCSnap RC server快照信息
 type RCSnap struct {
 	rcServer *RCServer
@@ -19,7 +24,7 @@ type RCSnap struct {
 	Last     string                  `json:"last"`
 	Mem      uint64                  `json:"mem"`
 	Sys      *monitor.SysMonitorInfo `json:"sys"`
-	RPCSnap  json.RawMessage         `json:"rpcSnap"`
+	Snap     ExtSnap                 `json:"snap"`
 	ip       string
 }
 
@@ -28,7 +33,8 @@ func (rs RCSnap) GetSnap() string {
 	snap := rs
 	snap.Last = time.Now().Format("20060102150405")
 	snap.Sys, _ = monitor.GetSysMonitorInfo()
-	snap.RPCSnap, _ = json.Marshal(rs.rcServer.spRPCClient.GetSnap().Snaps)
+	snap.Snap.Server, _ = json.Marshal(rs.rcServer.rcRPCServer.GetSnap())
+	snap.Snap.RPC, _ = json.Marshal(rs.rcServer.spRPCClient.GetSnap())
 	snap.Mem = sysinfo.GetAPPMemory()
 	buffer, _ := json.Marshal(&snap)
 	return string(buffer)
@@ -44,7 +50,7 @@ func (rc *RCServer) StartRefreshSnap() {
 	defer rc.recover()
 	rc.clusterClient.ResetSnap(rc.snap.Path, rc.snap.GetSnap())
 	tp := time.NewTicker(time.Second * 60)
-	free := time.NewTicker(time.Second * 120)
+	free := time.NewTicker(time.Second * 50)
 	for {
 		select {
 		case <-tp.C:

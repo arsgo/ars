@@ -20,7 +20,7 @@ func Usage() {
 	fmt.Fprintln(os.Stderr, "Usage of ", os.Args[0], " [-h host:port] [-u url] [-f[ramed]] function [arg1 [arg2...]]:")
 	flag.PrintDefaults()
 	fmt.Fprintln(os.Stderr, "\nFunctions:")
-	fmt.Fprintln(os.Stderr, "  string Request(string name, string input)")
+	fmt.Fprintln(os.Stderr, "  string Request(string name, string input, string session)")
 	fmt.Fprintln(os.Stderr, "  string Send(string name, string input, string data)")
 	fmt.Fprintln(os.Stderr, "  string Get(string name, string input)")
 	fmt.Fprintln(os.Stderr)
@@ -118,15 +118,17 @@ func main() {
 
 	switch cmd {
 	case "Request":
-		if flag.NArg()-1 != 2 {
-			fmt.Fprintln(os.Stderr, "Request requires 2 args")
+		if flag.NArg()-1 != 3 {
+			fmt.Fprintln(os.Stderr, "Request requires 3 args")
 			flag.Usage()
 		}
 		argvalue0 := flag.Arg(1)
 		value0 := argvalue0
 		argvalue1 := flag.Arg(2)
 		value1 := argvalue1
-		fmt.Print(client.Request(value0, value1))
+		argvalue2 := flag.Arg(3)
+		value2 := argvalue2
+		fmt.Print(client.Request(value0, value1, value2))
 		fmt.Print("\n")
 		break
 	case "Send":

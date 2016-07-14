@@ -10,26 +10,37 @@ import (
 	"github.com/colinyl/lib4go/sysinfo"
 )
 
+type ExtSnap struct {
+	Script json.RawMessage `json:"script"`
+	RPC    json.RawMessage `json:"rpc"`
+}
+
 //AppSnap  app server快照信息
 type AppSnap struct {
-	appserver  *AppServer
-	Address    string                  `json:"address"`
-	Server     string                  `json:"server"`
-	Last       string                  `json:"last"`
-	Mem        uint64                  `json:"mem"`
-	Sys        *monitor.SysMonitorInfo `json:"sys"`
-	ScriptSnap json.RawMessage         `json:"scriptSnap"`
-	RPCSnap    json.RawMessage         `json:"rpcSnap"`
-	ip         string
+	appserver *AppServer
+	Address   string                  `json:"address"`
+	Server    string                  `json:"server"`
+	Last      string                  `json:"last"`
+	Mem       uint64                  `json:"mem"`
+	Sys       *monitor.SysMonitorInfo `json:"sys"`
+	//	ServerSnap json.RawMessage         `json:"serverSnap"`
+	Snap ExtSnap `json:"snap"`
+	ip string
 }
 
 //GetSnap 获取快照信息
 func (as AppSnap) GetSnap() string {
 	snap := as
 	snap.Last = time.Now().Format("20060102150405")
+
 	snap.Sys, _ = monitor.GetSysMonitorInfo()
-	snap.RPCSnap, _ = json.Marshal(as.appserver.rpcClient.GetSnap().Snaps)
-	snap.ScriptSnap, _ = json.Marshal(as.appserver.scriptPool.GetSnap().Snaps)
+	//if as.appserver.httpServer != nil {
+	//	snap.ServerSnap, _ = json.Marshal(as.appserver.httpServer.GetSnap())
+	//	} else {
+	//	snap.ServerSnap = []byte("{}")
+	//	}
+	snap.Snap.RPC, _ = json.Marshal(as.appserver.rpcClient.GetSnap())
+	snap.Snap.Script, _ = json.Marshal(as.appserver.scriptPool.GetSnap())
 	snap.Mem = sysinfo.GetAPPMemory()
 	buffer, _ := json.Marshal(&snap)
 	r := string(buffer)
@@ -48,15 +59,18 @@ func (as AppSnap) GetJobSnap(server string) string {
 
 func (app *AppServer) recover() {
 	if r := recover(); r != nil {
-		app.Log.Fatal(r)
+		app.Log.Error(r)
 	}
 }
 
 //StartRefreshSnap 启动定时刷新快照信息
 func (app *AppServer) StartRefreshSnap() {
 	defer app.recover()
+	app.Log.Info("更新app server快照信息")
+	app.ResetAPPSnap()
+	app.ResetJobSnap()
 	tp := time.NewTicker(time.Second * 60)
-	free := time.NewTicker(time.Second * 120)
+	free := time.NewTicker(time.Second * 30)
 	for {
 		select {
 		case <-tp.C:
@@ -81,6 +95,7 @@ func (app *AppServer) ResetJobSnap() (err error) {
 
 //ResetAPPSnap 刷新APP快照信息
 func (app *AppServer) ResetAPPSnap() (err error) {
-	err = app.clusterClient.ResetAppServerSnap(app.snap.GetSnap())
+	snap := app.snap.GetSnap()
+	err = app.clusterClient.ResetAppServerSnap(snap)
 	return
 }

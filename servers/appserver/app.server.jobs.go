@@ -1,8 +1,10 @@
 package main
 
 import (
+	"github.com/colinyl/ars/base"
 	"github.com/colinyl/ars/cluster"
 	"github.com/colinyl/lib4go/scheduler"
+	"github.com/colinyl/lib4go/utility"
 )
 
 //BindLocalJobs 绑定本地JOB
@@ -24,9 +26,10 @@ func (a *AppServer) BindLocalJobs(jobs []cluster.JobItem) {
 			continue
 		}
 		scheduler.AddTask(v.Trigger, scheduler.NewTask(v, func(job interface{}) {
+			defer a.recover()
 			item := job.(cluster.JobItem)
 			a.Log.Infof(" -> run job [%s] %s", item.Name, item.Script)
-			_, _, err := a.scriptPool.Call(item.Script, "{}", item.Params,"")
+			_, _, err := a.scriptPool.Call(item.Script, base.NewInvokeContext(utility.GetSessionID(), "{}", item.Params, ""))
 			if err != nil {
 				a.Log.Error(err)
 			}

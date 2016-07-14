@@ -6,11 +6,12 @@ import (
 	"github.com/colinyl/ars/cluster"
 	"github.com/colinyl/lib4go/concurrent"
 	"github.com/colinyl/lib4go/logger"
+	"github.com/colinyl/lib4go/utility"
 )
 
 //MQHandler MQ任务处理程序
 type MQHandler interface {
-	Handle(cluster.TaskItem, string) bool
+	Handle(cluster.TaskItem, string, string) bool
 }
 
 //MQConsumerService MQ消费服务
@@ -51,10 +52,10 @@ func (mq *MQConsumerService) UpdateTasks(tasks []cluster.TaskItem) (err error) {
 	}
 
 	//启动已添加的服务
-	for k, v := range consumers {	
+	for k, v := range consumers {
 		if c := mq.consumers.Get(k); c == nil {
 			current, err := NewMQConsumer(v, mq.clusterClient, func(msg string, tk cluster.TaskItem) bool {
-				return mq.handler.Handle(tk, msg)
+				return mq.handler.Handle(tk, msg, utility.GetSessionID())
 			})
 			if err != nil {
 				mq.Log.Fatal("mq create error:", err)

@@ -3,6 +3,7 @@ package rpcproxy
 import (
 	"errors"
 
+	"github.com/colinyl/ars/base"
 	"github.com/colinyl/ars/cluster"
 	"github.com/colinyl/lib4go/concurrent"
 	"github.com/colinyl/lib4go/logger"
@@ -57,9 +58,9 @@ func (h *RPCScriptHandler) CloseTask(ti cluster.TaskItem) {
 }
 
 //Request 执行Request请求
-func (h *RPCScriptHandler) Request(ti cluster.TaskItem, input string) (result string, err error) {
+func (h *RPCScriptHandler) Request(ti cluster.TaskItem, input string, session string) (result string, err error) {
 	defer h.recover()
-	sresult, smap, err := h.scriptPool.Call(ti.Script, input, ti.Params, "")
+	sresult, smap, err := h.scriptPool.Call(ti.Script, base.NewInvokeContext(session, input, ti.Params, ""))
 	result, _, er := h.getResult(sresult, smap, err)
 	if er != nil {
 		result = GetErrorResult("500", er.Error())

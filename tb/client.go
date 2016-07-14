@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/colinyl/ars/rpcservice"
+	"github.com/colinyl/lib4go/utility"
 )
 
 type resultCode struct {
@@ -21,7 +22,7 @@ type TCPClient struct {
 
 func NewTCPClient(address string, commandName string, params string) *TCPClient {
 	client := &TCPClient{address: address, params: params, commandName: commandName}
-	client.client = rpcservice.NewRPCClientTimeout(address, time.Second*5,"tb")
+	client.client = rpcservice.NewRPCClientTimeout(address, time.Second*5, "tb")
 	err := client.client.Open()
 	if err != nil {
 		Log.Fatal(err)
@@ -48,7 +49,7 @@ func (c *TCPClient) Reqeust() (resp *response) {
 		return
 	}*/
 	c.client.Open()
-	result, err := c.client.Request(c.commandName, c.params)
+	result, err := c.client.Request(c.commandName, c.params, utility.GetSessionID())
 	defer c.client.Close()
 	if err != nil {
 		Log.Print(err)
