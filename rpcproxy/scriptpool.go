@@ -55,7 +55,7 @@ func NewScriptPool(clusterClient cluster.IClusterClient, rpcclient *RPCClient, e
 	p.clusterClient = clusterClient
 	p.rpcclient = rpcclient
 	p.Pool = script.NewLuaPool()
-	p.Pool.SetPackages(`./scripts/xlib`, `./scripts`)
+	p.Pool.SetPackages(`/scripts/xlib`, `/scripts`)
 	p.Log, err = logger.Get(loggerName, true)
 	p.Pool.RegisterLibs(p.bindGlobalLibs(extlibs))
 	p.Pool.RegisterModules(p.bindModules())
