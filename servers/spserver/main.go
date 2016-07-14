@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"runtime"
+	"syscall"
 
 	"github.com/colinyl/lib4go/forever"
 )
