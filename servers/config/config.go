@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"runtime/debug"
 	"strings"
 
 	"github.com/colinyl/lib4go/utility"
@@ -52,7 +53,7 @@ func exist(filename string) bool {
 func createConfig(config *conf) {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Printf("创建配置文件%s文件错误:%s\n", _filePath, r)
+			fmt.Println("创建配置文件", _filePath, "文件错误:", r, string(debug.Stack()))
 		}
 	}()
 	data, _ := json.Marshal(config)

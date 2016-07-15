@@ -8,6 +8,7 @@ package rpcproxy
 
 import (
 	"fmt"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -74,7 +75,7 @@ func (r *RPCClient) Close() {
 
 func (rc *RPCClient) recover() {
 	if r := recover(); r != nil {
-		rc.Log.Fatal(r)
+		rc.Log.Fatal(r, string(debug.Stack()))
 	}
 }
 

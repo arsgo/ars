@@ -1,6 +1,7 @@
 package mqservice
 
 import (
+	"runtime/debug"
 	"strings"
 
 	"github.com/colinyl/ars/cluster"
@@ -25,7 +26,7 @@ type MQConsumerService struct {
 
 func (mq *MQConsumerService) recover() {
 	if r := recover(); r != nil {
-		mq.Log.Fatal(r)
+		mq.Log.Fatal(r, string(debug.Stack()))
 	}
 }
 

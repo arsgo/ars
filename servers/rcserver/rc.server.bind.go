@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"runtime/debug"
 	"sort"
 	"strings"
 
@@ -67,7 +68,7 @@ func (rc *RCServer) BindRCServer() (err error) {
 func (rc *RCServer) PublishNow() {
 	defer func() {
 		if r := recover(); r != nil {
-			rc.Log.Info(r)
+			rc.Log.Fatal(r, string(debug.Stack()))
 		}
 	}()
 	//立即发布服务

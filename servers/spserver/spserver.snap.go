@@ -73,6 +73,6 @@ func (sp *SPServer) StartRefreshSnap() {
 }
 func (sp *SPServer) recover() {
 	if r := recover(); r != nil {
-		sp.Log.Fatal(r)
+		sp.Log.Fatal(r,string(debug.Stack()))
 	}
 }

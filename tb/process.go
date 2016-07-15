@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"runtime/debug"
 	"strings"
 	"time"
 )
@@ -112,12 +113,12 @@ loop:
 func (p *process) run(startNotify chan int, finishNotify chan *response) {
 	defer func() {
 		if r := recover(); r != nil {
-			Log.Fatal(r.(error).Error())
+			Log.Fatal(r, string(debug.Stack()))
 		}
 	}()
 	index := <-startNotify
 	finishNotify <- p.clients.RunNow(index)
 }
-func (p *process) Close() {	
+func (p *process) Close() {
 	p.clients.Close()
 }

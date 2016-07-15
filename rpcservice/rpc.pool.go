@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"runtime/debug"
 	"strings"
 
 	"github.com/colinyl/lib4go/concurrent"
@@ -81,7 +82,7 @@ func (s *RPCServerPool) Register(svs map[string]string) {
 	}
 }
 
-func (p *RPCServerPool) Request(group string, svName string, input string,session string) (result string, err error) {
+func (p *RPCServerPool) Request(group string, svName string, input string, session string) (result string, err error) {
 	defer p.recover()
 	if strings.EqualFold(group, "") {
 		err = errors.New("not find rpc server and name cant be nil")
@@ -107,7 +108,7 @@ START:
 	}
 	defer obj.Close()
 	defer p.pool.Recycle(group, o)
-	result, err = obj.Request(svName, input,session)
+	result, err = obj.Request(svName, input, session)
 	return
 }
 func (p *RPCServerPool) Send(group string, svName string, input string, data []byte) (result string, err error) {
@@ -160,6 +161,6 @@ func (p *RPCServerPool) Get(group string, svName string, input string) (result [
 }
 func (n *RPCServerPool) recover() {
 	if r := recover(); r != nil {
-		n.Log.Fatal(r)
+		n.Log.Fatal(r, string(debug.Stack()))
 	}
 }

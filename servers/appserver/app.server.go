@@ -14,6 +14,7 @@ import (
 //AppServer app server服务器
 type AppServer struct {
 	JobAddress               map[string]string
+	domain	string
 	Log                      logger.ILogger
 	clusterClient            cluster.IClusterClient
 	jobConsumerScriptHandler *rpcproxy.RPCScriptHandler //本地JOB Consumer提供的RPC接口,使用的代理处理程序为脚本处理
@@ -38,15 +39,16 @@ func NewAPPServer() *AppServer {
 //init 初始化服务器
 func (app *AppServer) init() (err error) {
 	defer app.recover()
-	app.Log.Info(" -> 初始化AppServer...")
 	cfg, err := config.Get()
 	if err != nil {
 		return
 	}
+	app.Log.Infof(" -> 初始化 %s...",cfg.Domain)	
 	app.clusterClient, err = cluster.GetClusterClient(cfg.Domain, cfg.IP, app.loggerName, cfg.ZKServers...)
 	if err != nil {
 		return
 	}
+	app.domain=cfg.Domain
 	app.rpcClient = rpcproxy.NewRPCClient(app.clusterClient, app.loggerName)
 	app.scriptPool, err = rpcproxy.NewScriptPool(app.clusterClient, app.rpcClient, make(map[string]interface{}), app.loggerName)
 	app.jobConsumerScriptHandler = rpcproxy.NewRPCScriptHandler(app.clusterClient, app.scriptPool, app.loggerName)

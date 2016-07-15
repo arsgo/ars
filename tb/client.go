@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -36,7 +37,7 @@ func (c *TCPClient) Reqeust() (resp *response) {
 		//c.client.Close()
 		//}
 		if err := recover(); nil != err {
-			Log.Fatal(err.(error).Error())
+			Log.Fatal(err, string(debug.Stack()))
 			resp = &response{success: false, url: c.address, useTime: 0}
 		}
 	}()

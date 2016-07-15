@@ -25,7 +25,7 @@ type AppSnap struct {
 	Sys       *monitor.SysMonitorInfo `json:"sys"`
 	//	ServerSnap json.RawMessage         `json:"serverSnap"`
 	Snap ExtSnap `json:"snap"`
-	ip string
+	ip   string
 }
 
 //GetSnap 获取快照信息
@@ -59,7 +59,7 @@ func (as AppSnap) GetJobSnap(server string) string {
 
 func (app *AppServer) recover() {
 	if r := recover(); r != nil {
-		app.Log.Error(r)
+		app.Log.Error(r, string(debug.Stack()))
 	}
 }
 

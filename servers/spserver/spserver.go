@@ -21,6 +21,7 @@ var (
 type SPServer struct {
 	Log            logger.ILogger
 	lk             sync.Mutex
+	domain         string
 	mode           string
 	serviceConfig  string
 	mqService      *mqservice.MQConsumerService
@@ -44,15 +45,17 @@ func NewSPServer() *SPServer {
 //init 初始化服务器
 func (sp *SPServer) init() (err error) {
 	defer sp.recover()
-	sp.Log.Info(" -> 初始化SP Server...")
 	cfg, err := config.Get()
 	if err != nil {
 		return
 	}
+	sp.Log.Infof(" -> 初始化 %s...",cfg.Domain)
+	
 	sp.clusterClient, err = cluster.GetClusterClient(cfg.Domain, cfg.IP, sp.loggerName, cfg.ZKServers...)
 	if err != nil {
 		return
 	}
+	sp.domain = cfg.Domain
 	sp.snap = SPSnap{ip: cfg.IP}
 	sp.rpcClient = rpcproxy.NewRPCClient(sp.clusterClient, sp.loggerName)
 	sp.scriptPool, err = rpcproxy.NewScriptPool(sp.clusterClient, sp.rpcClient, sp.GetScriptBinder(), sp.loggerName)

@@ -17,11 +17,12 @@ func getProxySnap(objectPoolSnaps pool.ObjectPoolSnap, snaps map[string]interfac
 	for _, v := range poolSnaps {
 		if elp, ok := snaps[v.Name]; ok {
 			sr := elp.(*ProxySnap)
-			sr.Available = v.Available
+			sr.Cache = v.Cache
 			sr.MinSize = v.MinSize
 			sr.MaxSize = v.MaxSize
 			sr.Name = v.Name
 			sr.Status = v.Status
+			//	sr.Created = v.Created
 			r = append(r, sr)
 		} else {
 			r = append(r, v)

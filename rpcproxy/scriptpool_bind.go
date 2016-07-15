@@ -49,6 +49,11 @@ func (s *ScriptPool) NewHTTPClientCert(certFile string, keyFile string, caFile s
 	return net.NewHTTPClientCert(certFile, keyFile, caFile)
 }
 
+//NewHTTPClientProxy 根据代理服务器地址创建http client,代理服务器格式:http://192.168.101.1:8080
+func (s *ScriptPool) NewHTTPClientProxy(proxy string) *net.HTTPClient {
+	return net.NewHTTPClientProxy(proxy)
+}
+
 //NewWechat 创建微信加解密对象
 func (s *ScriptPool) NewWechat(appid string, token string, encodingAESKey string) (weixin.Wechat, error) {
 	return weixin.NewWechat(appid, token, encodingAESKey)
@@ -62,19 +67,20 @@ func (s *ScriptPool) Sleep(r int) {
 //bindGlobalLibs 绑定lib
 func (s *ScriptPool) bindGlobalLibs(extlibs map[string]interface{}) (funs map[string]interface{}) {
 	funs = map[string]interface{}{
-		"sleep":             s.Sleep,
-		"print":             s.Log.Info,
-		"printf":            s.Log.Infof,
-		"error":             s.Log.Error,
-		"errorf":            s.Log.Errorf,
-		"NewGUID":           utility.GetGUID,
-		"NewRPC":            s.NewRPCClient,
-		"NewMQProducer":     s.NewMQProducer,
-		"NewMemcached":      s.NewMemcached,
-		"NewXHttp":          s.NewHTTPClient,
-		"NewHTTPClientCert": s.NewHTTPClientCert,
-		"NewSecurity":       s.NewBindSecurity,
-		"NewWechat":         s.NewWechat,
+		"sleep":              s.Sleep,
+		"print":              s.Log.Info,
+		"printf":             s.Log.Infof,
+		"error":              s.Log.Error,
+		"errorf":             s.Log.Errorf,
+		"NewGUID":            utility.GetGUID,
+		"NewRPC":             s.NewRPCClient,
+		"NewMQProducer":      s.NewMQProducer,
+		"NewMemcached":       s.NewMemcached,
+		"NewXHttp":           s.NewHTTPClient,
+		"NewHTTPClientCert":  s.NewHTTPClientCert,
+		"NewHTTPClientProxy": s.NewHTTPClientProxy,
+		"NewSecurity":        s.NewBindSecurity,
+		"NewWechat":          s.NewWechat,
 	}
 	for i, v := range extlibs {
 		funs[i] = v

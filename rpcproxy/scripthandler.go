@@ -2,6 +2,7 @@ package rpcproxy
 
 import (
 	"errors"
+	"runtime/debug"
 
 	"github.com/colinyl/ars/base"
 	"github.com/colinyl/ars/cluster"
@@ -92,6 +93,6 @@ func (h *RPCScriptHandler) getResult(result []string, params map[string]string, 
 }
 func (h *RPCScriptHandler) recover() {
 	if r := recover(); r != nil {
-		h.Log.Fatal(r)
+		h.Log.Fatal(r, string(debug.Stack()))
 	}
 }

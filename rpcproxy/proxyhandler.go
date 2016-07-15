@@ -1,6 +1,7 @@
 package rpcproxy
 
 import (
+	"runtime/debug"
 	"sync"
 
 	"github.com/colinyl/ars/cluster"
@@ -57,9 +58,9 @@ func (h *RPCProxyHandler) CloseTask(ti cluster.TaskItem) {
 }
 
 //Request 执行Request请求
-func (h *RPCProxyHandler) Request(ti cluster.TaskItem, input string,session string) (r string, err error) {
+func (h *RPCProxyHandler) Request(ti cluster.TaskItem, input string, session string) (r string, err error) {
 	defer h.recover()
-	r, _ = h.client.Request(ti.Name, input,session)
+	r, _ = h.client.Request(ti.Name, input, session)
 	return
 }
 
@@ -89,6 +90,6 @@ func (h *RPCProxyHandler) getResult(result []string, er error) (r string, err er
 
 func (h *RPCProxyHandler) recover() {
 	if r := recover(); r != nil {
-		h.Log.Fatal(r)
+		h.Log.Fatal(r, string(debug.Stack()))
 	}
 }

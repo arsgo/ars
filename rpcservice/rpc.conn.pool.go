@@ -4,6 +4,7 @@ package rpcservice
 
 import (
 	"fmt"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -53,13 +54,13 @@ func Subscribe(address string, notify chan *RpcClientConn, loggerName string) {
 
 func NewConnPool() (conn *connPool) {
 	conn = &connPool{workers: make(map[string]*worker)}
-	
+
 	return
 }
 func (n *connPool) recover() {
 	if r := recover(); r != nil {
 		log, _ := logger.Get("sys/conn.pool", true)
-		log.Fatal(r)
+		log.Fatal(r, string(debug.Stack()))
 	}
 }
 func (n *connPool) Subscribe(address string, notify chan *RpcClientConn, loggerName string) {

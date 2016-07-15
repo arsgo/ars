@@ -1,11 +1,12 @@
 package cluster
 
 import "encoding/json"
+import "runtime/debug"
 
 //recover 从异常中恢复
 func (client *ClusterClient) recover() {
 	if r := recover(); r != nil {
-		client.Log.Fatal(r)
+		client.Log.Fatal(r, string(debug.Stack()))
 	}
 }
 

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"runtime/debug"
+
 	"github.com/colinyl/ars/cluster"
 	"github.com/colinyl/ars/rpcproxy"
 	"github.com/colinyl/ars/servers/config"
@@ -41,11 +43,11 @@ func NewRCServer() *RCServer {
 //init 初始化服务
 func (rc *RCServer) init() (err error) {
 	defer rc.recover()
-	rc.Log.Info(" -> 初始化RC Server...")
 	cfg, err := config.Get()
 	if err != nil {
 		return
 	}
+	rc.Log.Infof(" -> 初始化 %s...", cfg.Domain)
 	rc.clusterClient, err = cluster.GetClusterClient(cfg.Domain, cfg.IP, rc.loggerName, cfg.ZKServers...)
 	if err != nil {
 		return
@@ -58,7 +60,7 @@ func (rc *RCServer) init() (err error) {
 }
 func (rc *RCServer) recover() {
 	if r := recover(); r != nil {
-		rc.Log.Fatal(r)
+		rc.Log.Fatal(r, string(debug.Stack()))
 	}
 }
 
