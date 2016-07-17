@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+	// defer profile.Start(profile.CPUProfile).Stop()
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	appServer := NewAPPServer()
 	f := forever.NewForever(appServer, appServer.Log, "appserver", "appserver")
