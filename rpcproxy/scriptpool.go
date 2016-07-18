@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -55,7 +56,8 @@ func NewScriptPool(clusterClient cluster.IClusterClient, rpcclient *RPCClient, e
 	p.clusterClient = clusterClient
 	p.rpcclient = rpcclient
 	p.Pool = script.NewLuaPool()
-	p.Pool.SetPackages(`./scripts`, `./script`, `./scripts/xlib`,`./scripts/lib`, `./scripts/lib/xlib`, `./script/lib`, `./script/lib/xlib`)
+	p.Pool.SetPackages(`./scripts`, `./script`, `./scripts/xlib`, `./scripts/lib`,
+		`./scripts/lib/xlib`, `./script/lib`, `./script/lib/xlib`)
 	p.Log, err = logger.Get(loggerName, true)
 	p.Pool.RegisterLibs(p.bindGlobalLibs(extlibs))
 	p.Pool.RegisterModules(p.bindModules())
@@ -73,10 +75,7 @@ func (s *ScriptPool) Call(name string, context base.InvokeContext) ([]string, ma
 	if strings.EqualFold(name, "") {
 		return nil, nil, errors.New("script is nil")
 	}
-	script := name
-	//if !strings.HasPrefix(name, "./") {
-	//script = "./" + strings.TrimLeft(name, "/")
-	//}
+	script, _ := filepath.Abs(name)
 	defer s.setLifeTime(script, time.Now())
 	return s.Pool.Call(script, context.Session, getScriptInputArgs(context.Input, context.Params), context.Body)
 }
