@@ -31,7 +31,8 @@ var _err error
 var _filePath string
 
 func init() {
-	_filePath, _ = filepath.Abs("./ars.conf.json")
+	f, _ := os.Getwd()
+	_filePath, _ = filepath.Abs(fmt.Sprintf("%s/ars.conf.json", f))
 	_config, _err = readConfig()
 }
 
