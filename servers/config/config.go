@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"runtime/debug"
 	"strings"
 
@@ -30,7 +31,7 @@ var _err error
 var _filePath string
 
 func init() {
-	_filePath = "./ars.conf.json"
+	_filePath, _ = filepath.Abs("./ars.conf.json")
 	_config, _err = readConfig()
 }
 
