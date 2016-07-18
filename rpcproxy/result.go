@@ -42,7 +42,6 @@ func GetDataResult(cdata string, redirect bool) string {
 	if redirect {
 		return cdata
 	}
-	fmt.Println("data:",cdata)
 	data := strings.Trim(cdata, " ")
 	if strings.EqualFold(data, "") || strings.EqualFold(strings.ToLower(data), "nil") || strings.EqualFold(strings.ToLower(data), "null") {
 		return result_success_format

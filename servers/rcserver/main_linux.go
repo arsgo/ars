@@ -10,6 +10,7 @@ import (
 )
 
 func main() {
+
 	logFile, err := os.OpenFile("/ext/rcserver", os.O_WRONLY|os.O_CREATE|os.O_SYNC, 0755)
 	if err != nil {
 		fmt.Println(err)

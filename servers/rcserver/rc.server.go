@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"runtime/debug"
 
 	"github.com/colinyl/ars/cluster"
@@ -37,6 +39,9 @@ func NewRCServer() *RCServer {
 	rc.crossDomain = concurrent.NewConcurrentMap()
 	rc.crossService = concurrent.NewConcurrentMap()
 	rc.Log, _ = logger.Get(rc.loggerName, true)
+	file, _ := os.Getwd()
+	rc.Log.Info("current path:", file)
+	rc.Log.Info("./:", filepath.Dir("./"))
 	return rc
 }
 

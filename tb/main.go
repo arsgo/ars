@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 )
 
 var Log *log.Logger
@@ -16,6 +17,10 @@ func init() {
 //批量下单，指定进程数，创建指定进程的程序，并批量进行下单请求
 func main() {
 
+	file, _ := os.Getwd()
+	log.Println("current path:", file)
+	fmt.Println("./:", filepath.Dir("./"))
+	
 	var (
 		totalRequest int
 		concurrent   int
