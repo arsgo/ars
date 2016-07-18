@@ -41,7 +41,8 @@ func NewRCServer() *RCServer {
 	rc.Log, _ = logger.Get(rc.loggerName, true)
 	file, _ := os.Getwd()
 	rc.Log.Info("current path:", file)
-	rc.Log.Info("./:", filepath.Dir("./"))
+	f, _ := filepath.Abs("./")
+	rc.Log.Info("./:", f)
 	return rc
 }
 
