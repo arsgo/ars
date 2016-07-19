@@ -12,6 +12,7 @@ type IClusterHandler interface {
 	UpdateValue(path string, value string) error
 	WatchValue(path string, data chan string) error
 	WatchChildren(path string, data chan []string) error
+	WatchConnected() bool
 	Delete(path string) error
 	Close()
 }
@@ -25,6 +26,7 @@ type IClusterClient interface {
 	GetElasticConfig(name string) (string, error)
 	GetDBConfig(name string) (string, error)
 	GetServiceFullPath(name string) string
+	WatchConnected() bool
 	Close()
 
 	//app server..........

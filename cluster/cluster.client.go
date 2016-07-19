@@ -142,6 +142,11 @@ func (client *ClusterClient) WatchClusterChildrenChange(path string, callback fu
 	}()
 }
 
+//WatchConnected 监控是否已链接到当前服务器
+func (client *ClusterClient) WatchConnected() bool {
+	return client.handler.WatchConnected()
+}
+
 //Close 关闭当前集群客户端
 func (client *ClusterClient) Close() {
 	client.handler.Close()

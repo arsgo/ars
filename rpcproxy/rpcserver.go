@@ -57,7 +57,7 @@ func (r *RPCServer) Start() {
 	r.Address = rpcservice.GetLocalRandomAddress()
 	r.server = rpcservice.NewRPCServer(r.Address, r.serverHandler, r.loggerName)
 	r.server.Serve()
-	time.Sleep(time.Second * 2)
+	time.Sleep(time.Second)
 }
 
 //Stop 停止RPC服务

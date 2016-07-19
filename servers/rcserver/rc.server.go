@@ -75,6 +75,9 @@ func (rc *RCServer) Start() (err error) {
 		rc.Log.Error(err)
 		return
 	}
+	if !rc.clusterClient.WatchConnected() {
+		return
+	}
 	//启动RPC服务,供APP,SP调用
 	rc.rcRPCServer.Start()
 

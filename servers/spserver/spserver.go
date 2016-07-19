@@ -49,8 +49,8 @@ func (sp *SPServer) init() (err error) {
 	if err != nil {
 		return
 	}
-	sp.Log.Infof(" -> 初始化 %s...",cfg.Domain)
-	
+	sp.Log.Infof(" -> 初始化 %s...", cfg.Domain)
+
 	sp.clusterClient, err = cluster.GetClusterClient(cfg.Domain, cfg.IP, sp.loggerName, cfg.ZKServers...)
 	if err != nil {
 		return
@@ -79,7 +79,9 @@ func (sp *SPServer) Start() (err error) {
 		sp.Log.Error(err)
 		return
 	}
-
+	if !sp.clusterClient.WatchConnected() {
+		return
+	}
 	sp.rpcServer.Start()
 	sp.snap.Address = fmt.Sprint(sp.snap.ip, sp.rpcServer.Address)
 	sp.clusterClient.WatchSPTaskChange(func() {

@@ -14,7 +14,7 @@ import (
 //AppServer app server服务器
 type AppServer struct {
 	JobAddress               map[string]string
-	domain	string
+	domain                   string
 	Log                      logger.ILogger
 	clusterClient            cluster.IClusterClient
 	jobConsumerScriptHandler *rpcproxy.RPCScriptHandler //本地JOB Consumer提供的RPC接口,使用的代理处理程序为脚本处理
@@ -43,12 +43,12 @@ func (app *AppServer) init() (err error) {
 	if err != nil {
 		return
 	}
-	app.Log.Infof(" -> 初始化 %s...",cfg.Domain)	
+	app.Log.Infof(" -> 初始化 %s...", cfg.Domain)
 	app.clusterClient, err = cluster.GetClusterClient(cfg.Domain, cfg.IP, app.loggerName, cfg.ZKServers...)
 	if err != nil {
 		return
 	}
-	app.domain=cfg.Domain
+	app.domain = cfg.Domain
 	app.rpcClient = rpcproxy.NewRPCClient(app.clusterClient, app.loggerName)
 	app.scriptPool, err = rpcproxy.NewScriptPool(app.clusterClient, app.rpcClient, make(map[string]interface{}), app.loggerName)
 	app.jobConsumerScriptHandler = rpcproxy.NewRPCScriptHandler(app.clusterClient, app.scriptPool, app.loggerName)
@@ -69,13 +69,15 @@ func (app *AppServer) Start() (err error) {
 		app.Log.Error(err)
 		return
 	}
-	app.clusterClient.WatchRCServerChange(func(config []*cluster.RCServerItem, err error) {
-		app.BindRCServer(config, err)
-	})
-
+	if !app.clusterClient.WatchConnected() {
+		return
+	}
 	app.clusterClient.WatchAppTaskChange(func(config *cluster.AppServerStartupConfig, err error) error {
 		app.BindTask(config, err)
 		return nil
+	})
+	app.clusterClient.WatchRCServerChange(func(config []*cluster.RCServerItem, err error) {
+		app.BindRCServer(config, err)
 	})
 	go app.StartRefreshSnap()
 	return nil

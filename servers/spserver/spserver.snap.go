@@ -57,7 +57,7 @@ func (sp *SPServer) StartRefreshSnap() {
 	defer sp.recover()
 	sp.ResetSPSnap()
 	tp := time.NewTicker(time.Second * 60)
-	free := time.NewTicker(time.Second * 50)
+	free := time.NewTicker(time.Second * 61)
 	defer tp.Stop()
 	for {
 		select {
