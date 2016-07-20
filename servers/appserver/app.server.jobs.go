@@ -20,7 +20,7 @@ func (a *AppServer) BindLocalJobs(jobs []cluster.JobItem) {
 		}
 		aliveJob++
 		a.Log.Infof("::start local job:[%s] %s", v.Name, v.Script)
-		er := a.scriptPool.Pool.PreLoad(v.Script, v.MinSize, v.MaxSize)
+		er := a.scriptPool.PreLoad(v.Script, v.MinSize, v.MaxSize)
 		if er != nil {
 			a.Log.Error("load task`s script error in:", v.Script, ",", er)
 			continue

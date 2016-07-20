@@ -41,7 +41,7 @@ func getScriptInputArgs(input string, params string) (r string) {
 
 //ScriptPool 创建ScriptPool
 type ScriptPool struct {
-	Pool          *script.LuaPool
+	pool          *script.LuaPool
 	Log           logger.ILogger
 	clusterClient cluster.IClusterClient
 	rpcclient     *RPCClient
@@ -54,14 +54,30 @@ func NewScriptPool(clusterClient cluster.IClusterClient, rpcclient *RPCClient, e
 	p = &ScriptPool{snaps: concurrent.NewConcurrentMap()}
 	p.clusterClient = clusterClient
 	p.rpcclient = rpcclient
-	p.Pool = script.NewLuaPool()
-	p.Pool.SetPackages(`./scripts`, `./script`, `./scripts/xlib`, `./scripts/lib`,
-		`./scripts/lib/xlib`, `./script/lib`, `./script/lib/xlib`)
+	p.pool = script.NewLuaPool()
 	p.Log, err = logger.Get(loggerName, true)
-	p.Pool.RegisterLibs(p.bindGlobalLibs(extlibs))
-	p.Pool.RegisterModules(p.bindModules())
+	p.pool.RegisterLibs(p.bindGlobalLibs(extlibs))
+	p.pool.RegisterModules(p.bindModules())
 	return
 }
+func (s *ScriptPool) SetPoolSize(minSize int, maxSize int) {
+	s.pool.SetPoolSize(minSize, maxSize)
+}
+func (s *ScriptPool) PreLoad(script string, minSize int, maxSize int) error {
+	return s.pool.PreLoad(utility.GetExcPath(script, "bin"), minSize, maxSize)
+}
+
+func (s *ScriptPool) SetPackages(path ...string) {
+	if len(path) == 0 {
+		return
+	}
+	npath := make([]string, 0, len(path))
+	for _, v := range path {
+		npath = append(npath, utility.GetExcPath(v, "bin"))
+	}
+	s.pool.SetPackages(npath...)
+}
+
 func (s *ScriptPool) setLifeTime(name string, start time.Time) {
 	ss := &ProxySnap{}
 	ss.ElapsedTime = ServerSnap{}
@@ -76,17 +92,17 @@ func (s *ScriptPool) Call(name string, context base.InvokeContext) ([]string, ma
 	}
 	script := utility.GetExcPath(name, "bin")
 	defer s.setLifeTime(script, time.Now())
-	return s.Pool.Call(script, context.Session, getScriptInputArgs(context.Input, context.Params), context.Body)
+	return s.pool.Call(script, context.Session, getScriptInputArgs(context.Input, context.Params), context.Body)
 }
 
 //GetSnap 获取当前脚本
 func (s *ScriptPool) GetSnap() (r []interface{}) {
-	poolSnaps := s.Pool.GetSnap()
+	poolSnaps := s.pool.GetSnap()
 	snaps := s.snaps.GetAll()
 	return getProxySnap(poolSnaps, snaps)
 }
 
 //Close 关闭脚本引擎
 func (s *ScriptPool) Close() {
-	s.Pool.Close()
+	s.pool.Close()
 }

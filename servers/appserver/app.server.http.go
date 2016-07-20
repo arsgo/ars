@@ -20,7 +20,7 @@ func (a *AppServer) BindHttpServer(config *cluster.ServerConfig) {
 	}
 
 	for _, v := range config.Routes {
-		er := a.scriptPool.Pool.PreLoad(v.Script, v.MinSize, v.MaxSize)
+		er := a.scriptPool.PreLoad(v.Script, v.MinSize, v.MaxSize)
 		if er != nil {
 			a.Log.Error("load script error in:", v.Script, ",", er)
 		} else {

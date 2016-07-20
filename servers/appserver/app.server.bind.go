@@ -22,9 +22,10 @@ func (a *AppServer) BindTask(config *cluster.AppServerStartupConfig, err error) 
 	if config == nil {
 		return
 	}
-	a.Log.Info("rpc pool size min:", config.RPCPoolSetting.MinSize, ",max:", config.RPCPoolSetting.MaxSize)
-	a.rpcClient.SetPoolSize(config.RPCPoolSetting.MinSize, config.RPCPoolSetting.MaxSize)
-	a.scriptPool.Pool.SetPoolSize(config.RPCPoolSetting.MinSize, config.RPCPoolSetting.MaxSize)
+	a.Log.Info("rpc pool size min:", config.Config.RPC.MinSize, ",max:", config.Config.RPC.MaxSize)
+	a.scriptPool.SetPackages(config.Config.Libs...)
+	a.rpcClient.SetPoolSize(config.Config.RPC.MinSize, config.Config.RPC.MaxSize)
+	a.scriptPool.SetPoolSize(config.Config.RPC.MinSize, config.Config.RPC.MaxSize)
 	a.ResetAPPSnap()
 	a.BindHttpServer(config.Server)
 	a.BindLocalJobs(config.LocalJobs)

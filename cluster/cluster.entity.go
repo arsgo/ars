@@ -28,12 +28,17 @@ type ServerConfig struct {
 	ServerType string               `json:"type"`
 	Routes     []*ServerRouteConfig `json:"routes"`
 }
+
+type RootConfig struct {
+	Status string         `json:"status"`
+	RPC    RPCPoolSetting `json:"rpc"`
+	Libs   []string       `json:"libs"`
+}
 type AppServerStartupConfig struct {
-	Status         string         `json:"status"`
-	LocalJobs      []JobItem      `json:"jobs"`
-	Tasks          []TaskItem     `json:"tasks"`
-	Server         *ServerConfig  `json:"server"`
-	RPCPoolSetting RPCPoolSetting `json:"rpc-pool"`
+	LocalJobs []JobItem     `json:"jobs"`
+	Tasks     []TaskItem    `json:"tasks"`
+	Server    *ServerConfig `json:"server"`
+	Config    RootConfig    `json:"config"`
 }
 
 //---------------------------------------------------------
@@ -68,8 +73,8 @@ type TaskItem struct {
 	MaxSize int    `json:"max"`
 }
 type ServiceProviderTask struct {
-	RPCPoolSetting RPCPoolSetting `json:"rpc-pool"`
-	Tasks          []TaskItem     `json:"tasks"`
+	Config RootConfig `json:"config"`
+	Tasks  []TaskItem `json:"tasks"`
 }
 
 //---------------------------------------------------------
