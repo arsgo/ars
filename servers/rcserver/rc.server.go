@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"runtime/debug"
 
 	"github.com/colinyl/ars/cluster"
@@ -45,6 +46,7 @@ func (rc *RCServer) init() (err error) {
 	defer rc.recover()
 	cfg, err := config.Get()
 	if err != nil {
+		os.Exit(1)
 		return
 	}
 	rc.Log.Infof(" -> 初始化 %s...", cfg.Domain)
