@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"runtime/debug"
 
 	"github.com/colinyl/ars/cluster"
@@ -38,8 +37,6 @@ func NewRCServer() *RCServer {
 	rc.crossDomain = concurrent.NewConcurrentMap()
 	rc.crossService = concurrent.NewConcurrentMap()
 	rc.Log, _ = logger.Get(rc.loggerName, true)
-	f, _ := os.Getwd()
-	rc.Log.Info(f)
 	return rc
 }
 

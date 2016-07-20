@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"runtime/debug"
 	"strings"
 
@@ -31,7 +30,7 @@ var _err error
 var _filePath string
 
 func init() {
-	_filePath, _ = filepath.Abs("./ars.conf.json")
+	_filePath = utility.GetExcPath("./conf/ars.conf.json", "bin")
 	_config, _err = readConfig()
 }
 
@@ -62,6 +61,7 @@ func createConfig(config *conf) {
 }
 func readConfig() (config *SysConfig, err error) {
 	if !exist(_filePath) {
+		fmt.Println("找不到配置文件:", _filePath)
 		createConfig(&conf{})
 	}
 
