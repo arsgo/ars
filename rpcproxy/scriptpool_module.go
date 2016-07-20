@@ -4,6 +4,9 @@ import "github.com/yuin/gopher-lua"
 
 func (s *ScriptPool) bindModules() (r map[string]map[string]lua.LGFunction) {
 	r = map[string]map[string]lua.LGFunction{
+		"random": map[string]lua.LGFunction{
+			"getGuid": s.moduleGetGUID,
+		},
 		"rpc": map[string]lua.LGFunction{
 			"request": s.moduleRPCRequest,
 		},
