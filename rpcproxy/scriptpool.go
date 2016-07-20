@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -75,7 +74,7 @@ func (s *ScriptPool) Call(name string, context base.InvokeContext) ([]string, ma
 	if strings.EqualFold(name, "") {
 		return nil, nil, errors.New("script is nil")
 	}
-	script, _ := filepath.Abs(name)
+	script := utility.GetExcPath(name, "bin")
 	defer s.setLifeTime(script, time.Now())
 	return s.Pool.Call(script, context.Session, getScriptInputArgs(context.Input, context.Params), context.Body)
 }
