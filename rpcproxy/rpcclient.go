@@ -177,7 +177,7 @@ func (r *RPCClient) setLifeTime(name string, start time.Time) {
 func (r *RPCClient) Request(cmd string, input string, session string) (result string, err error) {
 	defer r.recover()
 	clogger, _ := logger.NewSession(r.loggerName, session, true)
-	clogger.Info("-----rpc.request:", cmd, input, session)
+	clogger.Info("--> rpc request:", cmd, input)
 	name := r.client.GetServiceFullPath(cmd)
 	group := r.getGroupName(name)
 	if strings.EqualFold(group, "") {
@@ -191,7 +191,7 @@ func (r *RPCClient) Request(cmd string, input string, session string) (result st
 	} else {
 		result = GetDataResult(result, false)
 	}
-	clogger.Info("-----rpc.response:", cmd, result, session)
+	clogger.Info("--> rpc request:", cmd, result)
 	return
 }
 

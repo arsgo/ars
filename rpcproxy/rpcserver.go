@@ -155,7 +155,7 @@ func (r *RPCHandlerProxy) getTaskItem(name string) (item cluster.TaskItem, err e
 func (r *RPCHandlerProxy) Request(name string, input string, session string) (result string, err error) {
 	defer r.snap.Add(time.Now())
 	log, _ := logger.NewSession(r.loggerName, session, true)
-	log.Info("-> recv request:", name)
+	log.Info("--> rpc request:", name, input)
 	task, currentErr := r.getTaskItem(name)
 	if currentErr != nil {
 		result = GetErrorResult("500", currentErr.Error())
@@ -165,7 +165,7 @@ func (r *RPCHandlerProxy) Request(name string, input string, session string) (re
 	if currentErr != nil {
 		r.Log.Error(currentErr)
 	}
-	log.Infof(" <-%s response:%s", name, result)
+	log.Infof("--> rpc response:", name, result)
 	return
 }
 
