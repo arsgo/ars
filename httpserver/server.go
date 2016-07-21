@@ -109,7 +109,6 @@ func (r *HTTPScriptController) getPostValues(body string) (rt map[string]string)
 
 //Handle 脚本处理程序(r *HttpScriptController) Handle(ctx *web.Context)
 func (r *HTTPScriptController) Handle(context *webserver.Context) {
-	context.Log.Info("-->api.request:", context.Request.URL.Path)
 	defer r.snap.Add(time.Now())
 	body := r.getBodyText(context.Request)
 	context.Request.ParseForm()
@@ -123,11 +122,12 @@ func (r *HTTPScriptController) Handle(context *webserver.Context) {
 	}
 	data, err := json.Marshal(&params)
 	if err != nil {
+		context.Log.Info("-->api.request/response.error:", context.Request.URL.Path, err)
 		r.setResponse(context.Log, context.Writer, make(map[string]string), 500, err.Error())
 		return
 	}
 	input := string(data)
-	context.Log.Info("-->api.params:", input, body)
+	context.Log.Info("-->api.request:", context.Request.URL.Path, input, body)
 	result, output, err := r.server.call(r.config.Script, base.NewInvokeContext(context.Session, input, r.config.Params, body))
 	r.setHeader(context.Writer, output)
 	if err != nil {
