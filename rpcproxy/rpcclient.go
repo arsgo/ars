@@ -40,13 +40,14 @@ func (i *serviceItem) getOne() string {
 
 //RPCClient RPCClient
 type RPCClient struct {
-	queues   concurrent.ConcurrentMap //map[string]chan []interface{}
-	pool     *rpcservice.RPCServerPool
-	services concurrent.ConcurrentMap
-	client   cluster.IClusterClient
-	mutex    sync.RWMutex
-	Log      logger.ILogger
-	snaps    concurrent.ConcurrentMap
+	queues     concurrent.ConcurrentMap //map[string]chan []interface{}
+	pool       *rpcservice.RPCServerPool
+	services   concurrent.ConcurrentMap
+	client     cluster.IClusterClient
+	mutex      sync.RWMutex
+	Log        logger.ILogger
+	snaps      concurrent.ConcurrentMap
+	loggerName string
 }
 
 //NewRPCClient 创建RPC Client
@@ -57,6 +58,7 @@ func NewRPCClient(cli cluster.IClusterClient, loggerName string) *RPCClient {
 	client.pool = rpcservice.NewRPCServerPool(5, 10, loggerName)
 	client.services = concurrent.NewConcurrentMap()
 	client.queues = concurrent.NewConcurrentMap()
+	client.loggerName = loggerName
 	client.Log, _ = logger.Get(loggerName, true)
 	return client
 }
@@ -174,7 +176,8 @@ func (r *RPCClient) setLifeTime(name string, start time.Time) {
 //Request 发送Request请求
 func (r *RPCClient) Request(cmd string, input string, session string) (result string, err error) {
 	defer r.recover()
-	r.Log.Info("-----rpc.request:", cmd, input, session)
+	clogger, _ := logger.NewSession(r.loggerName, session, true)
+	clogger.Info("-----rpc.request:", cmd, input, session)
 	name := r.client.GetServiceFullPath(cmd)
 	group := r.getGroupName(name)
 	if strings.EqualFold(group, "") {
@@ -188,7 +191,7 @@ func (r *RPCClient) Request(cmd string, input string, session string) (result st
 	} else {
 		result = GetDataResult(result, false)
 	}
-	r.Log.Info("-----rpc.response:", cmd, result, session)
+	clogger.Info("-----rpc.response:", cmd, result, session)
 	return
 }
 
