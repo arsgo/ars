@@ -70,7 +70,7 @@ func (app *AppServer) StartRefreshSnap() {
 	app.ResetAPPSnap()
 	app.ResetJobSnap()
 	tp := time.NewTicker(time.Second * 60)
-	free := time.NewTicker(time.Second * 61)
+	free := time.NewTicker(time.Second * 122)
 	for {
 		select {
 		case <-tp.C:

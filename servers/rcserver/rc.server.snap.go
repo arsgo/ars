@@ -50,7 +50,7 @@ func (rc *RCServer) StartRefreshSnap() {
 	defer rc.recover()
 	rc.clusterClient.ResetSnap(rc.snap.Path, rc.snap.GetSnap())
 	tp := time.NewTicker(time.Second * 60)
-	free := time.NewTicker(time.Second * 61)
+	free := time.NewTicker(time.Second * 122)
 	for {
 		select {
 		case <-tp.C:
