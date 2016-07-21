@@ -109,7 +109,7 @@ func (r *HTTPScriptController) getPostValues(body string) (rt map[string]string)
 
 //Handle 脚本处理程序(r *HttpScriptController) Handle(ctx *web.Context)
 func (r *HTTPScriptController) Handle(context *webserver.Context) {
-	context.Log.Info("-->api.request:", context.Request.URL.RawPath)
+	context.Log.Info("-->api.request:", context.Request.URL.Path)
 	defer r.snap.Add(time.Now())
 	body := r.getBodyText(context.Request)
 	context.Request.ParseForm()
