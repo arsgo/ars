@@ -24,7 +24,7 @@ func (a *AppServer) BindHttpServer(config *cluster.ServerConfig) {
 		if er != nil {
 			a.Log.Error("load script error in:", v.Script, ",", er)
 		} else {
-			a.Log.Info("::start script ", v.Script)
+			a.Log.Info("::load script ", v.Script)
 		}
 	}
 	if config != nil && len(config.Routes) > 0 &&

@@ -35,7 +35,7 @@ func (sp *SPServer) rebindService() {
 
 //OnSPServiceCreate 服务创建时同时创建集群节点
 func (sp *SPServer) OnSPServiceCreate(task cluster.TaskItem) (path string) {
-	sp.Log.Info("::start script:", task.Script, ",minSize:", task.MinSize, ",maxSize:", task.MaxSize)
+	sp.Log.Info("::load script:", task.Script, ",minSize:", task.MinSize, ",maxSize:", task.MaxSize)
 	sp.scriptPool.PreLoad(task.Script, task.MinSize, task.MaxSize)
 	path, err := sp.clusterClient.CreateServiceProvider(task.Name, sp.rpcServer.Address,
 		sp.snap.GetSnap(task.Name))
