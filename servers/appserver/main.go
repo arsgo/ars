@@ -8,7 +8,6 @@ import (
 )
 
 func main() {
-	//defer profile.Start(profile.MemProfile).Stop()
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	appServer, err := NewAPPServer()
 	if err != nil {

@@ -70,7 +70,6 @@ func (app *AppServer) init() (err error) {
 
 //Start 启动服务器
 func (app *AppServer) Start() (err error) {
-	fmt.Println("start:1")
 	defer app.recover()
 
 	app.Log.Info(" -> 启动APP Server...")
@@ -78,20 +77,16 @@ func (app *AppServer) Start() (err error) {
 		app.Log.Error(err)
 		return
 	}
-	fmt.Println("start:WatchConnected")
 	if !app.clusterClient.WatchConnected() {
 		return
 	}
-	fmt.Println("start:WatchAppTaskChange")
 	app.clusterClient.WatchAppTaskChange(func(config *cluster.AppServerStartupConfig, err error) error {
 		app.BindTask(config, err)
 		return nil
 	})
-	fmt.Println("start:WatchRCServerChange")
 	app.clusterClient.WatchRCServerChange(func(config []*cluster.RCServerItem, err error) {
 		app.BindRCServer(config, err)
 	})
-	fmt.Println("start:StartRefreshSnap")
 	go app.StartRefreshSnap()
 	return nil
 }
