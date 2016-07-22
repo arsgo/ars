@@ -70,8 +70,9 @@ func (app *AppServer) init() (err error) {
 
 //Start 启动服务器
 func (app *AppServer) Start() (err error) {
-	defer app.recover()
 	fmt.Println("start:1")
+	defer app.recover()
+
 	app.Log.Info(" -> 启动APP Server...")
 	if err = app.init(); err != nil {
 		app.Log.Error(err)
