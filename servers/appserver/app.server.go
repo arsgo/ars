@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/colinyl/ars/cluster"
@@ -41,13 +42,13 @@ func NewAPPServer() (app *AppServer, err error) {
 	if err != nil {
 		return
 	}
+	fmt.Println("conf:", app.conf.Domain, app.conf.IP)
 	return
 }
 
 //init 初始化服务器
 func (app *AppServer) init() (err error) {
 	defer app.recover()
-
 	app.Log.Infof(" -> 初始化 %s...", app.conf.Domain)
 	app.clusterClient, err = cluster.GetClusterClient(app.conf.Domain, app.conf.IP, app.loggerName, app.conf.ZKServers...)
 	if err != nil {
