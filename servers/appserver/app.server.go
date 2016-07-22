@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/colinyl/ars/cluster"
@@ -34,7 +33,7 @@ type AppServer struct {
 func NewAPPServer() (app *AppServer, err error) {
 	app = &AppServer{loggerName: "app.server"}
 	app.JobAddress = make(map[string]string)
-	app.Log, err = logger.Get(app.loggerName, true)
+	app.Log, err = logger.Get(app.loggerName)
 	if err != nil {
 		return
 	}
@@ -42,8 +41,6 @@ func NewAPPServer() (app *AppServer, err error) {
 	if err != nil {
 		return
 	}
-	fmt.Println("conf:", app.conf.Domain, app.conf.IP)
-	app.Log.Info("conf:", app.conf.Domain, app.conf.IP)
 	return
 }
 

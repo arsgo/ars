@@ -43,7 +43,7 @@ type RPCHandler interface {
 func NewRPCServer(handler RPCHandler, loggerName string) (server *RPCServer) {
 	server = &RPCServer{loggerName: loggerName, snap: &ServerSnap{}}
 	server.serverHandler = NewRPCHandlerProxy(handler, loggerName, server.snap)
-	server.Log, _ = logger.Get(loggerName, true)
+	server.Log, _ = logger.Get(loggerName)
 	return server
 }
 
@@ -87,7 +87,7 @@ func NewRPCHandlerProxy(h RPCHandler, loggerName string, snap *ServerSnap) *RPCH
 	handler.tasks = Tasks{}
 	handler.handler = h
 	handler.tasks.Services = concurrent.NewConcurrentMap() //make(map[string]cluster.TaskItem)
-	handler.Log, _ = logger.Get(loggerName, true)
+	handler.Log, _ = logger.Get(loggerName)
 	return handler
 }
 
@@ -154,7 +154,7 @@ func (r *RPCHandlerProxy) getTaskItem(name string) (item cluster.TaskItem, err e
 //Request 执行RPC Request服务
 func (r *RPCHandlerProxy) Request(name string, input string, session string) (result string, err error) {
 	defer r.snap.Add(time.Now())
-	log, _ := logger.NewSession(r.loggerName, session, true)
+	log, _ := logger.NewSession(r.loggerName, session)
 	log.Info("--> rpc request(recv):", name, input)
 	task, currentErr := r.getTaskItem(name)
 	if currentErr != nil {

@@ -50,7 +50,7 @@ func (r *RPCServer) Stop() {
 func NewRPCServer(address string, handler rpcHandler, loggerName string) *RPCServer {
 	var err error
 	rpcs := &RPCServer{Address: address, Handler: handler}
-	rpcs.log, err = logger.Get(loggerName, true)
+	rpcs.log, err = logger.Get(loggerName)
 	if err != nil {
 		log.Println(err)
 	}

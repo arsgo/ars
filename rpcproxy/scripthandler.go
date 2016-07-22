@@ -26,7 +26,7 @@ func NewRPCScriptHandler(client cluster.IClusterClient, pool *ScriptPool, logger
 	job.clusterClient = client
 	job.scriptPool = pool
 	job.tasks = concurrent.NewConcurrentMap()
-	job.Log, _ = logger.Get(loggerName, true)
+	job.Log, _ = logger.Get(loggerName)
 	return job
 }
 

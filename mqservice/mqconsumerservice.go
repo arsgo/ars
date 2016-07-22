@@ -35,7 +35,7 @@ func NewMQConsumerService(client cluster.IClusterClient, handler MQHandler, logg
 	mq = &MQConsumerService{}
 	mq.clusterClient = client
 	mq.handler = handler
-	mq.Log, err = logger.Get(loggerName, true)
+	mq.Log, err = logger.Get(loggerName)
 	mq.consumers = concurrent.NewConcurrentMap()
 	return
 }

@@ -37,7 +37,7 @@ func NewRCServer() *RCServer {
 	rc.currentServices = concurrent.NewConcurrentMap()
 	rc.crossDomain = concurrent.NewConcurrentMap()
 	rc.crossService = concurrent.NewConcurrentMap()
-	rc.Log, _ = logger.Get(rc.loggerName, true)
+	rc.Log, _ = logger.Get(rc.loggerName)
 	return rc
 }
 

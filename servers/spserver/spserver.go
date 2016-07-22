@@ -38,7 +38,7 @@ type SPServer struct {
 //NewSPServer 创建SP server服务器
 func NewSPServer() *SPServer {
 	sp := &SPServer{loggerName: "sp.server"}
-	sp.Log, _ = logger.Get(sp.loggerName, true)
+	sp.Log, _ = logger.Get(sp.loggerName)
 	return sp
 }
 

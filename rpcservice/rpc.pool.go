@@ -33,7 +33,7 @@ func NewRPCServerPool(minSize int, maxSize int, loggerName string) *RPCServerPoo
 	pl := &RPCServerPool{MinSize: minSize, MaxSize: maxSize, MaxRetry: 1, loggerName: loggerName}
 	pl.pool = pool.New()
 	pl.servers = concurrent.NewConcurrentMap()
-	pl.Log, err = logger.Get(loggerName, true)
+	pl.Log, err = logger.Get(loggerName)
 	if err != nil {
 		log.Println(err)
 	}

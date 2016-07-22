@@ -31,7 +31,7 @@ func NewRPCClientTimeout(address string, timeout time.Duration, loggerName strin
 		addr = net.JoinHostPort(address, "1016")
 	}
 	client = &RPCClient{Address: addr, timeout: time.Second * 30}
-	client.Log, _ = logger.Get(loggerName, true)
+	client.Log, _ = logger.Get(loggerName)
 	return
 }
 func (n *RPCClient) recover() {

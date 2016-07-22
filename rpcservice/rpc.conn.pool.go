@@ -59,7 +59,7 @@ func NewConnPool() (conn *connPool) {
 }
 func (n *connPool) recover() {
 	if r := recover(); r != nil {
-		log, _ := logger.Get("sys/conn.pool", true)
+		log, _ := logger.Get("sys/conn.pool")
 		log.Fatal(r, string(debug.Stack()))
 	}
 }
@@ -69,7 +69,7 @@ func (n *connPool) Subscribe(address string, notify chan *RpcClientConn, loggerN
 	wkr, ok := n.workers[address]
 	if !ok {
 		wkr = &worker{address: address, status: make(chan bool, 1), loggerName: loggerName}
-		wkr.Log, _ = logger.Get(loggerName, true)
+		wkr.Log, _ = logger.Get(loggerName)
 		wkr.subscribers = make(chan *subscriber, 100)
 		wkr.status <- true
 		n.workers[address] = wkr

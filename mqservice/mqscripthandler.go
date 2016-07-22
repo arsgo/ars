@@ -18,7 +18,7 @@ type MQScriptHandler struct {
 //NewMQScriptHandler 创建新的脚本处理程序
 func NewMQScriptHandler(pool *rpcproxy.ScriptPool, loggerName string) (mq *MQScriptHandler) {
 	mq = &MQScriptHandler{pool: pool}
-	mq.Log, _ = logger.Get(loggerName, true)
+	mq.Log, _ = logger.Get(loggerName)
 	return
 }
 

@@ -69,7 +69,7 @@ func NewClusterClient(domain string, ip string, handler IClusterHandler, loggerN
 	client.jobConfigPath = client.dataMap.Translate(p_jobTaskConfig)
 	client.appServerPath = client.dataMap.Translate(p_appServerPath)
 	client.spServerTaskPath = client.dataMap.Translate(p_spTaskConfig)
-	client.Log, err = logger.Get(loggerName, true)
+	client.Log, err = logger.Get(loggerName)
 	client.timeout = time.Hour * 10000
 	client.handler = handler
 	return

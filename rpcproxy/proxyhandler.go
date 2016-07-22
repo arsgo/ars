@@ -31,7 +31,7 @@ func NewRPCProxyHandler(client cluster.IClusterClient, rpcClient *RPCClient, sna
 	job.client = rpcClient
 	job.snap = snap
 	job.tasks = concurrent.NewConcurrentMap()
-	job.Log, _ = logger.Get(loggerName, true)
+	job.Log, _ = logger.Get(loggerName)
 	return job
 }
 

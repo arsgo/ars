@@ -59,7 +59,7 @@ func NewRPCClient(cli cluster.IClusterClient, loggerName string) *RPCClient {
 	client.services = concurrent.NewConcurrentMap()
 	client.queues = concurrent.NewConcurrentMap()
 	client.loggerName = loggerName
-	client.Log, _ = logger.Get(loggerName, true)
+	client.Log, _ = logger.Get(loggerName)
 	return client
 }
 
@@ -176,7 +176,7 @@ func (r *RPCClient) setLifeTime(name string, start time.Time) {
 //Request 发送Request请求
 func (r *RPCClient) Request(cmd string, input string, session string) (result string, err error) {
 	defer r.recover()
-	clogger, _ := logger.NewSession(r.loggerName, session, true)
+	clogger, _ := logger.NewSession(r.loggerName, session)
 	clogger.Info("--> rpc request(send):", cmd, input)
 	name := r.client.GetServiceFullPath(cmd)
 	group := r.getGroupName(name)

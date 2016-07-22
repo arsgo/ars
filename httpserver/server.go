@@ -42,7 +42,7 @@ func NewHTTPScriptServer(Address string, routes []*cluster.ServerRouteConfig, ca
 	server.routes = routes
 	server.Address = Address
 	server.call = call
-	server.Log, err = logger.Get(loggerName, true)
+	server.Log, err = logger.Get(loggerName)
 	return
 }
 
