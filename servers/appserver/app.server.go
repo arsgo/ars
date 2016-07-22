@@ -43,6 +43,7 @@ func NewAPPServer() (app *AppServer, err error) {
 		return
 	}
 	fmt.Println("conf:", app.conf.Domain, app.conf.IP)
+	app.Log.Info("conf:", app.conf.Domain, app.conf.IP)
 	return
 }
 
