@@ -29,11 +29,11 @@ type AppServer struct {
 }
 
 //NewAPPServer 创建APP Server服务器
-func NewAPPServer() *AppServer {
-	app := &AppServer{loggerName: "app.server"}
+func NewAPPServer() (app *AppServer, err error) {
+	app = &AppServer{loggerName: "app.server"}
 	app.JobAddress = make(map[string]string)
-	app.Log, _ = logger.Get(app.loggerName, true)
-	return app
+	app.Log, err = logger.Get(app.loggerName, true)
+	return
 }
 
 //init 初始化服务器
