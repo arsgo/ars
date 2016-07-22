@@ -26,6 +26,7 @@ type AppServer struct {
 	mqService                *mqservice.MQConsumerService
 	snap                     AppSnap
 	loggerName               string
+	conf                     *config.SysConfig
 }
 
 //NewAPPServer 创建APP Server服务器
@@ -33,22 +34,26 @@ func NewAPPServer() (app *AppServer, err error) {
 	app = &AppServer{loggerName: "app.server"}
 	app.JobAddress = make(map[string]string)
 	app.Log, err = logger.Get(app.loggerName, true)
+	if err != nil {
+		return
+	}
+	app.conf, err = config.Get()
+	if err != nil {
+		return
+	}
 	return
 }
 
 //init 初始化服务器
 func (app *AppServer) init() (err error) {
 	defer app.recover()
-	cfg, err := config.Get()
+
+	app.Log.Infof(" -> 初始化 %s...", app.conf.Domain)
+	app.clusterClient, err = cluster.GetClusterClient(app.conf.Domain, app.conf.IP, app.loggerName, app.conf.ZKServers...)
 	if err != nil {
 		return
 	}
-	app.Log.Infof(" -> 初始化 %s...", cfg.Domain)
-	app.clusterClient, err = cluster.GetClusterClient(cfg.Domain, cfg.IP, app.loggerName, cfg.ZKServers...)
-	if err != nil {
-		return
-	}
-	app.domain = cfg.Domain
+	app.domain = app.conf.Domain
 	app.rpcClient = rpcproxy.NewRPCClient(app.clusterClient, app.loggerName)
 	app.scriptPool, err = rpcproxy.NewScriptPool(app.clusterClient, app.rpcClient, make(map[string]interface{}), app.loggerName)
 	app.jobConsumerScriptHandler = rpcproxy.NewRPCScriptHandler(app.clusterClient, app.scriptPool, app.loggerName)
@@ -56,8 +61,8 @@ func (app *AppServer) init() (err error) {
 	app.jobConsumerScriptHandler.OnCloseTask = app.OnJobClose
 	app.jobConsumerRPCServer = rpcproxy.NewRPCServer(app.jobConsumerScriptHandler, app.loggerName)
 	app.mqService, err = mqservice.NewMQConsumerService(app.clusterClient, mqservice.NewMQScriptHandler(app.scriptPool, app.loggerName), app.loggerName)
-	app.snap = AppSnap{ip: cfg.IP, appserver: app}
-	app.snap.Address = cfg.IP
+	app.snap = AppSnap{ip: app.conf.IP, appserver: app}
+	app.snap.Address = app.conf.IP
 	return
 }
 
