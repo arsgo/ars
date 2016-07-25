@@ -11,8 +11,8 @@ import (
 	"github.com/colinyl/lib4go/logger"
 )
 
-//RPCScriptHandler 基于脚本的RPC代理服务
-type RPCScriptHandler struct {
+//ScriptProxy 基于脚本的RPC代理服务
+type ScriptProxy struct {
 	tasks         concurrent.ConcurrentMap
 	clusterClient cluster.IClusterClient
 	scriptPool    *script.ScriptPool
@@ -21,9 +21,9 @@ type RPCScriptHandler struct {
 	OnCloseTask   func(task cluster.TaskItem, path string)
 }
 
-//NewRPCScriptHandler 构建JOB consumer处理对象
-func NewRPCScriptHandler(client cluster.IClusterClient, pool *script.ScriptPool, loggerName string) *RPCScriptHandler {
-	job := &RPCScriptHandler{}
+//NewScriptProxy 构建JOB consumer处理对象
+func NewScriptProxy(client cluster.IClusterClient, pool *script.ScriptPool, loggerName string) *ScriptProxy {
+	job := &ScriptProxy{}
 	job.clusterClient = client
 	job.scriptPool = pool
 	job.tasks = concurrent.NewConcurrentMap()
@@ -32,7 +32,7 @@ func NewRPCScriptHandler(client cluster.IClusterClient, pool *script.ScriptPool,
 }
 
 //GetTasks 获取当前已注册服务列表
-func (h *RPCScriptHandler) GetTasks() map[string]string {
+func (h *ScriptProxy) GetTasks() map[string]string {
 	data := make(map[string]string)
 	service := h.tasks.GetAll()
 	for i, v := range service {
@@ -42,7 +42,7 @@ func (h *RPCScriptHandler) GetTasks() map[string]string {
 }
 
 //OpenTask 启动新的任务
-func (h *RPCScriptHandler) OpenTask(task cluster.TaskItem) {
+func (h *ScriptProxy) OpenTask(task cluster.TaskItem) {
 	path := task.Name
 	if h.OnOpenTask != nil {
 		path = h.OnOpenTask(task)
@@ -51,7 +51,7 @@ func (h *RPCScriptHandler) OpenTask(task cluster.TaskItem) {
 }
 
 //CloseTask 关闭任务
-func (h *RPCScriptHandler) CloseTask(ti cluster.TaskItem) {
+func (h *ScriptProxy) CloseTask(ti cluster.TaskItem) {
 	value := h.tasks.Get(ti.Name)
 	if value != nil && h.OnCloseTask != nil {
 		h.OnCloseTask(ti, value.(string))
@@ -60,7 +60,7 @@ func (h *RPCScriptHandler) CloseTask(ti cluster.TaskItem) {
 }
 
 //Request 执行Request请求
-func (h *RPCScriptHandler) Request(ti cluster.TaskItem, input string, session string) (result string, err error) {
+func (h *ScriptProxy) Request(ti cluster.TaskItem, input string, session string) (result string, err error) {
 	defer h.recover()
 	sresult, smap, err := h.scriptPool.Call(ti.Script, base.NewInvokeContext(session, input, ti.Params, ""))
 	result, _, er := h.getResult(sresult, smap, err)
@@ -73,15 +73,15 @@ func (h *RPCScriptHandler) Request(ti cluster.TaskItem, input string, session st
 }
 
 //Send 暂不支持
-func (h *RPCScriptHandler) Send(ti cluster.TaskItem, input string, data []byte) (string, error) {
+func (h *ScriptProxy) Send(ti cluster.TaskItem, input string, data []byte) (string, error) {
 	return "", errors.New("job consumer not support send method")
 }
 
 //Get 暂不支持
-func (h *RPCScriptHandler) Get(ti cluster.TaskItem, input string) ([]byte, error) {
+func (h *ScriptProxy) Get(ti cluster.TaskItem, input string) ([]byte, error) {
 	return nil, errors.New("job consumer not support get method")
 }
-func (h *RPCScriptHandler) getResult(result []string, params map[string]string, er error) (r string, p map[string]string, err error) {
+func (h *ScriptProxy) getResult(result []string, params map[string]string, er error) (r string, p map[string]string, err error) {
 	err = er
 	if err != nil {
 		return
@@ -92,7 +92,7 @@ func (h *RPCScriptHandler) getResult(result []string, params map[string]string, 
 	p = params
 	return
 }
-func (h *RPCScriptHandler) recover() {
+func (h *ScriptProxy) recover() {
 	if r := recover(); r != nil {
 		h.Log.Fatal(r, string(debug.Stack()))
 	}

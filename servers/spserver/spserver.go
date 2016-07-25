@@ -29,8 +29,8 @@ type SPServer struct {
 	serviceConfig  string
 	mqService      *mq.MQConsumerService
 	rpcClient      *rpc.RPCClient
-	rpcServer      *server.RPCServer       //RPC 服务器
-	rpcScriptProxy *proxy.RPCScriptHandler //RPC Server 脚本处理程序
+	rpcServer      *server.RPCServer  //RPC 服务器
+	rpcScriptProxy *proxy.ScriptProxy //RPC Server 脚本处理程序
 	clusterClient  cluster.IClusterClient
 	scriptPool     *script.ScriptPool //脚本引擎池
 	dbPool         concurrent.ConcurrentMap
@@ -65,7 +65,7 @@ func (sp *SPServer) init() (err error) {
 	if err != nil {
 		return
 	}
-	sp.rpcScriptProxy = proxy.NewRPCScriptHandler(sp.clusterClient, sp.scriptPool, sp.loggerName)
+	sp.rpcScriptProxy = proxy.NewScriptProxy(sp.clusterClient, sp.scriptPool, sp.loggerName)
 	sp.rpcScriptProxy.OnOpenTask = sp.OnSPServiceCreate
 	sp.rpcScriptProxy.OnCloseTask = sp.OnSPServiceClose
 	sp.rpcServer = server.NewRPCServer(sp.rpcScriptProxy, sp.loggerName)

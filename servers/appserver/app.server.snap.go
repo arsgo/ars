@@ -86,9 +86,9 @@ func (app *AppServer) StartRefreshSnap() {
 
 //ResetJobSnap 重置JOB快照信息
 func (app *AppServer) ResetJobSnap() (err error) {
-	paths := app.jobConsumerScriptHandler.GetTasks()
+	paths := app.scriptPorxy.GetTasks()
 	for _, path := range paths {
-		app.clusterClient.UpdateJobConsumerPath(path, app.snap.GetJobSnap(app.jobConsumerRPCServer.Address))
+		app.clusterClient.UpdateJobConsumerPath(path, app.snap.GetJobSnap(app.jobServer.Address))
 	}
 	return nil
 }

@@ -31,8 +31,8 @@ type Tasks struct {
 	Services concurrent.ConcurrentMap
 }
 
-//RPCHandler RPC处理函数
-type RPCHandler interface {
+//IRPCHandler RPC处理函数
+type IRPCHandler interface {
 	OpenTask(cluster.TaskItem)
 	CloseTask(cluster.TaskItem)
 	Request(cluster.TaskItem, string, string) (string, error)
@@ -41,7 +41,7 @@ type RPCHandler interface {
 }
 
 //NewRPCServer 创建RPC服务器
-func NewRPCServer(handler RPCHandler, loggerName string) (server *RPCServer) {
+func NewRPCServer(handler IRPCHandler, loggerName string) (server *RPCServer) {
 	server = &RPCServer{loggerName: loggerName, snap: &base.ServerSnap{}}
 	server.serverHandler = NewRPCHandlerProxy(handler, loggerName, server.snap)
 	server.Log, _ = logger.Get(loggerName)
@@ -76,14 +76,14 @@ func (r *RPCServer) GetSnap() base.ServerSnap {
 //RPCHandlerProxy RPCHandler代理程序
 type RPCHandlerProxy struct {
 	tasks      Tasks
-	handler    RPCHandler
+	handler    IRPCHandler
 	Log        logger.ILogger
 	snap       *base.ServerSnap
 	loggerName string
 }
 
 //NewRPCHandlerProxy 创建RPC默认处理程序
-func NewRPCHandlerProxy(h RPCHandler, loggerName string, snap *base.ServerSnap) *RPCHandlerProxy {
+func NewRPCHandlerProxy(h IRPCHandler, loggerName string, snap *base.ServerSnap) *RPCHandlerProxy {
 	handler := &RPCHandlerProxy{snap: snap, loggerName: loggerName}
 	handler.tasks = Tasks{}
 	handler.handler = h

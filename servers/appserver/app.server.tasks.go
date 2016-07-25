@@ -19,7 +19,7 @@ func (a *AppServer) getMQConsumerTask(tasks []cluster.TaskItem) (tks []cluster.T
 	return
 }
 
-func (a *AppServer) getJobConsumerTask(tasks []cluster.TaskItem) (tks []cluster.TaskItem) {	
+func (a *AppServer) getJobConsumerTask(tasks []cluster.TaskItem) (tks []cluster.TaskItem) {
 	for _, v := range tasks {
 		if strings.EqualFold(strings.ToLower(v.Type), "job") &&
 			strings.EqualFold(strings.ToLower(v.Method), "consume") {
@@ -34,12 +34,12 @@ func (a *AppServer) bindMQConsumer(tasks []cluster.TaskItem) {
 }
 func (a *AppServer) bindJobConsumer(tasks []cluster.TaskItem) {
 	conusmers := a.getJobConsumerTask(tasks)
-	a.jobConsumerRPCServer.Stop()
+	a.jobServer.Stop()
 	if len(conusmers) == 0 {
 		return
 	}
-	a.jobConsumerRPCServer.Start()
-	a.jobConsumerRPCServer.UpdateTasks(conusmers)
+	a.jobServer.Start()
+	a.jobServer.UpdateTasks(conusmers)
 
 }
 

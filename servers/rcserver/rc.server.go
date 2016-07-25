@@ -20,17 +20,17 @@ const (
 
 //RCServer RC Server
 type RCServer struct {
-	clusterClient     cluster.IClusterClient
-	IsMaster          bool
-	currentServices   concurrent.ConcurrentMap
-	crossDomain       concurrent.ConcurrentMap //map[string]cluster.IClusterClient
-	crossService      concurrent.ConcurrentMap //map[string]map[string][]string
-	Log               logger.ILogger
-	rcRPCServer       *server.RPCServer //RC Server服务供RPC调用
-	spRPCClient       *rpc.RPCClient    //SP Server调用客户端
-	rcRPCProxyHandler server.RPCHandler //RC Server处理程序
-	snap              RCSnap
-	loggerName        string
+	clusterClient   cluster.IClusterClient
+	IsMaster        bool
+	currentServices concurrent.ConcurrentMap
+	crossDomain     concurrent.ConcurrentMap //map[string]cluster.IClusterClient
+	crossService    concurrent.ConcurrentMap //map[string]map[string][]string
+	Log             logger.ILogger
+	rcRPCServer     *server.RPCServer  //RC Server服务供RPC调用
+	spRPCClient     *rpc.RPCClient     //SP Server调用客户端
+	rcRPCHandler    server.IRPCHandler //RC Server处理程序
+	snap            RCSnap
+	loggerName      string
 }
 
 //NewRCServer 创建RC Server服务器
@@ -58,8 +58,8 @@ func (rc *RCServer) init() (err error) {
 	}
 	rc.spRPCClient = rpc.NewRPCClient(rc.clusterClient, rc.loggerName)
 	rc.snap = RCSnap{Domain: cfg.Domain, Server: SERVER_SLAVE, ip: cfg.IP, rcServer: rc}
-	rc.rcRPCProxyHandler = proxy.NewRPCProxyHandler(rc.clusterClient, rc.spRPCClient, rc.snap, rc.loggerName)
-	rc.rcRPCServer = server.NewRPCServer(rc.rcRPCProxyHandler, rc.loggerName)
+	rc.rcRPCHandler = proxy.NewRPCClientProxy(rc.clusterClient, rc.spRPCClient, rc.snap, rc.loggerName)
+	rc.rcRPCServer = server.NewRPCServer(rc.rcRPCHandler, rc.loggerName)
 	return nil
 }
 func (rc *RCServer) recover() {

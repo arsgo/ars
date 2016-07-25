@@ -35,7 +35,7 @@ func (a *AppServer) BindTask(config *cluster.AppServerStartupConfig, err error) 
 
 //OnJobCreate  创建JOB服务
 func (a *AppServer) OnJobCreate(task cluster.TaskItem) (path string) {
-	path, err := a.clusterClient.CreateJobConsumer(task.Name, a.snap.GetJobSnap(a.jobConsumerRPCServer.Address))
+	path, err := a.clusterClient.CreateJobConsumer(task.Name, a.snap.GetJobSnap(a.jobServer.Address))
 	if err != nil {
 		a.Log.Error(err)
 		return
