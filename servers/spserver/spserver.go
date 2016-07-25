@@ -5,8 +5,11 @@ import (
 	"sync"
 
 	"github.com/colinyl/ars/cluster"
-	"github.com/colinyl/ars/mqservice"
-	"github.com/colinyl/ars/rpcproxy"
+	"github.com/colinyl/ars/mq"
+	"github.com/colinyl/ars/proxy"
+	"github.com/colinyl/ars/rpc"
+	"github.com/colinyl/ars/script"
+	"github.com/colinyl/ars/server"
 	"github.com/colinyl/ars/servers/config"
 	"github.com/colinyl/lib4go/concurrent"
 	"github.com/colinyl/lib4go/logger"
@@ -24,12 +27,12 @@ type SPServer struct {
 	domain         string
 	mode           string
 	serviceConfig  string
-	mqService      *mqservice.MQConsumerService
-	rpcClient      *rpcproxy.RPCClient
-	rpcServer      *rpcproxy.RPCServer        //RPC 服务器
-	rpcScriptProxy *rpcproxy.RPCScriptHandler //RPC Server 脚本处理程序
+	mqService      *mq.MQConsumerService
+	rpcClient      *rpc.RPCClient
+	rpcServer      *server.RPCServer       //RPC 服务器
+	rpcScriptProxy *proxy.RPCScriptHandler //RPC Server 脚本处理程序
 	clusterClient  cluster.IClusterClient
-	scriptPool     *rpcproxy.ScriptPool //脚本引擎池
+	scriptPool     *script.ScriptPool //脚本引擎池
 	dbPool         concurrent.ConcurrentMap
 	snap           SPSnap
 	loggerName     string
@@ -57,16 +60,16 @@ func (sp *SPServer) init() (err error) {
 	}
 	sp.domain = cfg.Domain
 	sp.snap = SPSnap{ip: cfg.IP}
-	sp.rpcClient = rpcproxy.NewRPCClient(sp.clusterClient, sp.loggerName)
-	sp.scriptPool, err = rpcproxy.NewScriptPool(sp.clusterClient, sp.rpcClient, sp.GetScriptBinder(), sp.loggerName)
+	sp.rpcClient = rpc.NewRPCClient(sp.clusterClient, sp.loggerName)
+	sp.scriptPool, err = script.NewScriptPool(sp.clusterClient, sp.rpcClient, sp.GetScriptBinder(), sp.loggerName)
 	if err != nil {
 		return
 	}
-	sp.rpcScriptProxy = rpcproxy.NewRPCScriptHandler(sp.clusterClient, sp.scriptPool, sp.loggerName)
+	sp.rpcScriptProxy = proxy.NewRPCScriptHandler(sp.clusterClient, sp.scriptPool, sp.loggerName)
 	sp.rpcScriptProxy.OnOpenTask = sp.OnSPServiceCreate
 	sp.rpcScriptProxy.OnCloseTask = sp.OnSPServiceClose
-	sp.rpcServer = rpcproxy.NewRPCServer(sp.rpcScriptProxy, sp.loggerName)
-	sp.mqService, err = mqservice.NewMQConsumerService(sp.clusterClient, mqservice.NewMQScriptHandler(sp.scriptPool, sp.loggerName), sp.loggerName)
+	sp.rpcServer = server.NewRPCServer(sp.rpcScriptProxy, sp.loggerName)
+	sp.mqService, err = mq.NewMQConsumerService(sp.clusterClient, mq.NewMQScriptHandler(sp.scriptPool, sp.loggerName), sp.loggerName)
 	sp.dbPool = concurrent.NewConcurrentMap()
 	return
 }

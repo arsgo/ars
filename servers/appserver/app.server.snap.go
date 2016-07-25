@@ -6,7 +6,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/colinyl/ars/monitor"
+	"github.com/colinyl/ars/base"
 	"github.com/colinyl/lib4go/sysinfo"
 )
 
@@ -18,11 +18,11 @@ type ExtSnap struct {
 //AppSnap  app server快照信息
 type AppSnap struct {
 	appserver *AppServer
-	Address   string                  `json:"address"`
-	Server    string                  `json:"server"`
-	Last      string                  `json:"last"`
-	Mem       uint64                  `json:"mem"`
-	Sys       *monitor.SysMonitorInfo `json:"sys"`
+	Address   string               `json:"address"`
+	Server    string               `json:"server"`
+	Last      string               `json:"last"`
+	Mem       uint64               `json:"mem"`
+	Sys       *base.SysMonitorInfo `json:"sys"`
 	//	ServerSnap json.RawMessage         `json:"serverSnap"`
 	Snap ExtSnap `json:"snap"`
 	ip   string
@@ -33,7 +33,7 @@ func (as AppSnap) GetSnap() string {
 	snap := as
 	snap.Last = time.Now().Format("20060102150405")
 
-	snap.Sys, _ = monitor.GetSysMonitorInfo()
+	snap.Sys, _ = base.GetSysMonitorInfo()
 	//if as.appserver.httpServer != nil {
 	//	snap.ServerSnap, _ = json.Marshal(as.appserver.httpServer.GetSnap())
 	//	} else {
@@ -52,7 +52,7 @@ func (as AppSnap) GetJobSnap(server string) string {
 	snap := as
 	snap.Server = fmt.Sprint(snap.ip, server)
 	snap.Last = time.Now().Format("20060102150405")
-	snap.Sys, _ = monitor.GetSysMonitorInfo()
+	snap.Sys, _ = base.GetSysMonitorInfo()
 	buffer, _ := json.Marshal(&snap)
 	return string(buffer)
 }

@@ -5,7 +5,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/colinyl/ars/monitor"
+	"github.com/colinyl/ars/base"
 	"github.com/colinyl/lib4go/sysinfo"
 )
 
@@ -17,14 +17,14 @@ type ExtSnap struct {
 //RCSnap RC server快照信息
 type RCSnap struct {
 	rcServer *RCServer
-	Domain   string                  `json:"domain"`
-	Path     string                  `json:"path"`
-	Address  string                  `json:"address"`
-	Server   string                  `json:"server"`
-	Last     string                  `json:"last"`
-	Mem      uint64                  `json:"mem"`
-	Sys      *monitor.SysMonitorInfo `json:"sys"`
-	Snap     ExtSnap                 `json:"snap"`
+	Domain   string               `json:"domain"`
+	Path     string               `json:"path"`
+	Address  string               `json:"address"`
+	Server   string               `json:"server"`
+	Last     string               `json:"last"`
+	Mem      uint64               `json:"mem"`
+	Sys      *base.SysMonitorInfo `json:"sys"`
+	Snap     ExtSnap              `json:"snap"`
 	ip       string
 }
 
@@ -32,7 +32,7 @@ type RCSnap struct {
 func (rs RCSnap) GetSnap() string {
 	snap := rs
 	snap.Last = time.Now().Format("20060102150405")
-	snap.Sys, _ = monitor.GetSysMonitorInfo()
+	snap.Sys, _ = base.GetSysMonitorInfo()
 	snap.Snap.Server, _ = json.Marshal(rs.rcServer.rcRPCServer.GetSnap())
 	snap.Snap.RPC, _ = json.Marshal(rs.rcServer.spRPCClient.GetSnap())
 	snap.Mem = sysinfo.GetAPPMemory()

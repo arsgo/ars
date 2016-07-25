@@ -4,9 +4,11 @@ import (
 	"sync"
 
 	"github.com/colinyl/ars/cluster"
-	"github.com/colinyl/ars/httpserver"
-	"github.com/colinyl/ars/mqservice"
-	"github.com/colinyl/ars/rpcproxy"
+	"github.com/colinyl/ars/mq"
+	"github.com/colinyl/ars/proxy"
+	"github.com/colinyl/ars/rpc"
+	"github.com/colinyl/ars/script"
+	"github.com/colinyl/ars/server"
 	"github.com/colinyl/ars/servers/config"
 	"github.com/colinyl/lib4go/logger"
 )
@@ -17,13 +19,13 @@ type AppServer struct {
 	domain                   string
 	Log                      logger.ILogger
 	clusterClient            cluster.IClusterClient
-	jobConsumerScriptHandler *rpcproxy.RPCScriptHandler //本地JOB Consumer提供的RPC接口,使用的代理处理程序为脚本处理
-	jobConsumerRPCServer     *rpcproxy.RPCServer        //接收JOB事件调用,改事件将触发脚本执行
-	rpcClient                *rpcproxy.RPCClient        //RPC远程调用客户端,调用RC Server提供的RPC服务
-	scriptPool               *rpcproxy.ScriptPool       //脚本池,用于缓存JOB Consumer脚本和本地task任务执行脚本
+	jobConsumerScriptHandler *proxy.RPCScriptHandler //本地JOB Consumer提供的RPC接口,使用的代理处理程序为脚本处理
+	jobConsumerRPCServer     *server.RPCServer       //接收JOB事件调用,改事件将触发脚本执行
+	rpcClient                *rpc.RPCClient          //RPC远程调用客户端,调用RC Server提供的RPC服务
+	scriptPool               *script.ScriptPool      //脚本池,用于缓存JOB Consumer脚本和本地task任务执行脚本
 	lk                       sync.Mutex
-	httpServer               *httpserver.HTTPScriptServer
-	mqService                *mqservice.MQConsumerService
+	httpServer               *server.HTTPScriptServer
+	mqService                *mq.MQConsumerService
 	snap                     AppSnap
 	loggerName               string
 	conf                     *config.SysConfig
@@ -53,13 +55,13 @@ func (app *AppServer) init() (err error) {
 		return
 	}
 	app.domain = app.conf.Domain
-	app.rpcClient = rpcproxy.NewRPCClient(app.clusterClient, app.loggerName)
-	app.scriptPool, err = rpcproxy.NewScriptPool(app.clusterClient, app.rpcClient, make(map[string]interface{}), app.loggerName)
-	app.jobConsumerScriptHandler = rpcproxy.NewRPCScriptHandler(app.clusterClient, app.scriptPool, app.loggerName)
+	app.rpcClient = rpc.NewRPCClient(app.clusterClient, app.loggerName)
+	app.scriptPool, err = script.NewScriptPool(app.clusterClient, app.rpcClient, make(map[string]interface{}), app.loggerName)
+	app.jobConsumerScriptHandler = proxy.NewRPCScriptHandler(app.clusterClient, app.scriptPool, app.loggerName)
 	app.jobConsumerScriptHandler.OnOpenTask = app.OnJobCreate
 	app.jobConsumerScriptHandler.OnCloseTask = app.OnJobClose
-	app.jobConsumerRPCServer = rpcproxy.NewRPCServer(app.jobConsumerScriptHandler, app.loggerName)
-	app.mqService, err = mqservice.NewMQConsumerService(app.clusterClient, mqservice.NewMQScriptHandler(app.scriptPool, app.loggerName), app.loggerName)
+	app.jobConsumerRPCServer = server.NewRPCServer(app.jobConsumerScriptHandler, app.loggerName)
+	app.mqService, err = mq.NewMQConsumerService(app.clusterClient, mq.NewMQScriptHandler(app.scriptPool, app.loggerName), app.loggerName)
 	app.snap = AppSnap{ip: app.conf.IP, appserver: app}
 	app.snap.Address = app.conf.IP
 	return

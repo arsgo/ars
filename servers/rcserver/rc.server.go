@@ -5,7 +5,9 @@ import (
 	"runtime/debug"
 
 	"github.com/colinyl/ars/cluster"
-	"github.com/colinyl/ars/rpcproxy"
+	"github.com/colinyl/ars/proxy"
+	"github.com/colinyl/ars/rpc"
+	"github.com/colinyl/ars/server"
 	"github.com/colinyl/ars/servers/config"
 	"github.com/colinyl/lib4go/concurrent"
 	"github.com/colinyl/lib4go/logger"
@@ -24,9 +26,9 @@ type RCServer struct {
 	crossDomain       concurrent.ConcurrentMap //map[string]cluster.IClusterClient
 	crossService      concurrent.ConcurrentMap //map[string]map[string][]string
 	Log               logger.ILogger
-	rcRPCServer       *rpcproxy.RPCServer //RC Server服务供RPC调用
-	spRPCClient       *rpcproxy.RPCClient //SP Server调用客户端
-	rcRPCProxyHandler rpcproxy.RPCHandler //RC Server处理程序
+	rcRPCServer       *server.RPCServer //RC Server服务供RPC调用
+	spRPCClient       *rpc.RPCClient    //SP Server调用客户端
+	rcRPCProxyHandler server.RPCHandler //RC Server处理程序
 	snap              RCSnap
 	loggerName        string
 }
@@ -54,10 +56,10 @@ func (rc *RCServer) init() (err error) {
 	if err != nil {
 		return
 	}
-	rc.spRPCClient = rpcproxy.NewRPCClient(rc.clusterClient, rc.loggerName)
+	rc.spRPCClient = rpc.NewRPCClient(rc.clusterClient, rc.loggerName)
 	rc.snap = RCSnap{Domain: cfg.Domain, Server: SERVER_SLAVE, ip: cfg.IP, rcServer: rc}
-	rc.rcRPCProxyHandler = rpcproxy.NewRPCProxyHandler(rc.clusterClient, rc.spRPCClient, rc.snap, rc.loggerName)
-	rc.rcRPCServer = rpcproxy.NewRPCServer(rc.rcRPCProxyHandler, rc.loggerName)
+	rc.rcRPCProxyHandler = proxy.NewRPCProxyHandler(rc.clusterClient, rc.spRPCClient, rc.snap, rc.loggerName)
+	rc.rcRPCServer = server.NewRPCServer(rc.rcRPCProxyHandler, rc.loggerName)
 	return nil
 }
 func (rc *RCServer) recover() {

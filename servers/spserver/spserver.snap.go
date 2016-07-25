@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/colinyl/ars/monitor"
+	"github.com/colinyl/ars/base"
 	"github.com/colinyl/lib4go/sysinfo"
 )
 
@@ -17,11 +17,11 @@ type ExtSnap struct {
 
 //SPSnap sp server快照信息
 type SPSnap struct {
-	Address string                  `json:"address"`
-	Service string                  `json:"service"`
-	Last    string                  `json:"last"`
-	Mem     uint64                  `json:"mem"`
-	Sys     *monitor.SysMonitorInfo `json:"sys"`
+	Address string               `json:"address"`
+	Service string               `json:"service"`
+	Last    string               `json:"last"`
+	Mem     uint64               `json:"mem"`
+	Sys     *base.SysMonitorInfo `json:"sys"`
 	//ServerSnap json.RawMessage         `json:"serverSnap"`
 	Snap  ExtSnap `json:"snap"`
 	ip    string
@@ -35,7 +35,7 @@ func (sn SPSnap) GetSnap(service string) string {
 	sn.mutex.Unlock()
 	snap.Service = service
 	snap.Last = time.Now().Format("20060102150405")
-	snap.Sys, _ = monitor.GetSysMonitorInfo()
+	snap.Sys, _ = base.GetSysMonitorInfo()
 	buffer, _ := json.Marshal(&snap)
 	return string(buffer)
 }
@@ -73,6 +73,6 @@ func (sp *SPServer) StartRefreshSnap() {
 }
 func (sp *SPServer) recover() {
 	if r := recover(); r != nil {
-		sp.Log.Fatal(r,string(debug.Stack()))
+		sp.Log.Fatal(r, string(debug.Stack()))
 	}
 }

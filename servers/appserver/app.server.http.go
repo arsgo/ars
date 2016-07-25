@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/colinyl/ars/cluster"
-	"github.com/colinyl/ars/httpserver"
+	"github.com/colinyl/ars/server"
 )
 
 func (a *AppServer) BindHttpServer(config *cluster.ServerConfig) {
@@ -30,7 +30,7 @@ func (a *AppServer) BindHttpServer(config *cluster.ServerConfig) {
 	if config != nil && len(config.Routes) > 0 &&
 		strings.EqualFold(strings.ToLower(config.ServerType), "http") {
 		var err error
-		a.httpServer, err = httpserver.NewHTTPScriptServer(config.Address, config.Routes, a.scriptPool.Call, a.loggerName)
+		a.httpServer, err = server.NewHTTPScriptServer(config.Address, config.Routes, a.scriptPool.Call, a.loggerName)
 		if err == nil {
 			a.httpServer.Start()
 			a.snap.Server = fmt.Sprint(a.snap.ip, a.httpServer.Address)

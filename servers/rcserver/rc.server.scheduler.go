@@ -1,9 +1,9 @@
 package main
 
 import (
+	"github.com/colinyl/ars/base"
+	"github.com/colinyl/ars/base/rpcservice"
 	"github.com/colinyl/ars/cluster"
-	"github.com/colinyl/ars/rpcproxy"
-	"github.com/colinyl/ars/rpcservice"
 	"github.com/colinyl/lib4go/scheduler"
 	"github.com/colinyl/lib4go/utility"
 )
@@ -43,7 +43,7 @@ func (rc *RCServer) BindJobScheduler(jobs map[string]cluster.JobItem, err error)
 					rc.Log.Error(err)
 					continue
 				}
-				if !rpcproxy.ResultIsSuccess(result) {
+				if !base.ResultIsSuccess(result) {
 					rc.Log.Infof(" ->call job(%s - %v) failed %s", task.Name, consumers[i], result)
 					continue
 				} else {
