@@ -23,22 +23,15 @@ type AppSnap struct {
 	Last      string               `json:"last"`
 	Mem       uint64               `json:"mem"`
 	Sys       *base.SysMonitorInfo `json:"sys"`
-	//	ServerSnap json.RawMessage         `json:"serverSnap"`
-	Snap ExtSnap `json:"snap"`
-	ip   string
+	Snap      ExtSnap              `json:"snap"`
+	ip        string
 }
 
 //GetSnap 获取快照信息
 func (as AppSnap) GetSnap() string {
 	snap := as
 	snap.Last = time.Now().Format("20060102150405")
-
 	snap.Sys, _ = base.GetSysMonitorInfo()
-	//if as.appserver.httpServer != nil {
-	//	snap.ServerSnap, _ = json.Marshal(as.appserver.httpServer.GetSnap())
-	//	} else {
-	//	snap.ServerSnap = []byte("{}")
-	//	}
 	snap.Snap.RPC, _ = json.Marshal(as.appserver.rpcClient.GetSnap())
 	snap.Snap.Script, _ = json.Marshal(as.appserver.scriptPool.GetSnap())
 	snap.Mem = sysinfo.GetAPPMemory()
