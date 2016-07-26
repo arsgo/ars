@@ -19,6 +19,7 @@ type ExtSnap struct {
 type SPSnap struct {
 	Address string               `json:"address"`
 	Service string               `json:"service"`
+	Version string               `json:"version"`
 	Last    string               `json:"last"`
 	Mem     uint64               `json:"mem"`
 	Sys     *base.SysMonitorInfo `json:"sys"`

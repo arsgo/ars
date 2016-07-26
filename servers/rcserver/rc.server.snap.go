@@ -21,6 +21,7 @@ type RCSnap struct {
 	Path     string               `json:"path"`
 	Address  string               `json:"address"`
 	Server   string               `json:"server"`
+	Version  string               `json:"version"`
 	Last     string               `json:"last"`
 	Mem      uint64               `json:"mem"`
 	Sys      *base.SysMonitorInfo `json:"sys"`

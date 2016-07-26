@@ -36,11 +36,12 @@ type SPServer struct {
 	dbPool         concurrent.ConcurrentMap
 	snap           SPSnap
 	loggerName     string
+	version        string
 }
 
 //NewSPServer 创建SP server服务器
 func NewSPServer() *SPServer {
-	sp := &SPServer{loggerName: "sp.server"}
+	sp := &SPServer{loggerName: "sp.server", version: "0.1.10"}
 	sp.Log, _ = logger.Get(sp.loggerName)
 	return sp
 }
@@ -59,7 +60,7 @@ func (sp *SPServer) init() (err error) {
 		return
 	}
 	sp.domain = cfg.Domain
-	sp.snap = SPSnap{ip: cfg.IP}
+	sp.snap = SPSnap{ip: cfg.IP, Version: sp.version}
 	sp.rpcClient = rpc.NewRPCClient(sp.clusterClient, sp.loggerName)
 	sp.scriptPool, err = script.NewScriptPool(sp.clusterClient, sp.rpcClient, sp.GetScriptBinder(), sp.loggerName)
 	if err != nil {

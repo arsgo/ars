@@ -17,9 +17,10 @@ type ExtSnap struct {
 
 //AppSnap  app server快照信息
 type AppSnap struct {
-	appserver *AppServer
+	appserver *AppServer	
 	Address   string               `json:"address"`
 	Server    string               `json:"server"`
+	Version   string               `json:"version"`
 	Last      string               `json:"last"`
 	Mem       uint64               `json:"mem"`
 	Sys       *base.SysMonitorInfo `json:"sys"`

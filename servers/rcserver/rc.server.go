@@ -31,11 +31,12 @@ type RCServer struct {
 	rcRPCHandler    server.IRPCHandler //RC Server处理程序
 	snap            RCSnap
 	loggerName      string
+	version         string
 }
 
 //NewRCServer 创建RC Server服务器
 func NewRCServer() *RCServer {
-	rc := &RCServer{loggerName: "rc.server"}
+	rc := &RCServer{loggerName: "rc.server", version: "0.1.10"}
 	rc.currentServices = concurrent.NewConcurrentMap()
 	rc.crossDomain = concurrent.NewConcurrentMap()
 	rc.crossService = concurrent.NewConcurrentMap()
@@ -57,7 +58,7 @@ func (rc *RCServer) init() (err error) {
 		return
 	}
 	rc.spRPCClient = rpc.NewRPCClient(rc.clusterClient, rc.loggerName)
-	rc.snap = RCSnap{Domain: cfg.Domain, Server: SERVER_SLAVE, ip: cfg.IP, rcServer: rc}
+	rc.snap = RCSnap{Domain: cfg.Domain, Server: SERVER_SLAVE, ip: cfg.IP, rcServer: rc, Version: rc.version}
 	rc.rcRPCHandler = proxy.NewRPCClientProxy(rc.clusterClient, rc.spRPCClient, rc.snap, rc.loggerName)
 	rc.rcRPCServer = server.NewRPCServer(rc.rcRPCHandler, rc.loggerName)
 	return nil

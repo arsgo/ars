@@ -29,11 +29,12 @@ type AppServer struct {
 	snap          AppSnap
 	loggerName    string
 	conf          *config.SysConfig
+	version       string
 }
 
 //NewAPPServer 创建APP Server服务器
 func NewAPPServer() (app *AppServer, err error) {
-	app = &AppServer{loggerName: "app.server"}
+	app = &AppServer{loggerName: "app.server", version: "0.1.10"}
 	app.JobAddress = make(map[string]string)
 	app.Log, err = logger.Get(app.loggerName)
 	if err != nil {
@@ -62,7 +63,7 @@ func (app *AppServer) init() (err error) {
 	app.scriptPorxy.OnCloseTask = app.OnJobClose
 	app.jobServer = server.NewRPCServer(app.scriptPorxy, app.loggerName)
 	app.mqService, err = mq.NewMQConsumerService(app.clusterClient, mq.NewMQScriptHandler(app.scriptPool, app.loggerName), app.loggerName)
-	app.snap = AppSnap{ip: app.conf.IP, appserver: app}
+	app.snap = AppSnap{ip: app.conf.IP, appserver: app, Version: app.version}
 	app.snap.Address = app.conf.IP
 	return
 }
