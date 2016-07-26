@@ -1,8 +1,6 @@
 package main
 
 import (
-	"sync"
-
 	"github.com/colinyl/ars/base"
 	"github.com/colinyl/ars/cluster"
 	"github.com/colinyl/ars/mq"
@@ -25,13 +23,12 @@ type AppServer struct {
 	jobServer     *server.RPCServer  //接收JOB事件调用,改事件将触发脚本执行
 	rpcClient     *rpc.RPCClient     //RPC远程调用客户端,调用RC Server提供的RPC服务
 	scriptPool    *script.ScriptPool //脚本池,用于缓存JOB Consumer脚本和本地task任务执行脚本
-	lk            sync.Mutex
-	httpServer    *server.HTTPScriptServer
-	mqService     *mq.MQConsumerService
-	snap          AppSnap
-	loggerName    string
-	conf          *config.SysConfig
-	version       string
+	httpServer *server.HTTPScriptServer
+	mqService  *mq.MQConsumerService
+	snap       AppSnap
+	loggerName string
+	conf       *config.SysConfig
+	version    string
 }
 
 //NewAPPServer 创建APP Server服务器
