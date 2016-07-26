@@ -11,9 +11,10 @@ type ProxySnap struct {
 func GetProxySnap(objectPoolSnaps pool.ObjectPoolSnap, snaps map[string]interface{}) (r []interface{}) {
 	poolSnaps := objectPoolSnaps.Snaps
 	if len(poolSnaps) == 0 {
-		r = make([]interface{}, 0)
+		r = make([]interface{}, 0, 0)
 		return
 	}
+	r = make([]interface{}, 0, len(poolSnaps))
 	for _, v := range poolSnaps {
 		if elp, ok := snaps[v.Name]; ok {
 			sr := elp.(*ProxySnap)

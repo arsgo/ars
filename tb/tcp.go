@@ -13,7 +13,7 @@ type TCPClients struct {
 
 func NewHTCPClients(count int, cfg *config) *TCPClients {
 	c := &TCPClients{count: count, address: cfg.Address}
-	c.clients = make([]*TCPClient, 0)
+	c.clients = make([]*TCPClient, 0, c.count)
 	for i := 0; i < c.count; i++ {
 		item := cfg.Items[i%len(cfg.Items)]
 		c.clients = append(c.clients, NewTCPClient(cfg.Address, item.CommandName, string(item.Params)))

@@ -8,7 +8,7 @@ import (
 
 func (a *AppServer) getMQConsumerTask(tasks []cluster.TaskItem) (tks []cluster.TaskItem) {
 	if tasks == nil {
-		tasks = make([]cluster.TaskItem, 0)
+		tasks = make([]cluster.TaskItem, 0, len(tasks))
 	}
 	for _, v := range tasks {
 		if strings.EqualFold(strings.ToLower(v.Type), "mq") &&
