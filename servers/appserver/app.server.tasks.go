@@ -8,8 +8,9 @@ import (
 
 func (a *AppServer) getMQConsumerTask(tasks []cluster.TaskItem) (tks []cluster.TaskItem) {
 	if tasks == nil {
-		tasks = make([]cluster.TaskItem, 0, len(tasks))
+		tasks = make([]cluster.TaskItem, 0, 0)
 	}
+	tasks = make([]cluster.TaskItem, 0, len(tasks))
 	for _, v := range tasks {
 		if strings.EqualFold(strings.ToLower(v.Type), "mq") &&
 			strings.EqualFold(strings.ToLower(v.Method), "consume") {
@@ -20,6 +21,10 @@ func (a *AppServer) getMQConsumerTask(tasks []cluster.TaskItem) (tks []cluster.T
 }
 
 func (a *AppServer) getJobConsumerTask(tasks []cluster.TaskItem) (tks []cluster.TaskItem) {
+	if tasks == nil {
+		tasks = make([]cluster.TaskItem, 0, 0)
+	}
+	tasks = make([]cluster.TaskItem, 0, len(tasks))
 	for _, v := range tasks {
 		if strings.EqualFold(strings.ToLower(v.Type), "job") &&
 			strings.EqualFold(strings.ToLower(v.Method), "consume") {
