@@ -2,11 +2,8 @@ package base
 
 import (
 	"encoding/json"
-	"time"
 
-	"github.com/colinyl/ars/servers/config"
 	"github.com/colinyl/lib4go/sysinfo"
-	"github.com/colinyl/lib4go/utility"
 )
 
 //SysMonitorInfo 系统信息
@@ -19,22 +16,15 @@ type SysMonitorInfo struct {
 //GetSysMonitorInfo 获取系统信息
 func GetSysMonitorInfo() (sys *SysMonitorInfo, err error) {
 	sys = &SysMonitorInfo{}
-	cfg, err := config.Get()
+	sys.CPU, err = json.Marshal(sysinfo.GetCPU())
 	if err != nil {
 		return
 	}
-	baseMap := make(map[string]interface{})
-	baseMap["ip"] = cfg.IP
-	baseMap["timestamp"] = time.Now().Format("20060102150405")
-	sys.CPU, err = json.Marshal(utility.MergeMaps(baseMap, sysinfo.GetCPU()))
+	sys.Mem, err = json.Marshal(sysinfo.GetMemory())
 	if err != nil {
 		return
 	}
-	sys.Mem, err = json.Marshal(utility.MergeMaps(baseMap, sysinfo.GetMemory()))
-	if err != nil {
-		return
-	}
-	sys.Disk, err = json.Marshal(utility.MergeMaps(baseMap, sysinfo.GetDisk()))
+	sys.Disk, err = json.Marshal(sysinfo.GetDisk())
 	if err != nil {
 		return
 	}
