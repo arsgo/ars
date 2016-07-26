@@ -38,7 +38,6 @@ func (r *RPCServer) Serve() (er error) {
 			r.log.Error(er)
 		}
 	}(r)
-	time.Sleep(time.Second * 2)
 	return
 }
 func (r *RPCServer) Stop() {

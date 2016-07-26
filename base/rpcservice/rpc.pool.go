@@ -101,15 +101,13 @@ START:
 		return
 	}
 	obj := o.(*RPCClient)
-	p.Log.Info("++++open.start")
 	err = obj.Open()
-	p.Log.Info("++++open.end")
+	defer obj.Close()
 	if err != nil {
 		p.Log.Error("当前服务不可用:", svName, err)
 		p.pool.Unusable(svName, obj)
 		goto START
 	}
-	defer obj.Close()
 	defer p.pool.Recycle(group, o)
 	result, err = obj.Request(svName, input, session)
 	return

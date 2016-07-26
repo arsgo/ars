@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"sync"
 
+	"github.com/colinyl/ars/base"
 	"github.com/colinyl/ars/cluster"
 	"github.com/colinyl/ars/mq"
 	"github.com/colinyl/ars/proxy"
@@ -23,7 +23,7 @@ var (
 //SPServer SPServer
 type SPServer struct {
 	Log            logger.ILogger
-	lk             sync.Mutex
+	startSync      base.Sync
 	domain         string
 	mode           string
 	serviceConfig  string
@@ -42,6 +42,7 @@ type SPServer struct {
 //NewSPServer 创建SP server服务器
 func NewSPServer() *SPServer {
 	sp := &SPServer{loggerName: "sp.server", version: "0.1.10"}
+	sp.startSync = base.NewSync(2)
 	sp.Log, _ = logger.Get(sp.loggerName)
 	return sp
 }
@@ -89,13 +90,16 @@ func (sp *SPServer) Start() (err error) {
 	sp.rpcServer.Start()
 	sp.snap.Address = fmt.Sprint(sp.snap.ip, sp.rpcServer.Address)
 	sp.clusterClient.WatchSPTaskChange(func() {
+		defer sp.startSync.Done("INIT.TASK.BIND")
 		sp.rebindService()
 	})
 	sp.clusterClient.WatchRCServerChange(func(config []*cluster.RCServerItem, err error) {
+		defer sp.startSync.Done("INIT.RCSRV.BIND")
 		sp.BindRCServer(config, err)
 	})
-
+	sp.startSync.Wait()
 	go sp.StartRefreshSnap()
+	sp.Log.Info(" -> SP Server 启动完成...")
 	return nil
 }
 

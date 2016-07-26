@@ -4,6 +4,7 @@ import (
 	"os"
 	"runtime/debug"
 
+	"github.com/colinyl/ars/base"
 	"github.com/colinyl/ars/cluster"
 	"github.com/colinyl/ars/proxy"
 	"github.com/colinyl/ars/rpc"
@@ -21,6 +22,7 @@ const (
 //RCServer RC Server
 type RCServer struct {
 	clusterClient   cluster.IClusterClient
+	startSync       base.Sync
 	IsMaster        bool
 	currentServices concurrent.ConcurrentMap
 	crossDomain     concurrent.ConcurrentMap //map[string]cluster.IClusterClient
@@ -41,6 +43,7 @@ func NewRCServer() *RCServer {
 	rc.crossDomain = concurrent.NewConcurrentMap()
 	rc.crossService = concurrent.NewConcurrentMap()
 	rc.Log, _ = logger.Get(rc.loggerName)
+	rc.startSync = base.NewSync(1)
 	return rc
 }
 
@@ -84,11 +87,12 @@ func (rc *RCServer) Start() (err error) {
 	rc.rcRPCServer.Start()
 
 	//绑定RC服务
-	err = rc.BindRCServer()
-	if err != nil {
+	if rc.BindRCServer() != nil {
 		return
 	}
+	rc.startSync.Wait()
 	go rc.StartRefreshSnap()
+	rc.Log.Info(" -> RC Server 启动完成...")
 	return nil
 }
 

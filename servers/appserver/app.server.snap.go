@@ -17,7 +17,7 @@ type ExtSnap struct {
 
 //AppSnap  app server快照信息
 type AppSnap struct {
-	appserver *AppServer	
+	appserver *AppServer
 	Address   string               `json:"address"`
 	Server    string               `json:"server"`
 	Version   string               `json:"version"`
@@ -60,7 +60,6 @@ func (app *AppServer) recover() {
 //StartRefreshSnap 启动定时刷新快照信息
 func (app *AppServer) StartRefreshSnap() {
 	defer app.recover()
-	app.Log.Info("更新app server快照信息")
 	app.ResetAPPSnap()
 	app.ResetJobSnap()
 	tp := time.NewTicker(time.Second * 60)

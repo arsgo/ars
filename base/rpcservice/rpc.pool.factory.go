@@ -28,7 +28,9 @@ func (j *rpcClientFactory) Create() (p pool.Object, err error) {
 		return
 	}
 	//p, err = getConn(j.ip, j.loggerName)
-	p = NewRPCClientTimeout(j.ip, time.Second*5, j.loggerName)
+	client := NewRPCClientTimeout(j.ip, time.Second*5, j.loggerName)
+	err = client.Open()
+	p = client
 	return
 
 }

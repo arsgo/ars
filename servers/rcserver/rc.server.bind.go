@@ -17,7 +17,6 @@ func (rc *RCServer) BindRCServer() (err error) {
 		return
 	}
 	rc.clusterClient.ResetSnap(rc.snap.Path, rc.snap.GetSnap())
-
 	rc.clusterClient.WatchRCServerChange(func(items []*cluster.RCServerItem, err error) {
 		isMaster := rc.IsMasterServer(items)
 		if isMaster && !rc.IsMaster {
@@ -32,6 +31,7 @@ func (rc *RCServer) BindRCServer() (err error) {
 				//重新发布服务
 				rc.currentServices.Set("*", lst)
 				rc.PublishNow()
+				rc.startSync.Done("INIT.SERVER")
 			})
 			go rc.clusterClient.WatchRCTaskChange(func(task cluster.RCServerTask, err error) {
 				if err != nil {
@@ -47,10 +47,14 @@ func (rc *RCServer) BindRCServer() (err error) {
 			rc.Log.Info("::current server is ", rc.snap.Server)
 			go rc.clusterClient.WatchRCTaskChange(func(task cluster.RCServerTask, err error) {
 				rc.spRPCClient.SetPoolSize(task.RPCPoolSetting.MinSize, task.RPCPoolSetting.MaxSize)
+				rc.startSync.Done("INIT.SERVER")
 			})
+
 		}
 	})
-	go rc.clusterClient.WatchRPCServiceChange(func(services map[string][]string, err error) {
+	rc.startSync.WaitAndAdd(1)
+	rc.clusterClient.WatchRPCServiceChange(func(services map[string][]string, err error) {
+		defer rc.startSync.Done("INIT.SRV.CNG")
 		rc.Log.Info(" |-> rpc server changed")
 		ip := rc.spRPCClient.ResetRPCServer(services)
 		tasks, er := rc.clusterClient.FilterRPCService(services)
@@ -60,6 +64,7 @@ func (rc *RCServer) BindRCServer() (err error) {
 		}
 		rc.Log.Infof("rpc services:len(%d)%s ", len(tasks), ip)
 		rc.rcRPCServer.UpdateTasks(tasks)
+
 	})
 	return
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"sync"
 
+	"github.com/colinyl/ars/base"
 	"github.com/colinyl/ars/cluster"
 	"github.com/colinyl/ars/mq"
 	"github.com/colinyl/ars/proxy"
@@ -17,6 +18,7 @@ import (
 type AppServer struct {
 	JobAddress    map[string]string
 	domain        string
+	startSync     base.Sync
 	Log           logger.ILogger
 	clusterClient cluster.IClusterClient
 	scriptPorxy   *proxy.ScriptProxy //本地脚本处理
@@ -35,6 +37,7 @@ type AppServer struct {
 //NewAPPServer 创建APP Server服务器
 func NewAPPServer() (app *AppServer, err error) {
 	app = &AppServer{loggerName: "app.server", version: "0.1.10"}
+	app.startSync = base.NewSync(2)
 	app.JobAddress = make(map[string]string)
 	app.Log, err = logger.Get(app.loggerName)
 	if err != nil {
@@ -81,13 +84,17 @@ func (app *AppServer) Start() (err error) {
 		return
 	}
 	app.clusterClient.WatchAppTaskChange(func(config *cluster.AppServerStartupConfig, err error) error {
+		defer app.startSync.Done("INIT.BIND.TASK")
 		app.BindTask(config, err)
 		return nil
 	})
 	app.clusterClient.WatchRCServerChange(func(config []*cluster.RCServerItem, err error) {
+		defer app.startSync.Done("INIT.BIND.RCSRV")
 		app.BindRCServer(config, err)
 	})
+	app.startSync.Wait()
 	go app.StartRefreshSnap()
+	app.Log.Info(" -> APP Server 启动完成...")
 	return nil
 }
 

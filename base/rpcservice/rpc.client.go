@@ -53,7 +53,6 @@ func (client *RPCClient) Open() (err error) {
 	client.client = rpc.NewServiceProviderClientFactory(useTransport, pf)
 	if err := client.client.Transport.Open(); err != nil {
 		return errors.New(fmt.Sprint("open client error :", client.Address, ",", err.Error()))
-
 	}
 	return nil
 }
