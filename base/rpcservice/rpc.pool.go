@@ -62,6 +62,7 @@ func (s *RPCServerPool) Register(svs map[string]string) {
 			go func(ip string) {
 				defer s.recover()
 				s.pool.UnRegister(ip)
+				removeWorker(ip)
 			}(ip)
 		}
 	}
@@ -100,7 +101,9 @@ START:
 		return
 	}
 	obj := o.(*RPCClient)
+	p.Log.Info("++++open.start")
 	err = obj.Open()
+	p.Log.Info("++++open.end")
 	if err != nil {
 		p.Log.Error("当前服务不可用:", svName, err)
 		p.pool.Unusable(svName, obj)
