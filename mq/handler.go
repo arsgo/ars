@@ -26,7 +26,7 @@ func NewMQScriptHandler(pool *script.ScriptPool, loggerName string) (mq *MQScrip
 
 //Handle 处理MQ消息
 func (mq *MQScriptHandler) Handle(task cluster.TaskItem, input string, session string) bool {
-	mq.Log.Info("-->mq.request(consumer):", input)
+	mq.Log.Info("-->mq.request(consumer):", task.Script, input)
 	result, _, err := mq.pool.Call(task.Script, base.NewInvokeContext(mq.loggerName, utility.GetSessionID(), input, task.Params, ""))
 	if err != nil {
 		return false
