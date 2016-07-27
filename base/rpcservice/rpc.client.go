@@ -79,5 +79,4 @@ func (j *RPCClient) Close() {
 	if j.transport != nil {
 		j.transport.Close()
 	}
-
 }

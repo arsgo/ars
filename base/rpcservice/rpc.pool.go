@@ -93,6 +93,7 @@ func (p *RPCServerPool) Request(group string, svName string, input string, sessi
 START:
 	execute++
 	if execute > p.MaxRetry {
+		err = fmt.Errorf("cant connect to rpc server(%s):%s/%s,%s", p.loggerName, group, svName, err)
 		return
 	}
 	o, err := p.pool.Get(group)
