@@ -55,16 +55,16 @@ func (rc *RCServer) BindRCServer() (err error) {
 	rc.startSync.WaitAndAdd(1)
 	rc.clusterClient.WatchRPCServiceChange(func(services map[string][]string, err error) {
 		defer rc.startSync.Done("INIT.SRV.CNG")
-		rc.Log.Info(" |-> rpc server changed")
+		rc.Log.Info(" |-> rpc services changed")
 		ip := rc.spRPCClient.ResetRPCServer(services)
 		tasks, er := rc.clusterClient.FilterRPCService(services)
 		if er != nil {
 			rc.Log.Error(er)
 			return
 		}
-		rc.Log.Infof("rpc services:len(%d)%s ", len(tasks), ip)
-		rc.rcRPCServer.UpdateTasks(tasks)
-
+		if rc.rcRPCServer.UpdateTasks(tasks) > 0 {
+			rc.Log.Info(" |-> local services has changed:", services, len(tasks), ip)
+		}
 	})
 	return
 }

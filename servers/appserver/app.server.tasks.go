@@ -12,8 +12,8 @@ func (a *AppServer) getMQConsumerTask(tasks []cluster.TaskItem) (tks []cluster.T
 	}
 	tks = make([]cluster.TaskItem, 0, len(tasks))
 	for _, v := range tasks {
-		if strings.EqualFold(strings.ToLower(v.Type), "mq") &&
-			strings.EqualFold(strings.ToLower(v.Method), "consume") {
+		if strings.EqualFold(v.Type, "mq") &&
+			strings.EqualFold(v.Method, "consume") {
 			tks = append(tks, v)
 		}
 	}
@@ -26,8 +26,8 @@ func (a *AppServer) getJobConsumerTask(tasks []cluster.TaskItem) (tks []cluster.
 	}
 	tks = make([]cluster.TaskItem, 0, len(tasks))
 	for _, v := range tasks {
-		if strings.EqualFold(strings.ToLower(v.Type), "job") &&
-			strings.EqualFold(strings.ToLower(v.Method), "consume") {
+		if strings.EqualFold(v.Type, "job") &&
+			strings.EqualFold(v.Method, "consume") {
 			tks = append(tks, v)
 		}
 	}

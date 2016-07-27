@@ -49,8 +49,8 @@ func NewRPCServer(handler IRPCHandler, loggerName string) (server *RPCServer) {
 }
 
 //UpdateTasks 更新任务列表
-func (r *RPCServer) UpdateTasks(tasks []cluster.TaskItem) {
-	r.serverHandler.UpdateTasks(tasks)
+func (r *RPCServer) UpdateTasks(tasks []cluster.TaskItem) int {
+	return r.serverHandler.UpdateTasks(tasks)
 }
 
 //Start 启动RPC服务器
@@ -93,26 +93,30 @@ func NewRPCHandlerProxy(h IRPCHandler, loggerName string, snap *base.ServerSnap)
 }
 
 //UpdateTasks 更新服务列表
-func (r *RPCHandlerProxy) UpdateTasks(tasks []cluster.TaskItem) {
+func (r *RPCHandlerProxy) UpdateTasks(tasks []cluster.TaskItem) int {
+	count := 0
 	tks := make(map[string]cluster.TaskItem)
 	for _, v := range tasks {
 		tks[v.Name] = v
 	}
 	services := r.tasks.Services.GetAll()
-	for i, v := range services {
-		if _, ok := tks[i]; !ok {
-			r.handler.CloseTask(v.(cluster.TaskItem))
-			r.tasks.Services.Delete(i)
-		} else {
-			r.tasks.Services.Set(i, tks[i]) //更新可能已经变化的服务
-		}
-	}
 	for i, v := range tks {
 		if _, ok := services[i]; !ok {
 			r.tasks.Services.Set(i, v) //添加新任务
 			r.handler.OpenTask(v)
+			count++
 		}
 	}
+	for i, v := range services {
+		if _, ok := tks[i]; !ok {
+			r.handler.CloseTask(v.(cluster.TaskItem))
+			r.tasks.Services.Delete(i)
+			count++
+		} else {
+			r.tasks.Services.Set(i, tks[i]) //更新可能已经变化的服务
+		}
+	}
+	return count
 }
 
 //getDomain 获取domain
@@ -148,7 +152,7 @@ func (r *RPCHandlerProxy) getTaskItem(name string) (item cluster.TaskItem, err e
 		item.Name = name
 		return
 	}
-	err = fmt.Errorf("not find service:%s", name)
+	err = fmt.Errorf("not find service(%s):%s", r.loggerName, name)
 	return
 }
 

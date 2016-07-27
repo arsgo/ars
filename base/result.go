@@ -24,7 +24,7 @@ func ResultIsSuccess(content string) bool {
 	if err != nil {
 		return false
 	}
-	return strings.EqualFold(strings.ToLower(entity.Code), "success")
+	return strings.EqualFold(entity.Code, "success")
 }
 
 func GetErrorResult(code string, msg ...interface{}) string {
@@ -43,7 +43,7 @@ func GetDataResult(cdata string, redirect bool) string {
 		return cdata
 	}
 	data := strings.Trim(cdata, " ")
-	if strings.EqualFold(data, "") || strings.EqualFold(strings.ToLower(data), "nil") || strings.EqualFold(strings.ToLower(data), "null") {
+	if strings.EqualFold(data, "") || strings.EqualFold(data, "nil") || strings.EqualFold(data, "null") {
 		return result_success_format
 	}
 	if strings.HasPrefix(data, "{") && strings.HasSuffix(data, "}") {

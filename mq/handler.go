@@ -32,7 +32,7 @@ func (mq *MQScriptHandler) Handle(task cluster.TaskItem, input string, session s
 	if err != nil {
 		return false
 	}
-	v := len(result) > 0 && (strings.EqualFold(strings.ToLower(result[0]), "true") || strings.EqualFold(strings.ToLower(result[0]), "success"))
+	v := len(result) > 0 && (strings.EqualFold(result[0], "true") || strings.EqualFold(result[0], "success"))
 	context.Log.Info("-->mq.response(consumer):", v)
 	return v
 }

@@ -86,7 +86,7 @@ func (s *RPCServerPool) Register(svs map[string]string) {
 func (p *RPCServerPool) Request(group string, svName string, input string, session string) (result string, err error) {
 	defer p.recover()
 	if strings.EqualFold(group, "") {
-		err = errors.New("not find rpc server and name cant be nil")
+		err = errors.New("not find rpc server and name cant be nil" + p.loggerName)
 		return
 	}
 	execute := 0
@@ -97,14 +97,14 @@ START:
 	}
 	o, err := p.pool.Get(group)
 	if err != nil {
-		err = fmt.Errorf("not find rpc server:%s/%s,%s", group, svName, err)
+		err = fmt.Errorf("not find rpc server(%s):%s/%s,%s", p.loggerName, group, svName, err)
 		return
 	}
 	obj := o.(*RPCClient)
 	err = obj.Open()
 	defer obj.Close()
 	if err != nil {
-		p.Log.Error("当前服务不可用:", svName, err)
+		p.Log.Error("当前服务不可用:", p.loggerName, svName, err)
 		p.pool.Unusable(svName, obj)
 		goto START
 	}

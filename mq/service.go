@@ -81,7 +81,7 @@ func (mq *MQConsumerService) getTasks(tasks []cluster.TaskItem) (consumers map[s
 		if _, ok := consumers[v.Name]; ok {
 			continue
 		}
-		if strings.EqualFold(strings.ToLower(v.Type), "mq") && strings.EqualFold(strings.ToLower(v.Method), "consume") {
+		if strings.EqualFold(v.Type, "mq") && strings.EqualFold(v.Method, "consume") {
 			consumers[v.Name] = v
 		}
 	}

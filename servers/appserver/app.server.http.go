@@ -28,7 +28,7 @@ func (a *AppServer) BindHttpServer(config *cluster.ServerConfig) {
 		}
 	}
 	if config != nil && len(config.Routes) > 0 &&
-		strings.EqualFold(strings.ToLower(config.ServerType), "http") {
+		strings.EqualFold(config.ServerType, "http") {
 		var err error
 		a.httpServer, err = server.NewHTTPScriptServer(config.Address, config.Routes, a.scriptPool.Call, a.loggerName)
 		if err == nil {
