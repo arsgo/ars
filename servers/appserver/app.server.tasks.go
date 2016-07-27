@@ -10,7 +10,7 @@ func (a *AppServer) getMQConsumerTask(tasks []cluster.TaskItem) (tks []cluster.T
 	if tasks == nil {
 		tasks = make([]cluster.TaskItem, 0, 0)
 	}
-	tasks = make([]cluster.TaskItem, 0, len(tasks))
+	tks = make([]cluster.TaskItem, 0, len(tasks))
 	for _, v := range tasks {
 		if strings.EqualFold(strings.ToLower(v.Type), "mq") &&
 			strings.EqualFold(strings.ToLower(v.Method), "consume") {
@@ -24,7 +24,7 @@ func (a *AppServer) getJobConsumerTask(tasks []cluster.TaskItem) (tks []cluster.
 	if tasks == nil {
 		tasks = make([]cluster.TaskItem, 0, 0)
 	}
-	tasks = make([]cluster.TaskItem, 0, len(tasks))
+	tks = make([]cluster.TaskItem, 0, len(tasks))
 	for _, v := range tasks {
 		if strings.EqualFold(strings.ToLower(v.Type), "job") &&
 			strings.EqualFold(strings.ToLower(v.Method), "consume") {
@@ -52,5 +52,4 @@ func (a *AppServer) bindJobConsumer(tasks []cluster.TaskItem) {
 func (a *AppServer) BindLocalTask(tasks []cluster.TaskItem) {
 	a.bindMQConsumer(tasks)
 	a.bindJobConsumer(tasks)
-
 }
