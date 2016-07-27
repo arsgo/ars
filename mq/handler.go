@@ -26,10 +26,12 @@ func NewMQScriptHandler(pool *script.ScriptPool, loggerName string) (mq *MQScrip
 
 //Handle 处理MQ消息
 func (mq *MQScriptHandler) Handle(task cluster.TaskItem, input string, session string) bool {
-	mq.Log.Infof(" -> recv mq message:%s", input)
+	mq.Log.Info("-->mq.request(consumer):", input)
 	result, _, err := mq.pool.Call(task.Script, base.NewInvokeContext(mq.loggerName, utility.GetSessionID(), input, task.Params, ""))
 	if err != nil {
 		return false
 	}
-	return len(result) > 0 && (strings.EqualFold(strings.ToLower(result[0]), "true") || strings.EqualFold(strings.ToLower(result[0]), "success"))
+	v := len(result) > 0 && (strings.EqualFold(strings.ToLower(result[0]), "true") || strings.EqualFold(strings.ToLower(result[0]), "success"))
+	mq.Log.Info("-->mq.response(consumer):", v)
+	return v
 }
