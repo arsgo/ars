@@ -10,9 +10,8 @@ type InvokeContext struct {
 	Log     logger.ILogger
 }
 
-func NewInvokeContext(session string, input string, params string, body string) InvokeContext {
+func NewInvokeContext(loggerName string, session string, input string, params string, body string) InvokeContext {
 	context := InvokeContext{Session: session, Input: input, Params: params, Body: body}
-	context.Log = logger.GetDeubgLogger(session)
+	context.Log, _ = logger.NewSession(loggerName, session)
 	return context
-
 }

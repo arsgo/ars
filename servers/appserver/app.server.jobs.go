@@ -29,7 +29,7 @@ func (a *AppServer) BindLocalJobs(jobs []cluster.JobItem) {
 			defer a.recover()
 			item := job.(cluster.JobItem)
 			a.Log.Infof(" -> run job [%s] %s", item.Name, item.Script)
-			_, _, err := a.scriptPool.Call(item.Script, base.NewInvokeContext(utility.GetSessionID(), "{}", item.Params, ""))
+			_, _, err := a.scriptPool.Call(item.Script, base.NewInvokeContext(a.loggerName, utility.GetSessionID(), "{}", item.Params, ""))
 			if err != nil {
 				a.Log.Error(err)
 			}

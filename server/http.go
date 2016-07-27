@@ -30,9 +30,10 @@ type HTTPScriptServer struct {
 
 //HTTPScriptController controller
 type HTTPScriptController struct {
-	config *cluster.ServerRouteConfig
-	server *HTTPScriptServer
-	snap   *base.ServerSnap
+	config     *cluster.ServerRouteConfig
+	server     *HTTPScriptServer
+	snap       *base.ServerSnap
+	loggerName string
 }
 
 //NewHTTPScriptServer 创建基于LUA的HTTP服务器
@@ -81,7 +82,7 @@ func (r *HTTPScriptServer) getHandlers() (handlers []webserver.WebHandler) {
 
 //NewHTTPScriptController 创建路由处理程序
 func NewHTTPScriptController(r *HTTPScriptServer, config *cluster.ServerRouteConfig, snap *base.ServerSnap) *HTTPScriptController {
-	return &HTTPScriptController{server: r, config: config, snap: snap}
+	return &HTTPScriptController{server: r, config: config, snap: snap,loggerName:r.loggerName}
 }
 
 func (r *HTTPScriptController) getBodyText(request *http.Request) string {
@@ -127,7 +128,7 @@ func (r *HTTPScriptController) Handle(context *webserver.Context) {
 	}
 	input := string(data)
 	context.Log.Info("-->api.request:", context.Request.URL.Path, input, body)
-	result, output, err := r.server.call(r.config.Script, base.NewInvokeContext(context.Session, input, r.config.Params, body))
+	result, output, err := r.server.call(r.config.Script, base.NewInvokeContext(r.loggerName, context.Session, input, r.config.Params, body))
 	r.setHeader(context.Writer, output)
 	if err != nil {
 		r.setResponse(context.Log, context.Writer, output, 500, err.Error())
