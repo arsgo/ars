@@ -78,11 +78,16 @@ func (s *ScriptPool) SetPackages(path ...string) {
 	}
 	s.pool.SetPackages(npath...)
 }
-
-func (s *ScriptPool) setLifeTime(name string, start time.Time) {
+func (s *ScriptPool) createSnap(p ...interface{}) (interface{}, error) {
 	ss := &base.ProxySnap{}
 	ss.ElapsedTime = base.ServerSnap{}
-	snap := s.snaps.GetOrAdd(name, ss)
+	return ss, nil
+}
+func (s *ScriptPool) setLifeTime(name string, start time.Time) {
+	_, snap := s.snaps.Add(name, s.createSnap)
+	if snap != nil {
+		return
+	}
 	snap.(*base.ProxySnap).ElapsedTime.Add(start)
 }
 

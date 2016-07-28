@@ -73,7 +73,7 @@ func (r *HTTPScriptServer) GetSnap() base.ServerSnap {
 //getHandlers 获取基于LUA的路由处理程序
 func (r *HTTPScriptServer) getHandlers() (handlers []webserver.WebHandler) {
 	for _, v := range r.routes {
-		handler := webserver.WebHandler{Path: v.Path, Method: v.Method, Script: v.Script}
+		handler := webserver.WebHandler{Path: v.Path, Method: v.Method, Script: v.Script, LoggerName: r.loggerName}
 		handler.Handler = NewHTTPScriptController(r, v, r.snap).Handle
 		handlers = append(handlers, handler)
 	}
@@ -82,7 +82,7 @@ func (r *HTTPScriptServer) getHandlers() (handlers []webserver.WebHandler) {
 
 //NewHTTPScriptController 创建路由处理程序
 func NewHTTPScriptController(r *HTTPScriptServer, config *cluster.ServerRouteConfig, snap *base.ServerSnap) *HTTPScriptController {
-	return &HTTPScriptController{server: r, config: config, snap: snap,loggerName:r.loggerName}
+	return &HTTPScriptController{server: r, config: config, snap: snap, loggerName: r.loggerName}
 }
 
 func (r *HTTPScriptController) getBodyText(request *http.Request) string {

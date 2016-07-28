@@ -171,10 +171,16 @@ func (r *RPCClient) getGroupName(name string) string {
 	}
 	return ""
 }
-func (r *RPCClient) setLifeTime(name string, start time.Time) {
+func (r *RPCClient) createSnap(p ...interface{}) (interface{}, error) {
 	ss := &base.ProxySnap{}
 	ss.ElapsedTime = base.ServerSnap{}
-	snap := r.snaps.GetOrAdd(name, ss)
+	return ss, nil
+}
+func (r *RPCClient) setLifeTime(name string, start time.Time) {
+	_, snap := r.snaps.Add(name, r.createSnap)
+	if snap == nil {
+		return
+	}
 	snap.(*base.ProxySnap).ElapsedTime.Add(start)
 }
 
