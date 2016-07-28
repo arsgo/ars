@@ -12,6 +12,7 @@ import (
 	"github.com/colinyl/ars/base"
 	"github.com/colinyl/ars/base/rpcservice"
 	"github.com/colinyl/ars/cluster"
+	"github.com/colinyl/ars/servers/config"
 	"github.com/colinyl/lib4go/concurrent"
 	"github.com/colinyl/lib4go/logger"
 )
@@ -79,12 +80,14 @@ type RPCHandlerProxy struct {
 	handler    IRPCHandler
 	Log        logger.ILogger
 	snap       *base.ServerSnap
+	domain     string
 	loggerName string
 }
 
 //NewRPCHandlerProxy 创建RPC默认处理程序
 func NewRPCHandlerProxy(h IRPCHandler, loggerName string, snap *base.ServerSnap) *RPCHandlerProxy {
-	handler := &RPCHandlerProxy{snap: snap, loggerName: loggerName}
+	conf, _ := config.Get()
+	handler := &RPCHandlerProxy{snap: snap, loggerName: loggerName, domain: conf.Domain}
 	handler.tasks = Tasks{}
 	handler.handler = h
 	handler.tasks.Services = concurrent.NewConcurrentMap() //make(map[string]cluster.TaskItem)
@@ -131,28 +134,19 @@ func (r *RPCHandlerProxy) getDomain(name string) string {
 //getTaskItem 根据名称获取一个分组
 func (r *RPCHandlerProxy) getTaskItem(name string) (item cluster.TaskItem, err error) {
 
-	//	all := r.tasks.Services.GetAll()
-	//	for i, v := range all {
-	//fmt.Printf("getTaskItem:%s,%v\n", i, v.(cluster.TaskItem).IP)
-	//	}
-
-	//r.Log.Info("get1:", name)
 	group := r.tasks.Services.Get(name)
 	if group == nil {
-		//r.Log.Info("get3:", "*"+r.getDomain(name))
 		group = r.tasks.Services.Get("*" + r.getDomain(name))
 	}
 	if group == nil {
-		//r.Log.Info("get3:", "*")
 		group = r.tasks.Services.Get("*")
 	}
-
 	if group != nil {
 		item = group.(cluster.TaskItem)
 		item.Name = name
 		return
 	}
-	err = fmt.Errorf("not find service(%s):%s,%s", r.loggerName, name, r.tasks.Services.GetAll())
+	err = fmt.Errorf("not find service(%s@%s.rpc.server):%s,%s", r.loggerName, r.domain, name, r.tasks.Services.GetAll())
 	return
 }
 

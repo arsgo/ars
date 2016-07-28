@@ -7,6 +7,7 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"github.com/colinyl/ars/servers/config"
 	"github.com/colinyl/lib4go/concurrent"
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/pool"
@@ -22,6 +23,7 @@ type RPCServerPool struct {
 	servers    concurrent.ConcurrentMap
 	Log        logger.ILogger
 	loggerName string
+	domain     string
 	MaxRetry   int
 	MinSize    int
 	MaxSize    int
@@ -30,7 +32,8 @@ type RPCServerPool struct {
 //NewRPCServerPool 创建RPC连接池
 func NewRPCServerPool(minSize int, maxSize int, loggerName string) *RPCServerPool {
 	var err error
-	pl := &RPCServerPool{MinSize: minSize, MaxSize: maxSize, MaxRetry: 1, loggerName: loggerName}
+	conf, _ := config.Get()
+	pl := &RPCServerPool{MinSize: minSize, MaxSize: maxSize, MaxRetry: 1, loggerName: loggerName, domain: conf.Domain}
 	pl.pool = pool.New()
 	pl.servers = concurrent.NewConcurrentMap()
 	pl.Log, err = logger.Get(loggerName)
@@ -86,19 +89,19 @@ func (s *RPCServerPool) Register(svs map[string]string) {
 func (p *RPCServerPool) Request(group string, svName string, input string, session string) (result string, err error) {
 	defer p.recover()
 	if strings.EqualFold(group, "") {
-		err = errors.New("not find rpc server and name cant be nil" + p.loggerName)
+		err = errors.New("not find rpc server and name cant be nil" + p.loggerName + "@" + p.domain + ".rpc.pool")
 		return
 	}
 	execute := 0
 START:
 	execute++
 	if execute > p.MaxRetry {
-		err = fmt.Errorf("cant connect to rpc server(%s):%s/%s,%s", p.loggerName, group, svName, err)
+		err = fmt.Errorf("cant connect to rpc server(%s@%s.rpc.pool):%s/%s,%s", p.loggerName, p.domain, group, svName, err)
 		return
 	}
 	o, err := p.pool.Get(group)
 	if err != nil {
-		err = fmt.Errorf("not find rpc server(%s):%s/%s,%s", p.loggerName, group, svName, err)
+		err = fmt.Errorf("not find rpc server(%s@%s.rpc.pool):%s/%s,%s", p.loggerName, p.domain, group, svName, err)
 		return
 	}
 	obj := o.(*RPCClient)

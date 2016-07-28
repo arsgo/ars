@@ -18,6 +18,7 @@ import (
 	"github.com/colinyl/ars/base"
 	"github.com/colinyl/ars/base/rpcservice"
 	"github.com/colinyl/ars/cluster"
+	"github.com/colinyl/ars/servers/config"
 	"github.com/colinyl/lib4go/concurrent"
 	"github.com/colinyl/lib4go/logger"
 	"github.com/colinyl/lib4go/utility"
@@ -50,11 +51,13 @@ type RPCClient struct {
 	Log        logger.ILogger
 	snaps      concurrent.ConcurrentMap
 	loggerName string
+	domain     string
 }
 
 //NewRPCClient 创建RPC Client
 func NewRPCClient(cli cluster.IClusterClient, loggerName string) *RPCClient {
-	client := &RPCClient{}
+	conf, _ := config.Get()
+	client := &RPCClient{domain: conf.Domain}
 	client.client = cli
 	client.snaps = concurrent.NewConcurrentMap()
 	client.pool = rpcservice.NewRPCServerPool(5, 10, loggerName)
@@ -183,7 +186,7 @@ func (r *RPCClient) Request(cmd string, input string, session string) (result st
 	name := r.client.GetServiceFullPath(cmd)
 	group := r.getGroupName(name)
 	if strings.EqualFold(group, "") {
-		result = base.GetErrorResult("500", "not find rpc server(", r.loggerName, "):", name, " in service list",
+		result = base.GetErrorResult("500", "not find rpc server(", r.loggerName, "@", r.domain, ".rpc.client):", name, " in service list",
 			r.services.GetAll())
 		err = errors.New(result)
 		return
