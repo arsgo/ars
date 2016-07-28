@@ -13,7 +13,7 @@ import (
 
 //ScriptProxy 基于脚本的RPC代理服务
 type ScriptProxy struct {
-	tasks         concurrent.ConcurrentMap
+	tasks         *concurrent.ConcurrentMap
 	clusterClient cluster.IClusterClient
 	scriptPool    *script.ScriptPool
 	Log           logger.ILogger

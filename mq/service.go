@@ -20,7 +20,7 @@ type MQConsumerService struct {
 	clusterClient cluster.IClusterClient
 	handler       MQHandler
 	tasks         []cluster.TaskItem
-	consumers     concurrent.ConcurrentMap //map[string]*MQConsumer
+	consumers     *concurrent.ConcurrentMap //map[string]*MQConsumer
 	Log           logger.ILogger
 }
 

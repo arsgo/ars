@@ -20,7 +20,7 @@ type rpcServerService struct {
 
 type RPCServerPool struct {
 	pool       *pool.ObjectPool
-	servers    concurrent.ConcurrentMap
+	servers    *concurrent.ConcurrentMap
 	Log        logger.ILogger
 	loggerName string
 	domain     string

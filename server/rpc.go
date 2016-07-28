@@ -29,7 +29,7 @@ type RPCServer struct {
 
 //Tasks 任务列表
 type Tasks struct {
-	Services concurrent.ConcurrentMap
+	Services *concurrent.ConcurrentMap
 }
 
 //IRPCHandler RPC处理函数

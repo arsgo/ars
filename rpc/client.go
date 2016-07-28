@@ -43,13 +43,13 @@ func (i *serviceItem) getOne() string {
 
 //RPCClient RPCClient
 type RPCClient struct {
-	queues     concurrent.ConcurrentMap //map[string]chan []interface{}
+	queues     *concurrent.ConcurrentMap //map[string]chan []interface{}
 	pool       *rpcservice.RPCServerPool
-	services   concurrent.ConcurrentMap
+	services   *concurrent.ConcurrentMap
 	client     cluster.IClusterClient
 	mutex      sync.RWMutex
 	Log        logger.ILogger
-	snaps      concurrent.ConcurrentMap
+	snaps      *concurrent.ConcurrentMap
 	loggerName string
 	domain     string
 }
@@ -99,16 +99,16 @@ func (r *RPCClient) ResetRPCServer(servers map[string][]string) string {
 			}
 		}
 		if len(v) > 0 {
-			r.Log.Info("rpc.clent.set:", n, v)
+			r.Log.Info("rpc.client.set:", n, v)
 			r.services.Set(n, &serviceItem{service: v}) //添加新服务
 		} else {
-			r.Log.Info("rpc.clent.del:", n)
+			r.Log.Info("rpc.client.del:", n)
 			r.services.Delete(n) //移除无可用IP的服务
 		}
 	}
 	for k := range service {
 		if _, ok := servers[k]; !ok {
-			r.Log.Info("rpc.clent.del:", k)
+			r.Log.Info("rpc.client.del:", k)
 			r.services.Delete(k) //移除已不存在的服务
 		}
 	}

@@ -17,7 +17,7 @@ type ISnap interface {
 
 //RPCClientProxy 处理JOB Consumer操作
 type RPCClientProxy struct {
-	tasks         concurrent.ConcurrentMap
+	tasks         *concurrent.ConcurrentMap
 	clusterClient cluster.IClusterClient
 	client        *rpc.RPCClient
 	Log           logger.ILogger

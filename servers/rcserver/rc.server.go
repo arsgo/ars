@@ -24,9 +24,9 @@ type RCServer struct {
 	clusterClient   cluster.IClusterClient
 	startSync       base.Sync
 	IsMaster        bool
-	currentServices concurrent.ConcurrentMap
-	crossDomain     concurrent.ConcurrentMap //map[string]cluster.IClusterClient
-	crossService    concurrent.ConcurrentMap //map[string]map[string][]string
+	currentServices *concurrent.ConcurrentMap
+	crossDomain     *concurrent.ConcurrentMap //map[string]cluster.IClusterClient
+	crossService    *concurrent.ConcurrentMap //map[string]map[string][]string
 	Log             logger.ILogger
 	rcRPCServer     *server.RPCServer  //RC Server服务供RPC调用
 	spRPCClient     *rpc.RPCClient     //SP Server调用客户端

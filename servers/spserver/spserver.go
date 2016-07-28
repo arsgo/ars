@@ -33,7 +33,7 @@ type SPServer struct {
 	rpcScriptProxy *proxy.ScriptProxy //RPC Server 脚本处理程序
 	clusterClient  cluster.IClusterClient
 	scriptPool     *script.ScriptPool //脚本引擎池
-	dbPool         concurrent.ConcurrentMap
+	dbPool         *concurrent.ConcurrentMap
 	snap           SPSnap
 	loggerName     string
 	version        string

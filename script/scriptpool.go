@@ -46,7 +46,7 @@ type ScriptPool struct {
 	Log           logger.ILogger
 	clusterClient cluster.IClusterClient
 	rpcclient     *rpc.RPCClient
-	snaps         concurrent.ConcurrentMap
+	snaps         *concurrent.ConcurrentMap
 }
 
 //NewScriptPool 创建脚本POOl

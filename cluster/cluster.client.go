@@ -44,7 +44,7 @@ type ClusterClient struct {
 	rpcProviderRootPath string
 	appServerPath       string
 	spServerTaskPath    string
-	configCache         concurrent.ConcurrentMap
+	configCache         *concurrent.ConcurrentMap
 	handler             IClusterHandler
 	Log                 logger.ILogger
 	timeout             time.Duration
