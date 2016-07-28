@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/colinyl/lib4go/concurrent"
@@ -33,23 +34,25 @@ const (
 
 //ClusterClient 集群客户端
 type ClusterClient struct {
-	domain              string
-	domainPath          string
-	appServerTaskPath   string
-	rcServerRoot        string
-	rcServerConfig      string
-	jobConfigPath       string
-	spConfigPath        string
-	rpcPublishPath      string
-	rpcProviderRootPath string
-	appServerPath       string
-	spServerTaskPath    string
-	configCache         *concurrent.ConcurrentMap
-	handler             IClusterHandler
-	Log                 logger.ILogger
-	timeout             time.Duration
-	dataMap             utility.DataMap
-	IP                  string
+	domain                  string
+	domainPath              string
+	appServerTaskPath       string
+	rcServerRoot            string
+	rcServerConfig          string
+	jobConfigPath           string
+	spConfigPath            string
+	rpcPublishPath          string
+	rpcProviderRootPath     string
+	appServerPath           string
+	spServerTaskPath        string
+	lastServiceProviderList ServiceProviderList
+	publishLock             sync.Mutex
+	configCache             *concurrent.ConcurrentMap
+	handler                 IClusterHandler
+	Log                     logger.ILogger
+	timeout                 time.Duration
+	dataMap                 utility.DataMap
+	IP                      string
 }
 
 func NewClusterClient(domain string, ip string, handler IClusterHandler, loggerName string) (client *ClusterClient, err error) {

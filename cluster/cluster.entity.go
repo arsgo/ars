@@ -1,5 +1,7 @@
 package cluster
 
+import "strings"
+
 //----------------app server-------------------------------
 type JobItem struct {
 	Name        string `json:"name"`
@@ -97,6 +99,35 @@ func (c CrossDoaminAccessItem) GetServicesMap() map[string][]string {
 		m[k] = c.Servers
 	}
 	return m
+}
+func (c ServiceProviderList) Equal(input ServiceProviderList) bool {
+	if input == nil {
+		return false
+	}
+	if len(c) != len(input) {
+		return false
+	}
+	for i, v := range c {
+		if _, ok := input[i]; !ok {
+			return false
+		}
+		if len(v) != len(input[i]) {
+			return false
+		}
+		for _, m := range v {
+			hasExist := false
+			for _, n := range input[i] {
+				if strings.EqualFold(m, n) {
+					hasExist = true
+					break
+				}
+			}
+			if !hasExist {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 //---------------------------------------------------------
