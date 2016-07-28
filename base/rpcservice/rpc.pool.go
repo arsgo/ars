@@ -149,7 +149,7 @@ func (p *RPCServerPool) Get(group string, svName string, input string) (result [
 
 	o, err := p.pool.Get(group)
 	if err != nil {
-		err = errors.New("not find rpc server")
+		err = fmt.Errorf("not find rpc server:%s", err)
 		return
 	}
 	obj := o.(*RPCClient)
