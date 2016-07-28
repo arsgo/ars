@@ -7,6 +7,7 @@ RPC客户端，维护RPC服务器列表，并提供RPC服务调用接口，调�
 package rpc
 
 import (
+	"errors"
 	"fmt"
 	"runtime/debug"
 	"strings"
@@ -184,6 +185,7 @@ func (r *RPCClient) Request(cmd string, input string, session string) (result st
 	if strings.EqualFold(group, "") {
 		result = base.GetErrorResult("500", "not find rpc server(", r.loggerName, "):", name, " in service list",
 			r.services.GetAll())
+		err = errors.New(result)
 		return
 	}
 	defer r.setLifeTime(group, time.Now())

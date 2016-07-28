@@ -61,7 +61,10 @@ func (h *RPCClientProxy) CloseTask(ti cluster.TaskItem) {
 //Request 执行Request请求
 func (h *RPCClientProxy) Request(ti cluster.TaskItem, input string, session string) (r string, err error) {
 	defer h.recover()
-	r, _ = h.client.Request(ti.Name, input, session)
+	r, er := h.client.Request(ti.Name, input, session)
+	if er != nil {
+		r = er.Error()
+	}
 	return
 }
 
