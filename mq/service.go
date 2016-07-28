@@ -55,23 +55,28 @@ func (mq *MQConsumerService) UpdateTasks(tasks []cluster.TaskItem) (err error) {
 	//启动已添加的服务
 	for k, v := range consumers {
 		if c := mq.consumers.Get(k); c == nil {
-			current, err := NewMQConsumer(v, mq.clusterClient, func(msg string, tk cluster.TaskItem) bool {
-				return mq.handler.Handle(tk, msg, utility.GetSessionID())
-			})
-			if err != nil {
-				mq.Log.Fatal("mq create error:", err)
-				continue
-			}
-			mq.Log.Infof("::start mq consumer:[%s] %s", v.Name, v.Script)
-			mq.consumers.Set(k, current)
-			go func(mq *MQConsumerService, current *MQConsumer) {
-				mq.recover()
-				current.Start()
-			}(mq, current)
+			mq.consumers.Add(k, mq.createConsumer, v)
 		}
 	}
 	return
 
+}
+func (mq *MQConsumerService) createConsumer(args ...interface{}) (r interface{}, err error) {
+	v := args[0].(cluster.TaskItem)
+	current, err := NewMQConsumer(v, mq.clusterClient, func(msg string, tk cluster.TaskItem) bool {
+		return mq.handler.Handle(tk, msg, utility.GetSessionID())
+	})
+	if err != nil {
+		mq.Log.Fatal("mq create error:", err)
+		return
+	}
+	mq.Log.Infof("::start mq consumer:[%s] %s", v.Name, v.Script)
+	go func(mq *MQConsumerService, current *MQConsumer) {
+		mq.recover()
+		current.Start()
+	}(mq, current)
+	r = current
+	return
 }
 
 //getTasks 获取当前服务列表

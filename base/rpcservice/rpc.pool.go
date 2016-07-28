@@ -80,7 +80,7 @@ func (s *RPCServerPool) Register(svs map[string]string) {
 					s.Log.Error(err)
 					return
 				}
-				s.servers.Set(ip, &rpcServerService{IP: ip, Status: true})
+				s.servers.Set(ip, &rpcServerService{IP:ip, Status: true}) //set ->add
 			}(ip)
 		}
 	}
