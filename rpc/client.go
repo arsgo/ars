@@ -182,7 +182,8 @@ func (r *RPCClient) Request(cmd string, input string, session string) (result st
 	name := r.client.GetServiceFullPath(cmd)
 	group := r.getGroupName(name)
 	if strings.EqualFold(group, "") {
-		result = base.GetErrorResult("500", "not find rpc server(", r.loggerName, "):", name, " in service list")
+		result = base.GetErrorResult("500", "not find rpc server(", r.loggerName, "):", name, " in service list",
+			r.services.GetAll())
 		return
 	}
 	defer r.setLifeTime(group, time.Now())
