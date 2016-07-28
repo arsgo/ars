@@ -99,16 +99,20 @@ func (r *RPCClient) ResetRPCServer(servers map[string][]string) string {
 			}
 		}
 		if len(v) > 0 {
+			r.Log.Info("rpc.clent.set:", n, v)
 			r.services.Set(n, &serviceItem{service: v}) //添加新服务
 		} else {
+			r.Log.Info("rpc.clent.del:", n)
 			r.services.Delete(n) //移除无可用IP的服务
 		}
 	}
 	for k := range service {
 		if _, ok := servers[k]; !ok {
+			r.Log.Info("rpc.clent.del:", k)
 			r.services.Delete(k) //移除已不存在的服务
 		}
 	}
+	r.Log.Info("rpc.client:", len(r.services.GetAll()), len(ips))
 	r.pool.Register(ips)
 	return strings.Join(aips, ",")
 }
@@ -157,7 +161,6 @@ func (r *RPCClient) getDomain(name string) string {
 
 //getGroupName 根据名称获取一个分组
 func (r *RPCClient) getGroupName(name string) string {
-
 	group := r.services.Get(name)
 	if group == nil {
 		group = r.services.Get("*" + r.getDomain(name))
