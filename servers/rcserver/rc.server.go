@@ -80,7 +80,7 @@ func (rc *RCServer) Start() (err error) {
 		rc.Log.Error(err)
 		return
 	}
-	if !rc.clusterClient.WatchConnected() {
+	if !rc.clusterClient.WaitForConnected() {
 		return
 	}
 	//启动RPC服务,供APP,SP调用

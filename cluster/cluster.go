@@ -12,8 +12,10 @@ type IClusterHandler interface {
 	UpdateValue(path string, value string) error
 	WatchValue(path string, data chan string) error
 	WatchChildren(path string, data chan []string) error
-	WatchConnected() bool
+	WaitForConnected() bool
+	WaitForDisconnected() bool
 	Delete(path string) error
+	Reconnect() error
 	Close()
 }
 type IClusterClient interface {
@@ -26,18 +28,23 @@ type IClusterClient interface {
 	GetElasticConfig(name string) (string, error)
 	GetDBConfig(name string) (string, error)
 	GetServiceFullPath(name string) string
-	WatchConnected() bool
+	WaitForConnected() bool
+	WaitForDisconnected() bool
+	Reconnect() error
 	Close()
 
 	//app server..........
 	WatchAppTaskChange(callback func(config *AppServerStartupConfig, err error) error)
 	GetAppServerStartupConfig(path string) (config *AppServerStartupConfig, err error)
-	ResetAppServerSnap(snap string) error
+	UpdateAppServerSnap(snap string) error
+	CloseAppServer(err error)
+
 	//rc server...........
 	WatchRCServerChange(callback func([]*RCServerItem, error))
 	GetRCServerValue(path string) (value *RCServerItem, err error)
 	GetAllRCServerValues() (servers []*RCServerItem, err error)
 	CreateRCServer(value string) (string, error)
+	CloseRCServer(path string) error
 	GetRCServerTasks() (config RCServerTask, err error)
 	WatchRCTaskChange(callback func(RCServerTask, error))
 
@@ -61,7 +68,7 @@ type IClusterClient interface {
 	FilterRPCService(map[string][]string) ([]TaskItem, error)
 	PublishRPCServices(services ServiceProviderList) (err error)
 	GetServiceProviderPaths() (lst ServiceProviderList, err error)
-	ResetSnap(addr string, snap string) (err error)
+	UpdateSnap(addr string, snap string) (err error)
 	CreateServiceProvider(name string, port string, value string) (string, error)
 	CloseServiceProvider(path string) error
 }

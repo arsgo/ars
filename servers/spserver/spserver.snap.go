@@ -53,6 +53,13 @@ func (sp *SPServer) ResetSPSnap() {
 	}
 }
 
+func (sp *SPServer) CloseSPServer() {
+	services := sp.rpcScriptProxy.GetTasks()
+	for _, v := range services {
+		sp.clusterClient.CloseServiceProvider(v)
+	}
+}
+
 //StartRefreshSnap 启动快照刷新服务
 func (sp *SPServer) StartRefreshSnap() {
 	defer sp.recover()
@@ -71,6 +78,14 @@ func (sp *SPServer) StartRefreshSnap() {
 		}
 	}
 
+}
+func (sp *SPServer) StartCloseSpServer() {
+START:
+	if sp.clusterClient.WaitForDisconnected() {
+		sp.CloseSPServer()
+		sp.ResetSPSnap()
+		goto START
+	}
 }
 func (sp *SPServer) recover() {
 	if r := recover(); r != nil {

@@ -59,6 +59,11 @@ func (client *ClusterClient) CreateRCServer(value string) (string, error) {
 	return client.handler.CreateSeqNode(client.dataMap.Translate(p_rcServerClusterClientBase), value)
 }
 
+//CloseRCServer close rc server
+func (client *ClusterClient) CloseRCServer(path string) error {
+	return client.handler.Delete(path)
+}
+
 //GetRCServerTasks 获取RC Server任务
 func (client *ClusterClient) GetRCServerTasks() (config RCServerTask, err error) {
 	value, err := client.handler.GetValue(client.rcServerConfig)

@@ -84,7 +84,7 @@ func (sp *SPServer) Start() (err error) {
 		sp.Log.Error(err)
 		return
 	}
-	if !sp.clusterClient.WatchConnected() {
+	if !sp.clusterClient.WaitForConnected() {
 		return
 	}
 	sp.rpcServer.Start()
@@ -99,6 +99,7 @@ func (sp *SPServer) Start() (err error) {
 	})
 	sp.startSync.Wait()
 	go sp.StartRefreshSnap()
+	go sp.StartCloseSpServer()
 	sp.Log.Info(" -> SP Server 启动完成...")
 	return nil
 }

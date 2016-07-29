@@ -45,6 +45,7 @@ type ClusterClient struct {
 	rpcProviderRootPath     string
 	appServerPath           string
 	spServerTaskPath        string
+	closeChans              *concurrent.ConcurrentMap
 	lastServiceProviderList ServiceProviderList
 	publishLock             sync.Mutex
 	configCache             *concurrent.ConcurrentMap
@@ -63,6 +64,7 @@ func NewClusterClient(domain string, ip string, handler IClusterHandler, loggerN
 	client.dataMap = utility.NewDataMap()
 	client.dataMap.Set("domain", client.domain)
 	client.dataMap.Set("ip", client.IP)
+	client.closeChans = concurrent.NewConcurrentMap()
 	client.appServerTaskPath = client.dataMap.Translate(p_appTaskConfig)
 	client.rcServerRoot = client.dataMap.Translate(p_rcServerRoot)
 	client.rcServerConfig = client.dataMap.Translate(p_rcServerTaskConfig)
@@ -77,6 +79,11 @@ func NewClusterClient(domain string, ip string, handler IClusterHandler, loggerN
 	client.handler = handler
 	return
 }
+func (client *ClusterClient) makeCloseChan() chan int {
+	closeChan := make(chan int, 1)
+	client.closeChans.Set(utility.GetGUID(), closeChan)
+	return closeChan
+}
 
 //WaitClusterPathExists  等待集群中的指定配置出现,不存在时持续等待
 func (client *ClusterClient) WaitClusterPathExists(path string, timeout time.Duration, callback func(exists bool)) {
@@ -87,9 +94,7 @@ func (client *ClusterClient) WaitClusterPathExists(path string, timeout time.Dur
 	callback(false)
 	timePiker := time.NewTicker(time.Second * 2)
 	timeoutPiker := time.NewTicker(timeout)
-	defer func() {
-		timeoutPiker.Stop()
-	}()
+	closeChan := client.makeCloseChan()
 CHECKER:
 	for {
 		select {
@@ -99,6 +104,8 @@ CHECKER:
 			if client.handler.Exists(path) {
 				break CHECKER
 			}
+		case <-closeChan:
+			break CHECKER
 		}
 	}
 	callback(client.handler.Exists(path))
@@ -111,7 +118,9 @@ func (client *ClusterClient) WatchClusterValueChange(path string, callback func(
 		defer client.recover()
 		client.handler.WatchValue(path, changes)
 	}()
+	closeChan := client.makeCloseChan()
 	go func() {
+	START:
 		for {
 			select {
 			case <-changes:
@@ -119,6 +128,8 @@ func (client *ClusterClient) WatchClusterValueChange(path string, callback func(
 					defer client.recover()
 					callback()
 				}
+			case <-closeChan:
+				break START
 			}
 		}
 	}()
@@ -128,11 +139,12 @@ func (client *ClusterClient) WatchClusterValueChange(path string, callback func(
 func (client *ClusterClient) WatchClusterChildrenChange(path string, callback func()) {
 	changes := make(chan []string, 10)
 	go func() {
-
 		go func() {
 			defer client.recover()
 			client.handler.WatchChildren(path, changes)
 		}()
+		closeChan := client.makeCloseChan()
+	START:
 		for {
 			select {
 			case <-changes:
@@ -140,17 +152,34 @@ func (client *ClusterClient) WatchClusterChildrenChange(path string, callback fu
 					defer client.recover()
 					callback()
 				}
+			case <-closeChan:
+				break START
 			}
 		}
 	}()
 }
 
-//WatchConnected 监控是否已链接到当前服务器
-func (client *ClusterClient) WatchConnected() bool {
-	return client.handler.WatchConnected()
+//WaitForConnected 监控是否已链接到当前服务器
+func (client *ClusterClient) WaitForConnected() bool {
+	return client.handler.WaitForConnected()
+}
+
+//WaitForDisconnected 监控是否已链接到当前服务器
+func (client *ClusterClient) WaitForDisconnected() bool {
+	return client.handler.WaitForDisconnected()
+}
+
+//Reconnect 重新连接到服务器
+func (client *ClusterClient) Reconnect() error {
+	return client.handler.Reconnect()
 }
 
 //Close 关闭当前集群客户端
 func (client *ClusterClient) Close() {
+	all := client.closeChans.GetAll()
+	for _, v := range all {
+		ch := v.(chan int)
+		ch <- 1
+	}
 	client.handler.Close()
 }

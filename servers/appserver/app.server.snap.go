@@ -76,6 +76,17 @@ func (app *AppServer) StartRefreshSnap() {
 		}
 	}
 }
+func (app *AppServer) StartResetSnap() {
+START:
+	if app.clusterClient.WaitForDisconnected() {
+		app.CloseAppServer()
+		app.CloseJobSnap()
+		app.ResetAPPSnap()
+		app.ResetJobSnap()
+
+		goto START
+	}
+}
 
 //ResetJobSnap 重置JOB快照信息
 func (app *AppServer) ResetJobSnap() (err error) {
@@ -85,10 +96,20 @@ func (app *AppServer) ResetJobSnap() (err error) {
 	}
 	return nil
 }
+func (app *AppServer) CloseJobSnap() (err error) {
+	paths := app.scriptPorxy.GetTasks()
+	for _, path := range paths {
+		app.clusterClient.CloseJobConsumer(path)
+	}
+	return nil
+}
 
 //ResetAPPSnap 刷新APP快照信息
 func (app *AppServer) ResetAPPSnap() (err error) {
-	snap := app.snap.GetSnap()
-	err = app.clusterClient.ResetAppServerSnap(snap)
-	return
+	return app.clusterClient.ResetAppServerSnap(app.snap.GetSnap())
+}
+
+//CloseAppServer 关闭 APP Server
+func (app *AppServer) CloseAppServer() (err error) {
+	return app.clusterClient.CloseAppServer()
 }
