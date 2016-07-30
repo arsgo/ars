@@ -12,7 +12,6 @@ import (
 //BindRCServer 绑定服务
 func (rc *RCServer) BindRCServer() (err error) {
 	rc.snap.Address = fmt.Sprint(rc.snap.ip, rc.rcRPCServer.Address)
-STARTSERVER:
 	rc.snap.Path, err = rc.clusterClient.CreateRCServer(rc.snap.GetSnap())
 	if err != nil {
 		return
@@ -67,18 +66,19 @@ STARTSERVER:
 			rc.Log.Info(" |-> local services has changed:", services, len(tasks), ip)
 		}
 	})
-	go func() {
-		//监控 cluster是否已断开连接, 断开后则关闭重试,并重新创建连接到cluster,并重新启动所有服务
-		if rc.clusterClient.WaitForDisconnected() {
-			rc.clusterClient.Close()
-			if r := rc.clusterClient.Reconnect(); r != nil {
-				rc.Log.Error(r)
-				return
-			}
-			goto STARTSERVER
+	go rc.waitForReconnect() //第二次启动不应该使用go
+}
+func (rc *RCServer) waitForReconnect() {
+	if rc.clusterClient.WaitForDisconnected() {
+		rc.clusterClient.Close()
+		if r := rc.clusterClient.Reconnect(); r != nil {
+			rc.Log.Error(r)
+			return
 		}
-	}()
-	return
+		if r := rc.BindRCServer(); r != nil {
+			rc.Log.Error(r)
+		}
+	}
 }
 
 //PublishNow 立即发布服务

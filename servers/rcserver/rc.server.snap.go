@@ -43,13 +43,13 @@ func (rs RCSnap) GetSnap() string {
 
 //RefreshSnap 刷新快照信息
 func (rc *RCServer) RefreshSnap() {
-	rc.clusterClient.ResetSnap(rc.snap.Path, rc.snap.GetSnap())
+	rc.clusterClient.UpdateSnap(rc.snap.Path, rc.snap.GetSnap())
 }
 
 //StartRefreshSnap 启动定时刷新
 func (rc *RCServer) StartRefreshSnap() {
 	defer rc.recover()
-	rc.clusterClient.ResetSnap(rc.snap.Path, rc.snap.GetSnap())
+	rc.clusterClient.UpdateSnap(rc.snap.Path, rc.snap.GetSnap())
 	rc.RefreshSnap()
 	tp := time.NewTicker(time.Second * 60)
 	free := time.NewTicker(time.Second * 122)
