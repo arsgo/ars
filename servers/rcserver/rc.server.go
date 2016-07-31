@@ -23,6 +23,7 @@ const (
 type RCServer struct {
 	clusterClient   cluster.IClusterClient
 	startSync       base.Sync
+	domain	string
 	isReconnect 	bool
 	IsMaster        bool
 	currentServices *concurrent.ConcurrentMap
@@ -57,6 +58,7 @@ func (rc *RCServer) init() (err error) {
 		return
 	}
 	rc.Log.Infof(" -> 初始化 %s...", cfg.Domain)
+	rc.domain=cfg.Domain
 	rc.clusterClient, err = cluster.GetClusterClient(cfg.Domain, cfg.IP, rc.loggerName, cfg.ZKServers...)
 	if err != nil {
 		return

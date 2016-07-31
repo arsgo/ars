@@ -85,6 +85,11 @@ func (rc *RPCClient) recover() {
 		rc.Log.Fatal(r, string(debug.Stack()))
 	}
 }
+
+func (r *RPCClient) GetServices() map[string]interface{} {
+	return r.services.GetAll()
+}
+
 func (r *RPCClient) GetServiceCount() int {
 	return r.services.GetLength()
 }

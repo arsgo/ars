@@ -80,10 +80,8 @@ func (rc *RCServer) startMonitor() {
 		for {
 			select {
 			case <-tk.C:
-				minServices := rc.crossDomain.GetLength() + 1
-				currentServices := rc.spRPCClient.GetServiceCount()
-				if currentServices < minServices {
-					rc.Log.Info(" -> service len cant less than ", minServices, currentServices)
+				if rc.needBindRPCService() {
+					rc.Log.Info(" -> need bind all services")
 					rc.BindSPServers(rc.clusterClient.GetRPCService())
 				}
 			}
@@ -98,6 +96,29 @@ START:
 		}
 		goto START
 	}
+}
+func (rc *RCServer) needBindRPCService() bool {
+	nmap := make(map[string]bool)
+	cdomain := strings.Replace(strings.TrimLeft(rc.domain, "/"), "/", ".", -1)
+	nmap[cdomain] = false
+	all := rc.crossDomain.GetAll()
+	for i := range all {
+		nmap[i] = false
+	}
+	services := rc.spRPCClient.GetServices()
+	for sv := range services {
+		index := strings.LastIndex(sv, "@")
+		domain := sv[index+1:]
+		if _, ok := nmap[domain]; ok {
+			nmap[domain] = true
+		}
+	}
+	for _, v := range nmap {
+		if !v {
+			return true
+		}
+	}
+	return false
 }
 
 //PublishAll 发布所有服务
@@ -134,7 +155,7 @@ func (rc *RCServer) BindSPServers(services map[string][]string, err error) {
 		return
 	}
 	if rc.rcRPCServer.UpdateTasks(tasks) > 0 {
-		rc.Log.Info(" |-> local services has changed:", len(tasks), ip)
+		rc.Log.Info(" |-> local services has changed:", len(tasks), ",", ip)
 	}
 }
 
