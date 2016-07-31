@@ -133,6 +133,7 @@ func (client *ClusterClient) WatchClusterValueChange(path string, callback func(
 			}
 		}
 	}()
+
 }
 
 //WatchClusterChildrenChange 监控集群指定路径的子节点变化

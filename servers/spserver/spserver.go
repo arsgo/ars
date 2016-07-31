@@ -98,8 +98,8 @@ func (sp *SPServer) Start() (err error) {
 		sp.BindRCServer(config, err)
 	})
 	sp.startSync.Wait()
-	go sp.StartRefreshSnap()
-	go sp.StartCloseSpServer()
+	go sp.startRefreshSnap()
+	go sp.startMonitor()
 	sp.Log.Info(" -> SP Server 启动完成...")
 	return nil
 }

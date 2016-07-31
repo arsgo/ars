@@ -37,7 +37,7 @@ type IClusterClient interface {
 	WatchAppTaskChange(callback func(config *AppServerStartupConfig, err error) error)
 	GetAppServerStartupConfig(path string) (config *AppServerStartupConfig, err error)
 	UpdateAppServerSnap(snap string) error
-	CloseAppServer(err error)
+	CloseAppServer() error
 
 	//rc server...........
 	WatchRCServerChange(callback func([]*RCServerItem, error))
@@ -67,7 +67,7 @@ type IClusterClient interface {
 	GetServiceTasks() (ServiceProviderTask, error)
 	FilterRPCService(map[string][]string) ([]TaskItem, error)
 	PublishRPCServices(services ServiceProviderList) (err error)
-	GetServiceProviderPaths() (lst ServiceProviderList, err error)
+	GetServiceProviders() (lst ServiceProviderList, err error)
 	UpdateSnap(addr string, snap string) (err error)
 	CreateServiceProvider(name string, port string, value string) (string, error)
 	CloseServiceProvider(path string) error

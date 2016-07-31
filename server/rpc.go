@@ -146,7 +146,7 @@ func (r *RPCHandlerProxy) getTaskItem(name string) (item cluster.TaskItem, err e
 		item.Name = name
 		return
 	}
-	err = fmt.Errorf("not find service(%s@%s.rpc.server):%s,%s", r.loggerName, r.domain, name, r.tasks.Services.GetAll())
+	err = fmt.Errorf("not find service(%s@%s.rpc.server):%s,%d", r.loggerName, r.domain, name, r.tasks.Services.GetLength())
 	return
 }
 

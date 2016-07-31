@@ -46,8 +46,8 @@ func (rc *RCServer) RefreshSnap() {
 	rc.clusterClient.UpdateSnap(rc.snap.Path, rc.snap.GetSnap())
 }
 
-//StartRefreshSnap 启动定时刷新
-func (rc *RCServer) StartRefreshSnap() {
+//startRefreshSnap 启动定时刷新
+func (rc *RCServer) startRefreshSnap() {
 	defer rc.recover()
 	rc.clusterClient.UpdateSnap(rc.snap.Path, rc.snap.GetSnap())
 	rc.RefreshSnap()

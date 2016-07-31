@@ -85,6 +85,9 @@ func (rc *RPCClient) recover() {
 		rc.Log.Fatal(r, string(debug.Stack()))
 	}
 }
+func (r *RPCClient) GetServiceCount() int {
+	return r.services.GetLength()
+}
 
 //ResetRPCServer 重置所有RPC服务器
 func (r *RPCClient) ResetRPCServer(servers map[string][]string) string {
@@ -112,7 +115,7 @@ func (r *RPCClient) ResetRPCServer(servers map[string][]string) string {
 			r.services.Delete(k) //移除已不存在的服务
 		}
 	}
-	r.Log.Info("rpc.client:", len(r.services.GetAll()), len(ips))
+	r.Log.Info("rpc.client:", r.services.GetLength(), len(ips))
 	r.pool.Register(ips)
 	return strings.Join(aips, ",")
 }
@@ -196,7 +199,7 @@ func (r *RPCClient) Request(cmd string, input string, session string) (result st
 	group := r.getGroupName(name)
 	if strings.EqualFold(group, "") {
 		result = base.GetErrorResult("500", "not find rpc server(", r.loggerName, "@", r.domain, ".rpc.client):", name, " in service list",
-			r.services.GetAll())
+			r.services.GetLength())
 		err = errors.New(result)
 		return
 	}

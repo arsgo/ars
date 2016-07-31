@@ -91,7 +91,7 @@ func (app *AppServer) Start() (err error) {
 	})
 	app.startSync.Wait()
 	go app.StartRefreshSnap()
-	go app.StartResetSnap()
+	go app.startMonitor()
 	app.Log.Info(" -> APP Server 启动完成...")
 	return nil
 }

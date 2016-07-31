@@ -49,7 +49,7 @@ func (sp *SPServer) ResetSPSnap() {
 	sp.snap.Snap.Script, _ = json.Marshal(sp.scriptPool.GetSnap())
 	sp.snap.Mem = sysinfo.GetAPPMemory()
 	for k, v := range services {
-		sp.clusterClient.ResetSnap(v, sp.snap.GetSnap(k))
+		sp.clusterClient.UpdateSnap(v, sp.snap.GetSnap(k))
 	}
 }
 
@@ -61,7 +61,7 @@ func (sp *SPServer) CloseSPServer() {
 }
 
 //StartRefreshSnap 启动快照刷新服务
-func (sp *SPServer) StartRefreshSnap() {
+func (sp *SPServer) startRefreshSnap() {
 	defer sp.recover()
 	sp.ResetSPSnap()
 	tp := time.NewTicker(time.Second * 60)
@@ -77,15 +77,15 @@ func (sp *SPServer) StartRefreshSnap() {
 			debug.FreeOSMemory()
 		}
 	}
-
 }
-func (sp *SPServer) StartCloseSpServer() {
-START:
-	if sp.clusterClient.WaitForDisconnected() {
-		sp.CloseSPServer()
-		sp.ResetSPSnap()
-		goto START
-	}
+
+func (sp *SPServer) resetCluster() {
+	sp.Log.Info("关闭所有服务")
+	sp.CloseSPServer()
+	sp.Log.Info("启动所有服务")
+	time.Sleep(time.Second)
+	sp.ResetSPSnap()
+
 }
 func (sp *SPServer) recover() {
 	if r := recover(); r != nil {

@@ -76,16 +76,14 @@ func (app *AppServer) StartRefreshSnap() {
 		}
 	}
 }
-func (app *AppServer) StartResetSnap() {
-START:
-	if app.clusterClient.WaitForDisconnected() {
-		app.CloseAppServer()
-		app.CloseJobSnap()
-		app.ResetAPPSnap()
-		app.ResetJobSnap()
-
-		goto START
-	}
+func (app *AppServer) resetCluster() {
+	app.Log.Info("关闭所有服务")
+	app.CloseAppServer()
+	app.CloseJobSnap()
+	time.Sleep(time.Second)
+	app.Log.Info("启动所有服务")
+	app.ResetAPPSnap()
+	app.ResetJobSnap()
 }
 
 //ResetJobSnap 重置JOB快照信息
@@ -106,7 +104,7 @@ func (app *AppServer) CloseJobSnap() (err error) {
 
 //ResetAPPSnap 刷新APP快照信息
 func (app *AppServer) ResetAPPSnap() (err error) {
-	return app.clusterClient.ResetAppServerSnap(app.snap.GetSnap())
+	return app.clusterClient.UpdateAppServerSnap(app.snap.GetSnap())
 }
 
 //CloseAppServer 关闭 APP Server

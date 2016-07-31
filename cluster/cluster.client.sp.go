@@ -38,14 +38,14 @@ func (client *ClusterClient) WatchServiceProviderChange(changed func(ServiceProv
 		} else {
 			go func() {
 				defer client.recover()
-				changed(client.GetServiceProviderPaths())
+				changed(client.GetServiceProviders())
 			}()
 		}
 	})
 	client.WatchClusterChildrenChange(client.rpcProviderRootPath, func() {
 		go func() {
 			defer client.recover()
-			changed(client.GetServiceProviderPaths())
+			changed(client.GetServiceProviders())
 		}()
 	})
 	lst, err := client.GetAllServiceProviderNamePath()
@@ -54,7 +54,7 @@ func (client *ClusterClient) WatchServiceProviderChange(changed func(ServiceProv
 			client.WatchClusterChildrenChange(p, func() {
 				go func() {
 					defer client.recover()
-					changed(client.GetServiceProviderPaths())
+					changed(client.GetServiceProviders())
 				}()
 			})
 		}
@@ -78,8 +78,8 @@ func (client *ClusterClient) GetAllServiceProviderNamePath() (lst map[string][]s
 	return
 }
 
-//GetServiceProviderPaths 根据服务提供方路径,获取所有服务列表
-func (client *ClusterClient) GetServiceProviderPaths() (lst ServiceProviderList, err error) {
+//GetServiceProviders 根据服务提供方路径,获取所有服务列表
+func (client *ClusterClient) GetServiceProviders() (lst ServiceProviderList, err error) {
 	lst = make(map[string][]string)
 	serviceList, err := client.handler.GetChildren(client.rpcProviderRootPath)
 	if err != nil {

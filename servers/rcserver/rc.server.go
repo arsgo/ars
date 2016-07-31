@@ -23,6 +23,7 @@ const (
 type RCServer struct {
 	clusterClient   cluster.IClusterClient
 	startSync       base.Sync
+	isReconnect 	bool
 	IsMaster        bool
 	currentServices *concurrent.ConcurrentMap
 	crossDomain     *concurrent.ConcurrentMap //map[string]cluster.IClusterClient
@@ -91,7 +92,8 @@ func (rc *RCServer) Start() (err error) {
 		return
 	}
 	rc.startSync.Wait()
-	go rc.StartRefreshSnap()
+	go rc.startRefreshSnap()
+	go rc.startMonitor()
 	rc.Log.Info(" -> RC Server 启动完成...")
 	return nil
 }
