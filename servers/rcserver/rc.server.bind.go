@@ -81,9 +81,12 @@ func (rc *RCServer) startMonitor() {
 			select {
 			case <-tk.C:
 				if rc.needBindRPCService() {
-					rc.Log.Info(" -> need bind all services")
+					if rc.IsMaster {
+						rc.Log.Info(" -> need bind all services")
+						rc.PublishAll()
+					}
 
-					rc.BindSPServers(rc.GetAllDomainServices())
+					///	rc.BindSPServers(rc.GetAllDomainServices())
 				}
 			}
 		}
