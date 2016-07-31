@@ -123,7 +123,7 @@ func (r *HTTPScriptController) Handle(context *webserver.Context) {
 	data, err := json.Marshal(&params)
 	if err != nil {
 		context.Log.Info("-->api.request/response.error:", context.Request.URL.Path, err)
-		r.setResponse(context.Log, context.Writer, make(map[string]string), 500, err.Error())
+		r.setResponse(context, make(map[string]string), 500, err.Error())
 		return
 	}
 	input := string(data)
@@ -131,22 +131,22 @@ func (r *HTTPScriptController) Handle(context *webserver.Context) {
 	result, output, err := r.server.call(r.config.Script, base.NewInvokeContext(r.loggerName, context.Session, input, r.config.Params, body))
 	r.setHeader(context.Writer, output)
 	if err != nil {
-		r.setResponse(context.Log, context.Writer, output, 500, err.Error())
+		r.setResponse(context, output, 500, err.Error())
 		return
 	}
 	switch len(result) {
 	case 0:
-		r.setResponse(context.Log, context.Writer, output, 200, "")
+		r.setResponse(context, output, 200, "")
 	case 1:
-		r.setResponse(context.Log, context.Writer, output, 200, result[0])
+		r.setResponse(context, output, 200, result[0])
 	case 2:
 		if result[0] == "302" {
-			r.setResponse(context.Log, context.Writer, output, 302, result[1])
+			r.setResponse(context, output, 302, result[1])
 		} else {
-			r.setResponse(context.Log, context.Writer, output, 500, "system busy")
+			r.setResponse(context, output, 500, "system busy")
 		}
 	default:
-		r.setResponse(context.Log, context.Writer, output, 500, "system busy")
+		r.setResponse(context, output, 500, "system busy")
 	}
 
 	return
@@ -160,27 +160,27 @@ func (r *HTTPScriptController) setHeader(ctx http.ResponseWriter, input map[stri
 		ctx.Header().Set(i, v)
 	}
 }
-func (r *HTTPScriptController) setResponse(log logger.ILogger, ctx http.ResponseWriter, config map[string]string, code int, msg string) {
+func (r *HTTPScriptController) setResponse(context *webserver.Context, config map[string]string, code int, msg string) {
 	responseContent := ""
 	switch code {
 	case 200:
 		{
 			responseContent = base.GetDataResult(msg, base.IsRaw(config))
-			ctx.Write([]byte(responseContent))
+			context.Writer.Write([]byte(responseContent))
 		}
 	case 500:
 		{
 			responseContent = base.GetErrorResult(string(code), msg)
-			ctx.WriteHeader(500)
-			ctx.Write([]byte(responseContent))
+			context.Writer.WriteHeader(500)
+			context.Writer.Write([]byte(responseContent))
 		}
 	case 302:
 		{
 			responseContent = msg
-			ctx.Header().Set("Location", responseContent)
-			ctx.WriteHeader(302)
-			ctx.Write([]byte("Redirecting to: " + responseContent))
+			context.Writer.Header().Set("Location", responseContent)
+			context.Writer.WriteHeader(302)
+			context.Writer.Write([]byte("Redirecting to: " + responseContent))
 		}
 	}
-	log.Infof("api.response:%d %s", code, responseContent)
+	context.Log.Infof("api.response:[%d,%v]%s", code, context.PassTime(), responseContent)
 }
