@@ -93,10 +93,10 @@ type RCServerTask struct {
 	RPCPoolSetting    RPCPoolSetting                   `json:"rpc-pool"`
 }
 
-func (c CrossDoaminAccessItem) GetServicesMap() map[string][]string {
+func (c CrossDoaminAccessItem) GetServicesMap(domain string) map[string][]string {
 	m := make(map[string][]string)
 	for _, k := range c.Services {
-		m[k] = c.Servers
+		m[k+"@"+domain] = c.Servers
 	}
 	return m
 }

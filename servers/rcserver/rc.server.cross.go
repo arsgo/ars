@@ -21,8 +21,8 @@ func (rc *RCServer) ResetCrossDomainServices(task cluster.RCServerTask) {
 		if _, ok := allServices[domain]; ok {
 			continue
 		}
-		crossData := item.GetServicesMap()     //转换为服务映射表
-		rc.crossService.Set(domain, crossData) //添加到服务列表
+		crossData := item.GetServicesMap(domain) //转换为服务映射表
+		rc.crossService.Set(domain, crossData)   //添加到服务列表
 	}
 	//删除，更新服务
 	for domain, svs := range allServices {
@@ -31,8 +31,8 @@ func (rc *RCServer) ResetCrossDomainServices(task cluster.RCServerTask) {
 			continue
 		}
 		//检查本地服务是否与远程服务一致
-		currentServices := svs.(cluster.ServiceProviderList)              //本地服务
-		remoteServices := task.CrossDomainAccess[domain].GetServicesMap() //远程服务
+		currentServices := svs.(cluster.ServiceProviderList)                    //本地服务
+		remoteServices := task.CrossDomainAccess[domain].GetServicesMap(domain) //远程服务
 		//删除更新服务
 		for name := range currentServices {
 			if _, ok := remoteServices[name]; !ok {
@@ -79,11 +79,7 @@ func (rc *RCServer) WatchCrossDomain(task cluster.RCServerTask) {
 
 			//将服务添加到服务列表
 			rc.crossDomain.Set(domain, clusterClient)
-			currentServices := make(cluster.ServiceProviderList)
-			for _, svs := range v.Services {
-				currentServices[svs+"@"+domain] = v.Servers
-			}
-			rc.crossService.Set(domain, currentServices)
+			rc.crossService.Set(domain, v.GetServicesMap(domain))
 
 			//监控外部RC服务器变化,变化后更新本地服务
 			go func(domain string) {
