@@ -90,7 +90,7 @@ func (rc *RCServer) WatchCrossDomain(task cluster.RCServerTask) {
 				defer rc.recover()
 				rc.Log.Infof("::watch cross domain [%s] rc server change", domain)
 				clusterClient.WatchRCServerChange(func(items []*cluster.RCServerItem, err error) {
-					rc.Log.Infof("::cross domain [%s] rc server changed", domain, len(items))
+					rc.Log.Infof("::cross domain [%s] rc server changed,%d", domain, len(items))
 					rc.bindCrossServices(domain, items)
 					rc.PublishNow()
 				})
@@ -109,6 +109,7 @@ func (rc *RCServer) bindCrossServices(domain string, items []*cluster.RCServerIt
 	ips := rc.getDomainIPs(items)
 	allServices := rc.crossService.Get(domain).(cluster.ServiceProviderList)
 	for name := range allServices {
+		rc.Log.Info("name:", ips)
 		allServices[name] = ips
 	}
 }
