@@ -11,7 +11,7 @@ func (client *ClusterClient) WatchJobConfigChange(callback func(config map[strin
 				callback(client.GetJobConfig())
 			}()
 		} else {
-			client.Log.Info("job config path not exists")
+			client.Log.Info("job config path not exists:", client.jobConfigPath)
 		}
 	})
 	client.Log.Info("::watch for job config changes")

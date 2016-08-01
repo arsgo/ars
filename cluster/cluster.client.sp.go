@@ -34,7 +34,7 @@ func (client *ClusterClient) WatchServiceProviderChange(changed func(ServiceProv
 	client.Log.Info("::watch for service providers changes")
 	client.WaitClusterPathExists(client.rpcProviderRootPath, client.timeout, func(exists bool) {
 		if !exists {
-			client.Log.Info("service provider node not exists")
+			client.Log.Info("service provider node not exists:", client.rpcProviderRootPath)
 		} else {
 			go func() {
 				defer client.recover()

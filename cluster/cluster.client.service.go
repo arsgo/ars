@@ -58,7 +58,6 @@ func (client *ClusterClient) FilterRPCService(services map[string][]string) (ite
 			item := TaskItem{Name: name}
 			items = append(items, item)
 		}
-
 	}
 	return
 }

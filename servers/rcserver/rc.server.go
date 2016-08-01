@@ -106,7 +106,7 @@ func (rc *RCServer) Stop() error {
 	rc.Log.Info(" -> 退出RC Server...")
 	defer rc.recover()
 	rc.clusterClient.CloseRCServer(rc.snap.Path)
-	time.Sleep(time.Millisecond * 10)
+	time.Sleep(time.Millisecond * 1000)
 	rc.clusterClient.Close()
 	rc.spRPCClient.Close()
 	rc.rcRPCServer.Stop()
