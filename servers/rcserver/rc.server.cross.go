@@ -81,7 +81,7 @@ func (rc *RCServer) WatchCrossDomain(task cluster.RCServerTask) {
 			rc.crossDomain.Set(domain, clusterClient)
 			currentServices := make(cluster.ServiceProviderList)
 			for _, svs := range v.Services {
-				currentServices[svs] = v.Servers
+				currentServices[svs+"@"+domain] = v.Servers
 			}
 			rc.crossService.Set(domain, currentServices)
 

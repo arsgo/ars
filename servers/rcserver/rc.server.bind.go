@@ -134,11 +134,13 @@ func (rc *RCServer) MergeService() (lst cluster.ServiceProviderList) {
 	}
 	rc.Log.Info("merge.current:", lst)
 	crossServices := rc.crossService.GetAll()
-	for domain, svs := range crossServices {
+	for _, svs := range crossServices {
 		service := svs.(cluster.ServiceProviderList)
 		for i, v := range service {
 			if len(v) > 0 {
-				lst[i+"@"+domain] = v
+				lst[i] = v
+			} else {
+				delete(lst, i)
 			}
 		}
 	}
