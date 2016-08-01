@@ -115,10 +115,10 @@ func (c ServiceProviderList) Equal(input ServiceProviderList) bool {
 			return false
 		}
 		for _, m := range v {
-			hasExist := false
+			hasExist := true
 			for _, n := range input[i] {
-				if strings.EqualFold(m, n) {
-					hasExist = true
+				if !strings.EqualFold(m, n) {
+					hasExist = false
 					break
 				}
 			}

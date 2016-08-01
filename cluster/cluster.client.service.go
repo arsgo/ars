@@ -64,12 +64,13 @@ func (client *ClusterClient) FilterRPCService(services map[string][]string) (ite
 
 //PublishRPCServices 发布所有服务
 func (client *ClusterClient) PublishRPCServices(services ServiceProviderList) (err error) {
+	client.Log.Info("上次服务：", client.lastServiceProviderList)
 	client.publishLock.Lock()
 	equal := services.Equal(client.lastServiceProviderList)
 	client.lastServiceProviderList = services
 	client.publishLock.Unlock()
 	if equal {
-		client.Log.Info("服务无变化", services)
+		client.Log.Info("服务无变化:", services)
 		return
 	}
 
