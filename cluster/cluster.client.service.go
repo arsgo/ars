@@ -70,7 +70,7 @@ func (client *ClusterClient) PublishRPCServices(services ServiceProviderList) (e
 	client.lastServiceProviderList = services
 	client.publishLock.Unlock()
 	if equal {
-		client.Log.Info("服务无变化")
+		client.Log.Info("服务无变化", services)
 		return
 	}
 

@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"runtime/debug"
+	"time"
 
 	"github.com/colinyl/ars/base"
 	"github.com/colinyl/ars/cluster"
@@ -23,8 +24,8 @@ const (
 type RCServer struct {
 	clusterClient   cluster.IClusterClient
 	startSync       base.Sync
-	domain	string
-	isReconnect 	bool
+	domain          string
+	isReconnect     bool
 	IsMaster        bool
 	currentServices *concurrent.ConcurrentMap
 	crossDomain     *concurrent.ConcurrentMap //map[string]cluster.IClusterClient
@@ -58,7 +59,7 @@ func (rc *RCServer) init() (err error) {
 		return
 	}
 	rc.Log.Infof(" -> 初始化 %s...", cfg.Domain)
-	rc.domain=cfg.Domain
+	rc.domain = cfg.Domain
 	rc.clusterClient, err = cluster.GetClusterClient(cfg.Domain, cfg.IP, rc.loggerName, cfg.ZKServers...)
 	if err != nil {
 		return
@@ -104,6 +105,8 @@ func (rc *RCServer) Start() (err error) {
 func (rc *RCServer) Stop() error {
 	rc.Log.Info(" -> 退出RC Server...")
 	defer rc.recover()
+	rc.clusterClient.CloseRCServer(rc.snap.Path)
+	time.Sleep(time.Millisecond * 10)
 	rc.clusterClient.Close()
 	rc.spRPCClient.Close()
 	rc.rcRPCServer.Stop()
