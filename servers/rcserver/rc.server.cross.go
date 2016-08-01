@@ -104,10 +104,8 @@ func (rc *RCServer) getDomainIPs(items []*cluster.RCServerItem) []string {
 func (rc *RCServer) bindCrossServices(domain string, items []*cluster.RCServerItem) {
 	ips := rc.getDomainIPs(items)
 	allServices := rc.crossService.Get(domain).(cluster.ServiceProviderList)
-	for name := range allServices {
-		rc.Log.Info("name:", ips)
+	for name := range allServices {	
 		allServices[name] = ips
 	}
 	rc.crossService.Set(domain, allServices)
-	rc.Log.Info("crossService:", rc.crossService.Get(domain))
 }

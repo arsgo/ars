@@ -132,7 +132,6 @@ func (rc *RCServer) MergeService() (lst cluster.ServiceProviderList) {
 	if services != nil {
 		lst = services.(cluster.ServiceProviderList)
 	}
-	rc.Log.Info("merge.current:", lst)
 	crossServices := rc.crossService.GetAll()
 	for _, svs := range crossServices {
 		service := svs.(cluster.ServiceProviderList)
@@ -144,7 +143,5 @@ func (rc *RCServer) MergeService() (lst cluster.ServiceProviderList) {
 			}
 		}
 	}
-	rc.Log.Info("merge.crossServices:", crossServices)
-	rc.Log.Info("merge.all:", lst)
 	return lst
 }
