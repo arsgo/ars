@@ -106,12 +106,7 @@ func (rc *RCServer) bindCrossServices(domain string, items []*cluster.RCServerIt
 	allServices := rc.crossService.Get(domain).(cluster.ServiceProviderList)
 	for name := range allServices {
 		rc.Log.Info("name:", ips)
-		if len(ips) == 0 {
-			delete(allServices, name)
-		} else {
-			allServices[name] = ips
-		}
-
+		allServices[name] = ips
 	}
 	rc.crossService.Set(domain, allServices)
 	rc.Log.Info("crossService:", rc.crossService.Get(domain))
