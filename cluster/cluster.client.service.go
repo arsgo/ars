@@ -3,8 +3,6 @@ package cluster
 import (
 	"encoding/json"
 	"strings"
-
-	"github.com/colinyl/lib4go/utility"
 )
 
 //WatchRPCServiceChange 监控已发布的RPC服务变化
@@ -70,14 +68,7 @@ func (client *ClusterClient) PublishRPCServices(services ServiceProviderList) (e
 	client.Log.Info("本次服务：", services)
 	client.publishLock.Lock()
 	equal := services.Equal(client.lastServiceProviderList)
-	sv, err := utility.Clone(services)
-	if err != nil {
-		client.Log.Error(err)
-	}
-	if sv != nil {
-		client.lastServiceProviderList = sv.(ServiceProviderList)
-	}
-
+	client.lastServiceProviderList = services.Clone()
 	client.publishLock.Unlock()
 	client.Log.Info("当前服务：", client.lastServiceProviderList)
 

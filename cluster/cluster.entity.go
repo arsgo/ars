@@ -100,6 +100,18 @@ func (c CrossDoaminAccessItem) GetServicesMap(domain string) ServiceProviderList
 	}
 	return m
 }
+func (c ServiceProviderList) Clone() ServiceProviderList {
+	mp := make(ServiceProviderList)
+	for k, v := range c {
+		vs := make([]string, 0, len(v))
+		for _, p := range v {
+			vs = append(vs, p)
+		}
+		mp[k] = vs
+	}
+	return mp
+}
+
 func (c ServiceProviderList) Equal(input ServiceProviderList) bool {
 	if input == nil {
 		return false
