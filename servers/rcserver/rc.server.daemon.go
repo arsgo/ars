@@ -11,7 +11,7 @@ import (
 func (rc *RCServer) startMonitor() {
 
 	go func() {
-		tk := time.NewTicker(time.Second * 5)
+		tk := time.NewTicker(time.Second * 10)
 		for {
 			select {
 			case <-tk.C:
