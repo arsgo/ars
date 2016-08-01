@@ -112,4 +112,7 @@ func (rc *RCServer) bindCrossServices(domain string, items []*cluster.RCServerIt
 		rc.Log.Info("name:", ips)
 		allServices[name] = ips
 	}
+	rc.crossService.Set(domain, allServices)
+	rc.Log.Info("crossService:", rc.crossService.Get(domain))
+
 }
