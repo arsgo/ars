@@ -141,5 +141,7 @@ func (rc *RCServer) MergeService() (lst cluster.ServiceProviderList) {
 			}
 		}
 	}
+	rc.Log.Info("merge.crossServices:", crossServices)
+	rc.Log.Info("merge.all:", lst)
 	return lst
 }
