@@ -46,7 +46,7 @@ type ClusterClient struct {
 	appServerPath           string
 	spServerTaskPath        string
 	closeChans              *concurrent.ConcurrentMap
-	lastServiceProviderList ServiceProviderList
+	lastServiceProviderList *ServiceProviderList
 	publishLock             sync.Mutex
 	configCache             *concurrent.ConcurrentMap
 	handler                 IClusterHandler

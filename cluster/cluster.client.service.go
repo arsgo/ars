@@ -67,8 +67,8 @@ func (client *ClusterClient) PublishRPCServices(services ServiceProviderList) (e
 	client.Log.Info("上次服务：", client.lastServiceProviderList)
 	client.Log.Info("本次服务：", services)
 	client.publishLock.Lock()
-	equal := services.Equal(client.lastServiceProviderList)
-	client.lastServiceProviderList = services
+	equal := services.Equal(*client.lastServiceProviderList)
+	client.lastServiceProviderList = &services
 	client.publishLock.Unlock()
 	client.Log.Info("当前服务：", client.lastServiceProviderList)
 
