@@ -47,12 +47,14 @@ type ScriptPool struct {
 	clusterClient cluster.IClusterClient
 	rpcclient     *rpc.RPCClient
 	snaps         *concurrent.ConcurrentMap
+	mqservices		*concurrent.ConcurrentMap
 }
 
 //NewScriptPool 创建脚本POOl
 func NewScriptPool(clusterClient cluster.IClusterClient, rpcclient *rpc.RPCClient, extlibs map[string]interface{},
 	loggerName string) (p *ScriptPool, err error) {
 	p = &ScriptPool{snaps: concurrent.NewConcurrentMap()}
+	p.mqservices=concurrent.NewConcurrentMap()
 	p.clusterClient = clusterClient
 	p.rpcclient = rpcclient
 	p.pool = s.NewLuaPool()
@@ -84,7 +86,7 @@ func (s *ScriptPool) createSnap(p ...interface{}) (interface{}, error) {
 	return ss, nil
 }
 func (s *ScriptPool) setLifeTime(name string, start time.Time) {
-	_, snap := s.snaps.Add(name, s.createSnap)
+	_, snap,_ := s.snaps.Add(name, s.createSnap)
 	if snap != nil {
 		return
 	}

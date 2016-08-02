@@ -191,7 +191,7 @@ func (r *RPCClient) createSnap(p ...interface{}) (interface{}, error) {
 	return ss, nil
 }
 func (r *RPCClient) setLifeTime(name string, start time.Time) {
-	_, snap := r.snaps.Add(name, r.createSnap)
+	_, snap, _ := r.snaps.Add(name, r.createSnap)
 	if snap == nil {
 		return
 	}
