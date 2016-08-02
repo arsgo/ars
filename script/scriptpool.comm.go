@@ -1,8 +1,8 @@
 package script
 
 import (
-	"github.com/colinyl/ars/servers/config"
-	"github.com/colinyl/lib4go/utility"
+	"github.com/arsgo/ars/servers/config"
+	"github.com/arsgo/lib4go/utility"
 	"github.com/yuin/gopher-lua"
 )
 

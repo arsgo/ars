@@ -4,11 +4,11 @@ import (
 	"errors"
 	"runtime/debug"
 
-	"github.com/colinyl/ars/base"
-	"github.com/colinyl/ars/cluster"
-	"github.com/colinyl/ars/script"
-	"github.com/colinyl/lib4go/concurrent"
-	"github.com/colinyl/lib4go/logger"
+	"github.com/arsgo/ars/base"
+	"github.com/arsgo/ars/cluster"
+	"github.com/arsgo/ars/script"
+	"github.com/arsgo/lib4go/concurrent"
+	"github.com/arsgo/lib4go/logger"
 )
 
 //ScriptProxy 基于脚本的RPC代理服务

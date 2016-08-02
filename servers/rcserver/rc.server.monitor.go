@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/colinyl/ars/cluster"
+	"github.com/arsgo/ars/cluster"
 )
 
 //startMonitor 启动监控服务
@@ -16,8 +16,7 @@ func (rc *RCServer) startMonitor() {
 			select {
 			case <-tk.C:
 				if rc.needBindRPCService() {
-					rc.Log.Info(" -> need bind all services")
-					rc.RebindLocalServices()
+					rc.rebindLocalServices()
 				}
 			}
 		}
@@ -56,8 +55,8 @@ func (rc *RCServer) needBindRPCService() bool {
 	return false
 }
 
-//RebindLocalServices 重新绑定本地服务
-func (rc *RCServer) RebindLocalServices() (err error) {
+//rebindLocalServices 重新绑定本地服务
+func (rc *RCServer) rebindLocalServices() (err error) {
 	lst, err := rc.clusterClient.GetServiceProviders()
 	if err != nil {
 		rc.Log.Error(err)
@@ -66,7 +65,6 @@ func (rc *RCServer) RebindLocalServices() (err error) {
 	rc.currentServices.Set("*", lst)
 	rc.resetCrossDomainServices()
 	services := rc.MergeService()
-	rc.Log.Info("rebind.local.services:", services)
 	rc.BindSPServers(services, nil)
 	return
 

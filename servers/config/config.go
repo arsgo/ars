@@ -8,7 +8,7 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/colinyl/lib4go/utility"
+	"github.com/arsgo/lib4go/utility"
 )
 
 type conf struct {

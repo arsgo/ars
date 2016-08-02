@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"git.apache.org/thrift.git/lib/go/thrift"
-	"github.com/colinyl/ars/base/rpcservice/rpc"
-	"github.com/colinyl/lib4go/logger"
+	"github.com/arsgo/ars/base/rpcservice/rpc"
+	"github.com/arsgo/lib4go/logger"
 )
 
 type RPCClient struct {

@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/colinyl/ars/base"
-	"github.com/colinyl/lib4go/sysinfo"
+	"github.com/arsgo/ars/base"
+	"github.com/arsgo/lib4go/sysinfo"
 )
 
 type ExtSnap struct {

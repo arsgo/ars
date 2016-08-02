@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/colinyl/lib4go/db"
-	"github.com/colinyl/lib4go/elastic"
-	"github.com/colinyl/lib4go/influxdb"
+	"github.com/arsgo/lib4go/db"
+	"github.com/arsgo/lib4go/elastic"
+	"github.com/arsgo/lib4go/influxdb"
 )
 
 //GetScriptBinder 获取脚本绑定

@@ -15,13 +15,13 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/colinyl/ars/base"
-	"github.com/colinyl/ars/base/rpcservice"
-	"github.com/colinyl/ars/cluster"
-	"github.com/colinyl/ars/servers/config"
-	"github.com/colinyl/lib4go/concurrent"
-	"github.com/colinyl/lib4go/logger"
-	"github.com/colinyl/lib4go/utility"
+	"github.com/arsgo/ars/base"
+	"github.com/arsgo/ars/base/rpcservice"
+	"github.com/arsgo/ars/cluster"
+	"github.com/arsgo/ars/servers/config"
+	"github.com/arsgo/lib4go/concurrent"
+	"github.com/arsgo/lib4go/logger"
+	"github.com/arsgo/lib4go/utility"
 )
 
 //serviceItem 服务信息
@@ -99,6 +99,7 @@ func (r *RPCClient) ResetRPCServer(servers map[string][]string) string {
 	ips := make(map[string]string) //构建IP列表，用于注册服务
 	aips := []string{}
 	service := r.services.GetAll()
+	var setServer, delServer []string
 	for n, v := range servers {
 		for _, ip := range v {
 			if _, ok := ips[ip]; !ok {
@@ -107,20 +108,22 @@ func (r *RPCClient) ResetRPCServer(servers map[string][]string) string {
 			}
 		}
 		if len(v) > 0 {
-			r.Log.Info("rpc.client.set:", n, v)
+			setServer = append(setServer, n)
 			r.services.Set(n, &serviceItem{service: v}) //添加新服务
 		} else {
-			r.Log.Info("rpc.client.del:", n)
+			delServer = append(delServer, n)
 			r.services.Delete(n) //移除无可用IP的服务
 		}
 	}
 	for k := range service {
 		if _, ok := servers[k]; !ok {
-			r.Log.Info("rpc.client.del:", k)
+			delServer = append(delServer, k)
 			r.services.Delete(k) //移除已不存在的服务
 		}
 	}
-	r.Log.Info("rpc.client:", r.services.GetLength(), len(ips))
+	if len(setServer) > 0 || len(delServer) > 0 {
+		r.Log.Debugf(" >-reset rpc server:set:%v,delete:%v,ip:%v", setServer, delServer, aips)
+	}
 	r.pool.Register(ips)
 	return strings.Join(aips, ",")
 }

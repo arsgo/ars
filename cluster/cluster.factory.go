@@ -3,7 +3,7 @@ package cluster
 import (
 	"time"
 
-	"github.com/colinyl/lib4go/zkclient"
+	"github.com/arsgo/lib4go/zkclient"
 )
 
 func GetClusterClient(domain string, localip string,loggerName string, ips ...string) (c IClusterClient, err error) {

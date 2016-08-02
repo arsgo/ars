@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/colinyl/ars/rpcservice"
-	"github.com/colinyl/lib4go/utility"
+	"github.com/arsgo/ars/rpcservice"
+	"github.com/arsgo/lib4go/utility"
 )
 
 type resultCode struct {

@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/colinyl/lib4go/logger"
+	"github.com/arsgo/lib4go/logger"
 )
 
 type conn struct {

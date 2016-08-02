@@ -7,10 +7,10 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/colinyl/ars/servers/config"
-	"github.com/colinyl/lib4go/concurrent"
-	"github.com/colinyl/lib4go/logger"
-	"github.com/colinyl/lib4go/pool"
+	"github.com/arsgo/ars/servers/config"
+	"github.com/arsgo/lib4go/concurrent"
+	"github.com/arsgo/lib4go/logger"
+	"github.com/arsgo/lib4go/pool"
 )
 
 type rpcServerService struct {

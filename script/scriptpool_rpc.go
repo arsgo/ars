@@ -3,8 +3,8 @@ package script
 import (
 	"encoding/json"
 
-	"github.com/colinyl/ars/rpc"
-	"github.com/colinyl/lib4go/utility"
+	"github.com/arsgo/ars/rpc"
+	"github.com/arsgo/lib4go/utility"
 	"github.com/yuin/gopher-lua"
 )
 

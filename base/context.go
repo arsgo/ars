@@ -1,6 +1,6 @@
 package base
 
-import "github.com/colinyl/lib4go/logger"
+import "github.com/arsgo/lib4go/logger"
 
 type InvokeContext struct {
 	Session string

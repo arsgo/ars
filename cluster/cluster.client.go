@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/colinyl/lib4go/concurrent"
-	"github.com/colinyl/lib4go/logger"
-	"github.com/colinyl/lib4go/utility"
+	"github.com/arsgo/lib4go/concurrent"
+	"github.com/arsgo/lib4go/logger"
+	"github.com/arsgo/lib4go/utility"
 )
 
 const (

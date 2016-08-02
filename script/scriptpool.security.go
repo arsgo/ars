@@ -1,11 +1,11 @@
 package script
 
 import (
-	"github.com/colinyl/lib4go/security/aes"
-	"github.com/colinyl/lib4go/security/base64"
-	"github.com/colinyl/lib4go/security/des"
-	"github.com/colinyl/lib4go/security/md5"
-	"github.com/colinyl/lib4go/security/sha1"
+	"github.com/arsgo/lib4go/security/aes"
+	"github.com/arsgo/lib4go/security/base64"
+	"github.com/arsgo/lib4go/security/des"
+	"github.com/arsgo/lib4go/security/md5"
+	"github.com/arsgo/lib4go/security/sha1"
 )
 
 //BindSecurity 安全绑定函数

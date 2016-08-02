@@ -1,6 +1,6 @@
 package base
 
-import "github.com/colinyl/lib4go/pool"
+import "github.com/arsgo/lib4go/pool"
 
 type ProxySnap struct {
 	pool.ObjectSnap

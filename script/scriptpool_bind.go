@@ -4,11 +4,11 @@ import (
 	"errors"
 	"time"
 
-	"github.com/colinyl/lib4go/mem"
-	m "github.com/colinyl/lib4go/mq"
-	"github.com/colinyl/lib4go/net"
-	"github.com/colinyl/lib4go/security/weixin"
-	"github.com/colinyl/lib4go/utility"
+	"github.com/arsgo/lib4go/mem"
+	m "github.com/arsgo/lib4go/mq"
+	"github.com/arsgo/lib4go/net"
+	"github.com/arsgo/lib4go/security/weixin"
+	"github.com/arsgo/lib4go/utility"
 )
 
 //NewRPCClient 创建RPC client

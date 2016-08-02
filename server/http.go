@@ -9,11 +9,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/colinyl/ars/base"
-	"github.com/colinyl/ars/base/rpcservice"
-	"github.com/colinyl/ars/cluster"
-	"github.com/colinyl/lib4go/logger"
-	"github.com/colinyl/lib4go/webserver"
+	"github.com/arsgo/ars/base"
+	"github.com/arsgo/ars/base/rpcservice"
+	"github.com/arsgo/ars/cluster"
+	"github.com/arsgo/lib4go/logger"
+	"github.com/arsgo/lib4go/webserver"
 )
 
 //HTTPScriptServer 基于LUA的HTTP服务器

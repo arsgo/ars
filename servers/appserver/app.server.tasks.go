@@ -3,7 +3,7 @@ package main
 import (
 	"strings"
 
-	"github.com/colinyl/ars/cluster"
+	"github.com/arsgo/ars/cluster"
 )
 
 func (a *AppServer) getMQConsumerTask(tasks []cluster.TaskItem) (tks []cluster.TaskItem) {

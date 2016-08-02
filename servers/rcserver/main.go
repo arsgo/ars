@@ -3,7 +3,7 @@ package main
 import (
 	"runtime"
 
-	"github.com/colinyl/lib4go/forever"
+	"github.com/arsgo/lib4go/forever"
 )
 
 func main() {

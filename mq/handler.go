@@ -3,11 +3,11 @@ package mq
 import (
 	"strings"
 
-	"github.com/colinyl/ars/base"
-	"github.com/colinyl/ars/cluster"
-	"github.com/colinyl/ars/script"
-	"github.com/colinyl/lib4go/logger"
-	"github.com/colinyl/lib4go/utility"
+	"github.com/arsgo/ars/base"
+	"github.com/arsgo/ars/cluster"
+	"github.com/arsgo/ars/script"
+	"github.com/arsgo/lib4go/logger"
+	"github.com/arsgo/lib4go/utility"
 )
 
 //MQScriptHandler 脚本处理程序

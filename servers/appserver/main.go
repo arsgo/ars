@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"github.com/colinyl/lib4go/forever"
+	"github.com/arsgo/lib4go/forever"
 )
 
 func main() {

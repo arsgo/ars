@@ -4,10 +4,10 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/colinyl/ars/cluster"
-	"github.com/colinyl/lib4go/concurrent"
-	"github.com/colinyl/lib4go/logger"
-	"github.com/colinyl/lib4go/utility"
+	"github.com/arsgo/ars/cluster"
+	"github.com/arsgo/lib4go/concurrent"
+	"github.com/arsgo/lib4go/logger"
+	"github.com/arsgo/lib4go/utility"
 )
 
 //MQHandler MQ任务处理程序

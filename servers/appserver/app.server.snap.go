@@ -6,8 +6,8 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/colinyl/ars/base"
-	"github.com/colinyl/lib4go/sysinfo"
+	"github.com/arsgo/ars/base"
+	"github.com/arsgo/lib4go/sysinfo"
 )
 
 type ExtSnap struct {
@@ -76,7 +76,7 @@ func (app *AppServer) StartRefreshSnap() {
 		}
 	}
 }
-func (app *AppServer) resetCluster() {
+func (app *AppServer) resetAppServer() {
 	app.Log.Info("关闭所有服务")
 	app.CloseAppServer()
 	app.CloseJobSnap()

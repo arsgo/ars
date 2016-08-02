@@ -7,13 +7,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/colinyl/ars/base"
-	"github.com/colinyl/ars/cluster"
-	"github.com/colinyl/ars/rpc"
-	"github.com/colinyl/lib4go/concurrent"
-	"github.com/colinyl/lib4go/logger"
-	s "github.com/colinyl/lib4go/script"
-	"github.com/colinyl/lib4go/utility"
+	"github.com/arsgo/ars/base"
+	"github.com/arsgo/ars/cluster"
+	"github.com/arsgo/ars/rpc"
+	"github.com/arsgo/lib4go/concurrent"
+	"github.com/arsgo/lib4go/logger"
+	s "github.com/arsgo/lib4go/script"
+	"github.com/arsgo/lib4go/utility"
 )
 
 //scriptInputArgs 脚本输入参数

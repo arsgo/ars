@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/colinyl/ars/cluster"
-	q "github.com/colinyl/lib4go/mq"
-	"github.com/colinyl/lib4go/utility"
+	"github.com/arsgo/ars/cluster"
+	q "github.com/arsgo/lib4go/mq"
+	"github.com/arsgo/lib4go/utility"
 )
 
 //MQConsumer MQ消费者

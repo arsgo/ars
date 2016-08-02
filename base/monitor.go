@@ -3,7 +3,7 @@ package base
 import (
 	"encoding/json"
 
-	"github.com/colinyl/lib4go/sysinfo"
+	"github.com/arsgo/lib4go/sysinfo"
 )
 
 //SysMonitorInfo 系统信息

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/colinyl/ars/cluster"
-	"github.com/colinyl/ars/server"
+	"github.com/arsgo/ars/cluster"
+	"github.com/arsgo/ars/server"
 )
 
 func (a *AppServer) BindHttpServer(config *cluster.ServerConfig) {

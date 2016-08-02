@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/colinyl/lib4go/pool"
+	"github.com/arsgo/lib4go/pool"
 )
 
 type rpcClientFactory struct {

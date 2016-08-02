@@ -2,7 +2,7 @@ package rpcservice
 
 import (
 	"git.apache.org/thrift.git/lib/go/thrift"
-	"github.com/colinyl/lib4go/logger"
+	"github.com/arsgo/lib4go/logger"
 )
 
 type rpcHandler interface {

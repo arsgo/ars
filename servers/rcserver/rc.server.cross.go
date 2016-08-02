@@ -1,6 +1,6 @@
 package main
 
-import "github.com/colinyl/ars/cluster"
+import "github.com/arsgo/ars/cluster"
 
 //BindCrossAccess 绑定垮域访问服务
 func (rc *RCServer) BindCrossAccess(task cluster.RCServerTask) (err error) {

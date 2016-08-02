@@ -5,14 +5,14 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/colinyl/ars/base"
-	"github.com/colinyl/ars/cluster"
-	"github.com/colinyl/ars/proxy"
-	"github.com/colinyl/ars/rpc"
-	"github.com/colinyl/ars/server"
-	"github.com/colinyl/ars/servers/config"
-	"github.com/colinyl/lib4go/concurrent"
-	"github.com/colinyl/lib4go/logger"
+	"github.com/arsgo/ars/base"
+	"github.com/arsgo/ars/cluster"
+	"github.com/arsgo/ars/proxy"
+	"github.com/arsgo/ars/rpc"
+	"github.com/arsgo/ars/server"
+	"github.com/arsgo/ars/servers/config"
+	"github.com/arsgo/lib4go/concurrent"
+	"github.com/arsgo/lib4go/logger"
 )
 
 const (

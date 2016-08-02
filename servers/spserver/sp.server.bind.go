@@ -1,10 +1,6 @@
 package main
 
-import (
-	"time"
-
-	"github.com/colinyl/ars/cluster"
-)
+import "github.com/arsgo/ars/cluster"
 
 //BindRCServer 绑定RPC调用服务
 func (sp *SPServer) BindRCServer(configs []*cluster.RCServerItem, err error) error {
@@ -57,40 +53,4 @@ func (sp *SPServer) OnSPServiceClose(task cluster.TaskItem, path string) {
 		return
 	}
 	return
-}
-
-func (sp *SPServer) startMonitor() {
-	//检查RC服务个数，为0时重新获取
-	//检查连接是否发生重连，重连则重建节点
-	/*	go func() {
-		START:
-			if sp.clusterClient.WaitForDisconnected() {
-				sp.Log.Info("连接已断开")
-				r := make([]*cluster.RCServerItem, 0, 0)
-				sp.BindRCServer(r, nil)
-				goto START
-			}
-		}()*/
-	go func() {
-		tk := time.NewTicker(time.Second * 5)
-		for {
-			select {
-			case <-tk.C:
-				if sp.rpcClient.GetServiceCount() == 0 {
-					sp.Log.Info(" -> rc server len is 0")
-					items, err := sp.clusterClient.GetAllRCServerValues()
-					if len(items) > 0 {
-						sp.BindRCServer(items, err)
-						sp.resetCluster()
-					}
-				}
-			}
-		}
-	}()
-START:
-	if sp.clusterClient.WaitForConnected() {
-		sp.Log.Info(" |-> 已重新连接，重新发布服务")
-		sp.resetCluster()
-		goto START
-	}
 }

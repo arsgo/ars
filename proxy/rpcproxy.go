@@ -4,10 +4,10 @@ import (
 	"runtime/debug"
 	"sync"
 
-	"github.com/colinyl/ars/cluster"
-	"github.com/colinyl/ars/rpc"
-	"github.com/colinyl/lib4go/concurrent"
-	"github.com/colinyl/lib4go/logger"
+	"github.com/arsgo/ars/cluster"
+	"github.com/arsgo/ars/rpc"
+	"github.com/arsgo/lib4go/concurrent"
+	"github.com/arsgo/lib4go/logger"
 )
 
 //ISnap 快照信息接口

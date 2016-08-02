@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/colinyl/ars/cluster"
+	"github.com/arsgo/ars/cluster"
 )
 
 //BindRCServer 绑定服务

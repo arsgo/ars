@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/colinyl/ars/base"
-	"github.com/colinyl/ars/base/rpcservice"
-	"github.com/colinyl/ars/cluster"
-	"github.com/colinyl/lib4go/scheduler"
-	"github.com/colinyl/lib4go/utility"
+	"github.com/arsgo/ars/base"
+	"github.com/arsgo/ars/base/rpcservice"
+	"github.com/arsgo/ars/cluster"
+	"github.com/arsgo/lib4go/scheduler"
+	"github.com/arsgo/lib4go/utility"
 )
 
 //BindJobScheduler 绑定RC服务器的JOB任务
