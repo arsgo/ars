@@ -17,7 +17,6 @@ func (rc *RCServer) BindRCServer() (err error) {
 	if err != nil {
 		return
 	}
-	rc.clusterClient.UpdateSnap(rc.snap.Path, rc.snap.GetSnap())
 	rc.clusterClient.WatchRCServerChange(func(items []*cluster.RCServerItem, err error) {
 		isMaster := rc.IsMasterServer(items)
 		if isMaster && !rc.IsMaster {
