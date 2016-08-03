@@ -37,6 +37,7 @@ type SPServer struct {
 	snap           SPSnap
 	loggerName     string
 	version        string
+	ip	string
 }
 
 //NewSPServer 创建SP server服务器
@@ -55,7 +56,7 @@ func (sp *SPServer) init() (err error) {
 		return
 	}
 	sp.Log.Infof(" -> 初始化 %s...", cfg.Domain)
-
+	sp.ip=cfg.IP
 	sp.clusterClient, err = cluster.GetClusterClient(cfg.Domain, cfg.IP, sp.loggerName, cfg.ZKServers...)
 	if err != nil {
 		return

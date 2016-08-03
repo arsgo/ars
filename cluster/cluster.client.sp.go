@@ -114,7 +114,7 @@ func (client *ClusterClient) UpdateSPServerTask(config ServiceProviderTask) (err
 }
 
 //GetSPServerTask 获取service provider 的任务列表
-func (client *ClusterClient) GetSPServerTask() (task ServiceProviderTask, err error) {
+func (client *ClusterClient) GetSPServerTask(ip string) (task ServiceProviderTask, err error) {
 
 	task = ServiceProviderTask{}
 	values, err := client.handler.GetValue(client.spServerTaskPath)
@@ -127,7 +127,7 @@ func (client *ClusterClient) GetSPServerTask() (task ServiceProviderTask, err er
 	}
 	var items []TaskItem
 	for _, v := range task.Tasks {
-		if strings.EqualFold(v.IP, "*") || strings.Contains(","+v.IP+",", client.IP) {
+		if strings.EqualFold(v.IP, "*") || strings.Contains(","+v.IP+",", ip) {
 			v.Name = client.GetServiceFullPath(v.Name)
 			items = append(items, v)
 		}

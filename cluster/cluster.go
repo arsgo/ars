@@ -70,7 +70,7 @@ type IClusterClient interface {
 	WatchServiceProviderChange(changed func(ServiceProviderList, error)) (err error)
 	WatchSPTaskChange(callback func())
 	GetAllServiceProviderNamePath() (lst map[string][]string, err error)
-	GetSPServerTask() (ServiceProviderTask, error)
+	GetSPServerTask(ip string) (ServiceProviderTask, error)
 	UpdateSPServerTask(task ServiceProviderTask) (err error)
 	FilterRPCService(map[string][]string) ([]TaskItem, error)
 	PublishRPCServices(services ServiceProviderList) (err error)

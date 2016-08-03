@@ -17,7 +17,7 @@ func (sp *SPServer) BindRCServer(configs []*cluster.RCServerItem, err error) err
 //rebindService 重新绑定SP所有服务列表
 func (sp *SPServer) rebindService() {
 	sp.Log.Info(" -> start bind services")
-	task, err := sp.clusterClient.GetSPServerTask()
+	task, err := sp.clusterClient.GetSPServerTask(sp.ip)
 	if err != nil {
 		sp.Log.Error(err)
 		return
