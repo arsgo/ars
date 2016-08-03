@@ -1,10 +1,18 @@
 package script
 
-import "github.com/yuin/gopher-lua"
+import (
+	"fmt"
+
+	"github.com/yuin/gopher-lua"
+)
 
 func pushValues(ls *lua.LState, values ...interface{}) int {
 	for _, v := range values {
-		ls.Push(lua.LString(v.(string)))
+		if v != nil {
+			ls.Push(lua.LString(fmt.Sprintf("%v", v)))
+		} else {
+			ls.Push(lua.LNil)
+		}
 	}
 	return len(values)
 }

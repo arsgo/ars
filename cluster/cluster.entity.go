@@ -89,8 +89,8 @@ type CrossDoaminAccessItem struct {
 }
 
 type RCServerTask struct {
-	CrossDomainAccess map[string]CrossDoaminAccessItem `json:"cross-domain-access"`
-	RPCPoolSetting    RPCPoolSetting                   `json:"rpc-pool"`
+	CrossDomainAccess map[string]CrossDoaminAccessItem `json:"cross-domain"`
+	RPCPoolSetting    RPCPoolSetting                   `json:"rpc"`
 }
 
 func (c CrossDoaminAccessItem) GetServicesMap(domain string) ServiceProviderList {

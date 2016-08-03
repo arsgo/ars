@@ -70,11 +70,6 @@ func (s *ScriptPool) Sleep(r int) {
 //bindGlobalLibs 绑定lib
 func (s *ScriptPool) bindGlobalLibs(extlibs map[string]interface{}) (funs map[string]interface{}) {
 	funs = map[string]interface{}{
-		"sleep":              s.Sleep,
-		"print":              s.Log.Info,
-		"printf":             s.Log.Infof,
-		"error":              s.Log.Error,
-		"errorf":             s.Log.Errorf,
 		"NewGUID":            utility.GetGUID,
 		"NewRPC":             s.NewRPCClient,
 		"NewMQProducer":      s.NewMQProducer,

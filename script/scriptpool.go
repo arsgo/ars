@@ -61,6 +61,7 @@ func NewScriptPool(clusterClient cluster.IClusterClient, rpcclient *rpc.RPCClien
 	p.Log, err = logger.Get(loggerName)
 	p.pool.RegisterLibs(p.bindGlobalLibs(extlibs))
 	p.pool.RegisterModules(p.bindModules())
+	p.pool.RegisterGlobal(p.bindGlobal())
 	return
 }
 func (s *ScriptPool) SetPoolSize(minSize int, maxSize int) {

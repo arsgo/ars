@@ -27,6 +27,16 @@ func (client *ClusterClient) WatchRCServerChange(callback func([]*RCServerItem, 
 	})
 }
 
+//UpdateRCServerTask 更新RcServer任务配置
+func (client *ClusterClient) UpdateRCServerTask(config RCServerTask) (err error) {
+	buffer, err := json.Marshal(config)
+	if err != nil {
+		return
+	}
+	err = client.handler.UpdateValue(client.rcServerConfig, string(buffer))
+	return
+}
+
 //GetRCServerValue 获取RC服务器信息
 func (client *ClusterClient) GetRCServerValue(path string) (value *RCServerItem, err error) {
 	content, err := client.handler.GetValue(path)
@@ -64,8 +74,8 @@ func (client *ClusterClient) CloseRCServer(path string) error {
 	return client.handler.Delete(path)
 }
 
-//GetRCServerTasks 获取RC Server任务
-func (client *ClusterClient) GetRCServerTasks() (config RCServerTask, err error) {
+//GetRCServerTask 获取RC Server任务
+func (client *ClusterClient) GetRCServerTask() (config RCServerTask, err error) {
 	value, err := client.handler.GetValue(client.rcServerConfig)
 	if err != nil {
 		return
@@ -83,7 +93,7 @@ func (client *ClusterClient) WatchRCTaskChange(callback func(RCServerTask, error
 		} else {
 			go func() {
 				defer client.recover()
-				callback(client.GetRCServerTasks())
+				callback(client.GetRCServerTask())
 			}()
 		}
 	})
@@ -92,7 +102,7 @@ func (client *ClusterClient) WatchRCTaskChange(callback func(RCServerTask, error
 		client.Log.Info(" -> rc server config has changed")
 		go func() {
 			defer client.recover()
-			callback(client.GetRCServerTasks())
+			callback(client.GetRCServerTask())
 		}()
 	})
 }

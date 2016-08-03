@@ -4,6 +4,9 @@ import "github.com/yuin/gopher-lua"
 
 func (s *ScriptPool) bindModules() (r map[string]map[string]lua.LGFunction) {
 	r = map[string]map[string]lua.LGFunction{
+		"mq": map[string]lua.LGFunction{
+			"send": s.moduleMQProducerSend,
+		},
 		"common": map[string]lua.LGFunction{
 			"getGuid": s.moduleGetGUID,
 			"getIP":   s.moduleGetLocalIP,

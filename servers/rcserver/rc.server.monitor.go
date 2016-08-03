@@ -70,7 +70,7 @@ func (rc *RCServer) rebindLocalServices() (err error) {
 
 }
 func (rc *RCServer) resetCrossDomainServices() (err error) {
-	task, err := rc.clusterClient.GetRCServerTasks()
+	task, err := rc.clusterClient.GetRCServerTask()
 	if err != nil {
 		rc.Log.Error(err)
 		return

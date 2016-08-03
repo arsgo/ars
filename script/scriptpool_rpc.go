@@ -15,7 +15,10 @@ type RPCBinder struct {
 func luaTable2Json(tb *lua.LTable) (s string, err error) {
 	data := make(map[string]interface{})
 	tb.ForEach(func(key lua.LValue, value lua.LValue) {
-		data[key.String()] = value.String()
+		if value != nil {
+			data[key.String()] = value.String()
+		}
+
 	})
 	buffer, err := json.Marshal(&data)
 	if err != nil {

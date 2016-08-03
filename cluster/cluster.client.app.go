@@ -18,7 +18,7 @@ func (client *ClusterClient) WatchAppTaskChange(callback func(config *AppServerS
 		} else {
 			go func() {
 				defer client.recover()
-				callback(client.GetAppServerStartupConfig(client.appServerTaskPath))
+				callback(client.GetCurrentAppServerTask())
 			}()
 		}
 	})
@@ -27,13 +27,35 @@ func (client *ClusterClient) WatchAppTaskChange(callback func(config *AppServerS
 		client.Log.Info(" -> app config has changed")
 		go func() {
 			defer client.recover()
-			callback(client.GetAppServerStartupConfig(client.appServerTaskPath))
+			callback(client.GetCurrentAppServerTask())
 		}()
 	})
 }
 
-//GetAppServerStartupConfig 获取App Server的配置数据
-func (client *ClusterClient) GetAppServerStartupConfig(path string) (config *AppServerStartupConfig, err error) {
+//UpdateAppServerTask 更新AppServer配置文件
+func (client *ClusterClient) UpdateAppServerTask(ip string, config *AppServerStartupConfig) (err error) {
+	nmap := client.dataMap.Copy()
+	nmap.Set("ip", ip)
+	path := nmap.Translate(p_appTaskConfig)
+
+	buffer, err := json.Marshal(config)
+	if err != nil {
+		return
+	}
+	err = client.handler.UpdateValue(path, string(buffer))
+	return
+}
+
+//GetCurrentAppServerTask 获取当前AppServer任务
+func (client *ClusterClient)GetCurrentAppServerTask() (config *AppServerStartupConfig, err error){
+	return client.GetAppServerTask(client.IP)
+}
+//GetAppServerTask 获取App Server的配置数据
+func (client *ClusterClient) GetAppServerTask(ip string) (config *AppServerStartupConfig, err error) {
+	nmap := client.dataMap.Copy()
+	nmap.Set("ip", ip)
+	path := nmap.Translate(p_appTaskConfig)
+
 	config = &AppServerStartupConfig{}
 	values, err := client.handler.GetValue(path)
 	if err != nil {
@@ -43,7 +65,7 @@ func (client *ClusterClient) GetAppServerStartupConfig(path string) (config *App
 	if err != nil {
 		return
 	}
-	/*jobs, err := client.GetJobConfig()
+	/*jobs, err := client.GetJobTask()
 	if err != nil {
 		return
 	}

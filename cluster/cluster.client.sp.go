@@ -103,8 +103,18 @@ func (client *ClusterClient) GetServiceProviders() (lst ServiceProviderList, err
 	return
 }
 
-//GetServiceTasks 获取service provider 的任务列表
-func (client *ClusterClient) GetServiceTasks() (task ServiceProviderTask, err error) {
+//UpdateSPServerTask 更新sp server task config
+func (client *ClusterClient) UpdateSPServerTask(config ServiceProviderTask) (err error) {
+	buffer, err := json.Marshal(config)
+	if err != nil {
+		return
+	}
+	err = client.handler.UpdateValue(client.spServerTaskPath, string(buffer))
+	return
+}
+
+//GetSPServerTask 获取service provider 的任务列表
+func (client *ClusterClient) GetSPServerTask() (task ServiceProviderTask, err error) {
 
 	task = ServiceProviderTask{}
 	values, err := client.handler.GetValue(client.spServerTaskPath)

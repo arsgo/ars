@@ -8,7 +8,7 @@ func (client *ClusterClient) WatchJobConfigChange(callback func(config map[strin
 		if exists {
 			go func() {
 				defer client.recover()
-				callback(client.GetJobConfig())
+				callback(client.GetJobTask())
 			}()
 		} else {
 			client.Log.Info("job config path not exists:", client.jobConfigPath)
@@ -17,12 +17,12 @@ func (client *ClusterClient) WatchJobConfigChange(callback func(config map[strin
 	client.Log.Info("::watch for job config changes")
 	client.WatchClusterValueChange(client.jobConfigPath, func() {
 		client.Log.Info(" -> job config has changed")
-		callback(client.GetJobConfig())
+		callback(client.GetJobTask())
 	})
 }
 
-//GetJobConfig 获取JOB配置信息
-func (client *ClusterClient) GetJobConfig() (items map[string]JobItem, err error) {
+//GetJobTask 获取JOB配置信息
+func (client *ClusterClient) GetJobTask() (items map[string]JobItem, err error) {
 	path := client.jobConfigPath
 	if !client.handler.Exists(path) {
 		return
@@ -40,6 +40,16 @@ func (client *ClusterClient) GetJobConfig() (items map[string]JobItem, err error
 	for _, v := range jobs {
 		items[v.Name] = v
 	}
+	return
+}
+
+//UpdateJobTask 更新JOB配置信息
+func (client *ClusterClient) UpdateJobTask(jobName string, config map[string]JobItem) (err error) {
+	buffer, err := json.Marshal(config)
+	if err != nil {
+		return
+	}
+	err = client.handler.UpdateValue(client.jobConfigPath, string(buffer))
 	return
 }
 

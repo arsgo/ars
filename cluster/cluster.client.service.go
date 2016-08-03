@@ -39,7 +39,7 @@ func (client *ClusterClient) GetRPCService() (sp ServiceProviderList, err error)
 
 //FilterRPCService 过滤RPC服务
 func (client *ClusterClient) FilterRPCService(services map[string][]string) (items []TaskItem, err error) {
-	all, err := client.GetServiceTasks()
+	all, err := client.GetSPServerTask()
 	indentity := make(map[string]string)
 	if err != nil {
 		return
