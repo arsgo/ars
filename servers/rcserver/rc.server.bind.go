@@ -11,7 +11,6 @@ import (
 
 //BindRCServer 绑定服务
 func (rc *RCServer) BindRCServer() (err error) {
-	rc.Log.Info("------bind rcserver")
 	rc.snap.Address = fmt.Sprint(rc.snap.ip, rc.rcRPCServer.Address)
 	rc.snap.Path, err = rc.clusterClient.CreateRCServer(rc.snap.GetSnap())
 	if err != nil {
