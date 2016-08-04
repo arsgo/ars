@@ -26,7 +26,7 @@ func (rc *RCServer) BindRCServer() (err error) {
 			go rc.clusterClient.WatchJobConfigChange(func(config map[string]cluster.JobItem, err error) {
 				rc.BindJobScheduler(config, err)
 			})
-			go rc.clusterClient.WatchServiceProviderChange(func(lst cluster.ServiceProviderList, err error) {
+			go rc.clusterClient.WatchSPServerChange(func(lst cluster.RPCServices, err error) {
 				//重新发布服务
 				rc.Log.Info(" |-> rpc service provider changed")
 				rc.currentServices.Set("*", lst)
@@ -62,7 +62,7 @@ func (rc *RCServer) BindRCServer() (err error) {
 
 //PublishAll 发布所有服务
 func (rc *RCServer) PublishAll() {
-	currentServices, err := rc.clusterClient.GetServiceProviders()
+	currentServices, err := rc.clusterClient.GetSPServerServices()
 	if err != nil {
 		rc.Log.Error(err)
 		return
@@ -71,7 +71,7 @@ func (rc *RCServer) PublishAll() {
 	crossClusters := rc.crossDomain.GetAll()
 	for domain, clt := range crossClusters {
 		client := clt.(cluster.IClusterClient)
-		crossService, err := client.GetServiceProviders()
+		crossService, err := client.GetSPServerServices()
 		if err != nil {
 			rc.Log.Error(err)
 			continue
@@ -87,7 +87,7 @@ func (rc *RCServer) BindSPServers(services map[string][]string, err error) {
 		return
 	}
 	ip := rc.spRPCClient.ResetRPCServer(services)
-	tasks, er := rc.clusterClient.FilterRPCService(services)
+	tasks, er := rc.clusterClient.GetLocalServices(services)
 	if er != nil {
 		rc.Log.Error(er)
 		return
@@ -108,7 +108,7 @@ func (rc *RCServer) PublishNow() {
 	//立即发布服务
 	services := rc.MergeService()
 	rc.Log.Infof("->publish services:%d", len(services))
-	err := rc.clusterClient.PublishRPCServices(services)
+	err := rc.clusterClient.PublishServices(services)
 	if err != nil {
 		rc.Log.Error(err)
 	}
@@ -125,17 +125,17 @@ func (rc *RCServer) IsMasterServer(items []*cluster.RCServerItem) bool {
 }
 
 //MergeService 合并所有服务
-func (rc *RCServer) MergeService() (lst cluster.ServiceProviderList) {
+func (rc *RCServer) MergeService() (lst cluster.RPCServices) {
 	lst = make(map[string][]string)
 	services := rc.currentServices.Get("*")
 	if services != nil {
-		lst = services.(cluster.ServiceProviderList)
+		lst = services.(cluster.RPCServices)
 	}
 	rc.Log.Debug("lst:", lst)
 	crossServices := rc.crossService.GetAll()
 	rc.Log.Debug("cross:", crossServices)
 	for _, svs := range crossServices {
-		service := svs.(cluster.ServiceProviderList)
+		service := svs.(cluster.RPCServices)
 		for i, v := range service {
 			rc.Log.Debug(i, ",len:", len(v))
 

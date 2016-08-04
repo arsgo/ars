@@ -29,8 +29,8 @@ func (client *ClusterClient) WatchSPTaskChange(callback func()) {
 	})
 }
 
-//WatchServiceProviderChange 监控RPC服务提供方变化
-func (client *ClusterClient) WatchServiceProviderChange(changed func(ServiceProviderList, error)) (err error) {
+//WatchSPServerChange 监控sp server变化
+func (client *ClusterClient) WatchSPServerChange(changed func(RPCServices, error)) (err error) {
 	client.Log.Info("::watch for service providers changes")
 	client.WaitClusterPathExists(client.rpcProviderRootPath, client.timeout, func(exists bool) {
 		if !exists {
@@ -38,23 +38,23 @@ func (client *ClusterClient) WatchServiceProviderChange(changed func(ServiceProv
 		} else {
 			go func() {
 				defer client.recover()
-				changed(client.GetServiceProviders())
+				changed(client.GetSPServerServices())
 			}()
 		}
 	})
 	client.WatchClusterChildrenChange(client.rpcProviderRootPath, func() {
 		go func() {
 			defer client.recover()
-			changed(client.GetServiceProviders())
+			changed(client.GetSPServerServices())
 		}()
 	})
-	lst, err := client.GetAllServiceProviderNamePath()
+	lst, err := client.GetAllSPServers()
 	for _, v := range lst {
 		for _, p := range v {
 			client.WatchClusterChildrenChange(p, func() {
 				go func() {
 					defer client.recover()
-					changed(client.GetServiceProviders())
+					changed(client.GetSPServerServices())
 				}()
 			})
 		}
@@ -62,8 +62,8 @@ func (client *ClusterClient) WatchServiceProviderChange(changed func(ServiceProv
 	return
 }
 
-//GetAllServiceProviderNamePath 获了所有服务名称路径
-func (client *ClusterClient) GetAllServiceProviderNamePath() (lst map[string][]string, err error) {
+//GetAllSPServers 获了所有服务名称路径
+func (client *ClusterClient) GetAllSPServers() (lst map[string][]string, err error) {
 	lst = make(map[string][]string)
 	serviceList, err := client.handler.GetChildren(client.rpcProviderRootPath)
 	if err != nil {
@@ -78,8 +78,8 @@ func (client *ClusterClient) GetAllServiceProviderNamePath() (lst map[string][]s
 	return
 }
 
-//GetServiceProviders 根据服务提供方路径,获取所有服务列表
-func (client *ClusterClient) GetServiceProviders() (lst ServiceProviderList, err error) {
+//GetSPServerServices 根据服务提供方路径,获取所有服务列表
+func (client *ClusterClient) GetSPServerServices() (lst RPCServices, err error) {
 	lst = make(map[string][]string)
 	serviceList, err := client.handler.GetChildren(client.rpcProviderRootPath)
 	if err != nil {
@@ -104,7 +104,7 @@ func (client *ClusterClient) GetServiceProviders() (lst ServiceProviderList, err
 }
 
 //UpdateSPServerTask 更新sp server task config
-func (client *ClusterClient) UpdateSPServerTask(config ServiceProviderTask) (err error) {
+func (client *ClusterClient) UpdateSPServerTask(config SPServerTask) (err error) {
 	buffer, err := json.Marshal(config)
 	if err != nil {
 		return
@@ -114,9 +114,9 @@ func (client *ClusterClient) UpdateSPServerTask(config ServiceProviderTask) (err
 }
 
 //GetSPServerTask 获取service provider 的任务列表
-func (client *ClusterClient) GetSPServerTask(ip string) (task ServiceProviderTask, err error) {
+func (client *ClusterClient) GetSPServerTask(ip string) (task SPServerTask, err error) {
 
-	task = ServiceProviderTask{}
+	task = SPServerTask{}
 	values, err := client.handler.GetValue(client.spServerTaskPath)
 	if err != nil {
 		return
@@ -136,8 +136,8 @@ func (client *ClusterClient) GetSPServerTask(ip string) (task ServiceProviderTas
 	return
 }
 
-//CreateServiceProvider 创建服务提供节点
-func (client *ClusterClient) CreateServiceProvider(name string, port string, value string) (string, error) {
+//CreateSPServer 创建服务提供节点
+func (client *ClusterClient) CreateSPServer(name string, port string, value string) (string, error) {
 	data := client.dataMap.Copy()
 	data.Set("serviceName", strings.TrimSuffix(name, client.domainPath))
 	data.Set("ip", client.IP)
@@ -147,6 +147,6 @@ func (client *ClusterClient) CreateServiceProvider(name string, port string, val
 
 }
 
-func (client *ClusterClient) CloseServiceProvider(path string) error {
+func (client *ClusterClient) CloseSPServer(path string) error {
 	return client.handler.Delete(path)
 }

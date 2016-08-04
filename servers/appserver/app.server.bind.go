@@ -17,7 +17,7 @@ func (a *AppServer) BindRCServer(configs []*cluster.RCServerItem, err error) err
 }
 
 //BindTask 绑定本地任务
-func (a *AppServer) BindTask(config *cluster.AppServerStartupConfig, err error) (er error) {
+func (a *AppServer) BindTask(config *cluster.AppServerTask, err error) (er error) {
 	defer a.recover()
 	if config == nil {
 		return

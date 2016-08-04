@@ -36,7 +36,7 @@ type RootConfig struct {
 	RPC    RPCPoolSetting `json:"rpc"`
 	Libs   []string       `json:"libs"`
 }
-type AppServerStartupConfig struct {
+type AppServerTask struct {
 	LocalJobs []JobItem     `json:"jobs"`
 	Tasks     []TaskItem    `json:"tasks"`
 	Server    *ServerConfig `json:"server"`
@@ -57,7 +57,7 @@ type RCServerItem struct {
 type JobConsumerValue struct {
 	Server string `json:"server"`
 }
-type ServiceProviderList map[string][]string
+type RPCServices map[string][]string
 
 //---------------------------------------------------------
 
@@ -74,7 +74,7 @@ type TaskItem struct {
 	MinSize int    `json:"min"`
 	MaxSize int    `json:"max"`
 }
-type ServiceProviderTask struct {
+type SPServerTask struct {
 	Config RootConfig `json:"config"`
 	Tasks  []TaskItem `json:"tasks"`
 }
@@ -93,15 +93,15 @@ type RCServerTask struct {
 	RPCPoolSetting    RPCPoolSetting                   `json:"rpc"`
 }
 
-func (c CrossDoaminAccessItem) GetServicesMap(domain string) ServiceProviderList {
-	m := make(ServiceProviderList)
+func (c CrossDoaminAccessItem) GetServicesMap(domain string) RPCServices {
+	m := make(RPCServices)
 	for _, k := range c.Services {
 		m[k+"@"+domain] = []string{}
 	}
 	return m
 }
-func (c ServiceProviderList) Clone() ServiceProviderList {
-	mp := make(ServiceProviderList)
+func (c RPCServices) Clone() RPCServices {
+	mp := make(RPCServices)
 	for k, v := range c {
 		vs := make([]string, 0, len(v))
 		for _, p := range v {
@@ -112,7 +112,7 @@ func (c ServiceProviderList) Clone() ServiceProviderList {
 	return mp
 }
 
-func (c ServiceProviderList) Equal(input ServiceProviderList) bool {
+func (c RPCServices) Equal(input RPCServices) bool {
 	if input == nil {
 		return false
 	}

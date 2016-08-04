@@ -9,7 +9,7 @@ func (sp *SPServer) startMonitor() {
 			select {
 			case <-tk.C:
 				if sp.rpcClient.GetServiceCount() == 0 {
-					items, err := sp.clusterClient.GetAllRCServerValues()
+					items, err := sp.clusterClient.GetAllRCServers()
 					if len(items) > 0 {
 						sp.Log.Info(" |-> 重新绑定rc server")
 						sp.BindRCServer(items, err)

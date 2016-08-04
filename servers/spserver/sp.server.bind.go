@@ -37,7 +37,7 @@ func (sp *SPServer) rebindService() {
 func (sp *SPServer) OnSPServiceCreate(task cluster.TaskItem) (path string) {
 	sp.Log.Info("::load script:", task.Script, ",minSize:", task.MinSize, ",maxSize:", task.MaxSize)
 	sp.scriptPool.PreLoad(task.Script, task.MinSize, task.MaxSize)
-	path, err := sp.clusterClient.CreateServiceProvider(task.Name, sp.rpcServer.Address,
+	path, err := sp.clusterClient.CreateSPServer(task.Name, sp.rpcServer.Address,
 		sp.snap.GetSnap(task.Name))
 	if err != nil {
 		return
@@ -48,7 +48,7 @@ func (sp *SPServer) OnSPServiceCreate(task cluster.TaskItem) (path string) {
 
 //OnSPServiceClose 服务停止时同时删除集群节点
 func (sp *SPServer) OnSPServiceClose(task cluster.TaskItem, path string) {
-	err := sp.clusterClient.CloseServiceProvider(path)
+	err := sp.clusterClient.CloseSPServer(path)
 	if err != nil {
 		return
 	}

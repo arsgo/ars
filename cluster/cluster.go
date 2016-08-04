@@ -31,23 +31,24 @@ type IClusterClient interface {
 	GetElasticConfig(name string) (string, error)
 	GetDBConfig(name string) (string, error)
 	GetServiceFullPath(name string) string
+	UpdateSnap(path string, snap string) (err error)
 	WaitForConnected() bool
 	WaitForDisconnected() bool
 	Reconnect() error
 	Close()
 
 	//app server..........
-	WatchAppTaskChange(callback func(config *AppServerStartupConfig, err error) error)
-	GetCurrentAppServerTask() (config *AppServerStartupConfig, err error)
-	GetAppServerTask(name string) (config *AppServerStartupConfig, err error)
-	UpdateAppServerTask(name string, config *AppServerStartupConfig) (err error)
+	WatchAppTaskChange(callback func(config *AppServerTask, err error) error)
+	GetCurrentAppServerTask() (config *AppServerTask, err error)
+	GetAppServerTask(name string) (config *AppServerTask, err error)
+	UpdateAppServerTask(name string, config *AppServerTask) (err error)
 	UpdateAppServerSnap(snap string) error
 	CloseAppServer() error
 
 	//rc server...........
 	WatchRCServerChange(callback func([]*RCServerItem, error))
 	GetRCServerValue(path string) (value *RCServerItem, err error)
-	GetAllRCServerValues() (servers []*RCServerItem, err error)
+	GetAllRCServers() (servers []*RCServerItem, err error)
 	CreateRCServer(value string) (string, error)
 	CloseRCServer(path string) error
 	GetRCServerTask() (config RCServerTask, err error)
@@ -67,18 +68,17 @@ type IClusterClient interface {
 
 	//rpc service..........
 	WatchRPCServiceChange(callback func(services map[string][]string, err error))
-	GetRPCService() (ServiceProviderList, error)
+	GetPublishServices() (RPCServices, error)
+	GetSPServerServices() (lst RPCServices, err error)
+	PublishServices(services RPCServices) (err error)
 
 	//sp server........
-	WatchServiceProviderChange(changed func(ServiceProviderList, error)) (err error)
+	WatchSPServerChange(changed func(RPCServices, error)) (err error)
 	WatchSPTaskChange(callback func())
-	GetAllServiceProviderNamePath() (lst map[string][]string, err error)
-	GetSPServerTask(ip string) (ServiceProviderTask, error)
-	UpdateSPServerTask(task ServiceProviderTask) (err error)
-	FilterRPCService(map[string][]string) ([]TaskItem, error)
-	PublishRPCServices(services ServiceProviderList) (err error)
-	GetServiceProviders() (lst ServiceProviderList, err error)
-	UpdateSnap(addr string, snap string) (err error)
-	CreateServiceProvider(name string, port string, value string) (string, error)
-	CloseServiceProvider(path string) error
+	GetAllSPServers() (lst map[string][]string, err error)
+	GetSPServerTask(ip string) (SPServerTask, error)
+	UpdateSPServerTask(task SPServerTask) (err error)
+	GetLocalServices(map[string][]string) ([]TaskItem, error)
+	CreateSPServer(name string, port string, value string) (string, error)
+	CloseSPServer(path string) error
 }

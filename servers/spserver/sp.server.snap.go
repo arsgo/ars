@@ -56,7 +56,7 @@ func (sp *SPServer) ResetSPSnap() {
 func (sp *SPServer) CloseSPServer() {
 	services := sp.rpcScriptProxy.GetTasks()
 	for _, v := range services {
-		sp.clusterClient.CloseServiceProvider(v)
+		sp.clusterClient.CloseSPServer(v)
 	}
 }
 

@@ -31,7 +31,7 @@ func (rc *RCServer) ResetCrossDomainServices(task cluster.RCServerTask) {
 			continue
 		}
 		//检查本地服务是否与远程服务一致
-		currentServices := svs.(cluster.ServiceProviderList)                    //本地服务
+		currentServices := svs.(cluster.RPCServices)                    //本地服务
 		remoteServices := task.CrossDomainAccess[domain].GetServicesMap(domain) //远程服务
 		//删除更新服务
 		for name := range currentServices {
@@ -106,7 +106,7 @@ func (rc *RCServer) getDomainIPs(items []*cluster.RCServerItem) []string {
 }
 func (rc *RCServer) bindCrossServices(domain string, items []*cluster.RCServerItem) {
 	ips := rc.getDomainIPs(items)
-	allServices := rc.crossService.Get(domain).(cluster.ServiceProviderList)
+	allServices := rc.crossService.Get(domain).(cluster.RPCServices)
 	rc.Log.Debug("all:", allServices)
 	for name := range allServices {
 		allServices[name] = ips

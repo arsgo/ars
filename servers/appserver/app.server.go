@@ -80,7 +80,7 @@ func (app *AppServer) Start() (err error) {
 	if !app.clusterClient.WaitForConnected() {
 		return
 	}
-	app.clusterClient.WatchAppTaskChange(func(config *cluster.AppServerStartupConfig, err error) error {
+	app.clusterClient.WatchAppTaskChange(func(config *cluster.AppServerTask, err error) error {
 		defer app.startSync.Done("INIT.BIND.TASK")
 		app.BindTask(config, err)
 		return nil

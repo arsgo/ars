@@ -13,7 +13,7 @@ func (client *ClusterClient) WatchRPCServiceChange(callback func(services map[st
 		} else {
 			go func() {
 				defer client.recover()
-				callback(client.GetRPCService())
+				callback(client.GetPublishServices())
 			}()
 		}
 	})
@@ -21,13 +21,13 @@ func (client *ClusterClient) WatchRPCServiceChange(callback func(services map[st
 	client.WatchClusterValueChange(client.rpcPublishPath, func() {
 		go func() {
 			defer client.recover()
-			callback(client.GetRPCService())
+			callback(client.GetPublishServices())
 		}()
 	})
 }
 
-//GetRPCService 获取已发布的RPC服务
-func (client *ClusterClient) GetRPCService() (sp ServiceProviderList, err error) {
+//GetPublishServices 获取已发布的RPC服务
+func (client *ClusterClient) GetPublishServices() (sp RPCServices, err error) {
 	content, err := client.handler.GetValue(client.rpcPublishPath)
 	if err != nil {
 		return
@@ -37,8 +37,8 @@ func (client *ClusterClient) GetRPCService() (sp ServiceProviderList, err error)
 	return
 }
 
-//FilterRPCService 过滤RPC服务
-func (client *ClusterClient) FilterRPCService(services map[string][]string) (items []TaskItem, err error) {
+//GetLocalServices 过滤RPC服务
+func (client *ClusterClient) GetLocalServices(services map[string][]string) (items []TaskItem, err error) {
 	all, err := client.GetSPServerTask("*")
 	indentity := make(map[string]string)
 	if err != nil {
@@ -62,11 +62,11 @@ func (client *ClusterClient) FilterRPCService(services map[string][]string) (ite
 	return
 }
 
-//PublishRPCServices 发布所有服务
-func (client *ClusterClient) PublishRPCServices(services ServiceProviderList) (err error) {
+//PublishServices 发布所有服务
+func (client *ClusterClient) PublishServices(services RPCServices) (err error) {
 	client.publishLock.Lock()
-	equal := services.Equal(client.lastServiceProviderList)
-	client.lastServiceProviderList = services.Clone()
+	equal := services.Equal(client.lastRPCServices)
+	client.lastRPCServices = services.Clone()
 	client.publishLock.Unlock()
 	if equal {
 		client.Log.Debug("服务无变化")

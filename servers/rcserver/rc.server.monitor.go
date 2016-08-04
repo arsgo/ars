@@ -58,7 +58,7 @@ func (rc *RCServer) needBindRPCService() bool {
 
 //rebindLocalServices 重新绑定本地服务
 func (rc *RCServer) rebindLocalServices() (err error) {
-	lst, err := rc.clusterClient.GetServiceProviders()
+	lst, err := rc.clusterClient.GetSPServerServices()
 	if err != nil {
 		rc.Log.Error(err)
 		return
@@ -84,7 +84,7 @@ func (rc *RCServer) resetCrossDomainServices() (err error) {
 	domains := rc.crossDomain.GetAll()
 	rc.Log.Debug("domains:", domains)
 	for domain, cst := range domains {
-		serveritems, err := cst.(cluster.IClusterClient).GetAllRCServerValues()
+		serveritems, err := cst.(cluster.IClusterClient).GetAllRCServers()
 		if err != nil {
 			break
 		}

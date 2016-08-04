@@ -13,7 +13,7 @@ func (client *ClusterClient) WatchRCServerChange(callback func([]*RCServerItem, 
 		} else {
 			go func() {
 				defer client.recover()
-				callback(client.GetAllRCServerValues())
+				callback(client.GetAllRCServers())
 			}()
 		}
 	})
@@ -22,7 +22,7 @@ func (client *ClusterClient) WatchRCServerChange(callback func([]*RCServerItem, 
 		client.Log.Info(" -> rc server has changed")
 		go func() {
 			defer client.recover()
-			callback(client.GetAllRCServerValues())
+			callback(client.GetAllRCServers())
 		}()
 	})
 }
@@ -49,8 +49,8 @@ func (client *ClusterClient) GetRCServerValue(path string) (value *RCServerItem,
 	return
 }
 
-//GetAllRCServerValues 获取所有RC服务器信息
-func (client *ClusterClient) GetAllRCServerValues() (servers []*RCServerItem, err error) {
+//GetAllRCServers 获取所有RC服务器信息
+func (client *ClusterClient) GetAllRCServers() (servers []*RCServerItem, err error) {
 	rcs, _ := client.handler.GetChildren(client.rcServerRoot)
 	servers = []*RCServerItem{}
 	for _, v := range rcs {
