@@ -127,7 +127,7 @@ func (client *ClusterClient) GetSPServerTask(ip string) (task ServiceProviderTas
 	}
 	var items []TaskItem
 	for _, v := range task.Tasks {
-		if strings.EqualFold(v.IP, "*") || strings.Contains(","+v.IP+",", ip) {
+		if strings.EqualFold(ip, "*") || strings.EqualFold(v.IP, "*") || strings.Contains(","+v.IP+",", ip) {
 			v.Name = client.GetServiceFullPath(v.Name)
 			items = append(items, v)
 		}

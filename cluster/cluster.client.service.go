@@ -39,7 +39,7 @@ func (client *ClusterClient) GetRPCService() (sp ServiceProviderList, err error)
 
 //FilterRPCService 过滤RPC服务
 func (client *ClusterClient) FilterRPCService(services map[string][]string) (items []TaskItem, err error) {
-	all, err := client.GetSPServerTask(client.IP)
+	all, err := client.GetSPServerTask("*")
 	indentity := make(map[string]string)
 	if err != nil {
 		return
@@ -69,7 +69,7 @@ func (client *ClusterClient) PublishRPCServices(services ServiceProviderList) (e
 	client.lastServiceProviderList = services.Clone()
 	client.publishLock.Unlock()
 	if equal {
-		client.Log.Info("服务无变化")
+		client.Log.Debug("服务无变化")
 		return
 	}
 
@@ -81,7 +81,7 @@ func (client *ClusterClient) PublishRPCServices(services ServiceProviderList) (e
 	if client.handler.Exists(client.rpcPublishPath) {
 		err = client.handler.UpdateValue(client.rpcPublishPath, serviceValue)
 	} else {
-		err = client.handler.CreatePath(client.rpcPublishPath, serviceValue)
+		err = client.handler.CreateNode(client.rpcPublishPath, serviceValue)
 	}
 	return
 }

@@ -15,17 +15,17 @@ func (rc *RCServer) BindCrossAccess(task cluster.RCServerTask) (err error) {
 //ResetCrossDomainServices 重置跨域服务
 func (rc *RCServer) ResetCrossDomainServices(task cluster.RCServerTask) {
 	//添加、关闭、更新服务
-	allServices := rc.crossService.GetAll()
+	localServices := rc.crossService.GetAll()
 	//添加不存在的域和服务
 	for domain, item := range task.CrossDomainAccess {
-		if _, ok := allServices[domain]; ok {
+		if _, ok := localServices[domain]; ok {
 			continue
 		}
 		crossData := item.GetServicesMap(domain) //转换为服务映射表
 		rc.crossService.Set(domain, crossData)   //添加到服务列表
 	}
 	//删除，更新服务
-	for domain, svs := range allServices {
+	for domain, svs := range localServices {
 		if _, ok := task.CrossDomainAccess[domain]; !ok {
 			rc.crossService.Delete(domain) //不存在域,则删除
 			continue
@@ -58,8 +58,8 @@ func (rc *RCServer) WatchCrossDomain(task cluster.RCServerTask) {
 	}
 
 	//关闭域
-	currentCluster := rc.crossDomain.GetAll()
-	for domain, clt := range currentCluster {
+	localDomains := rc.crossDomain.GetAll()
+	for domain, clt := range localDomains {
 		if _, ok := task.CrossDomainAccess[domain]; !ok {
 			client := clt.(cluster.IClusterClient)
 			client.Close()
@@ -83,6 +83,9 @@ func (rc *RCServer) WatchCrossDomain(task cluster.RCServerTask) {
 
 			//监控外部RC服务器变化,变化后更新本地服务
 			go func(domain string) {
+				if !rc.IsMaster {
+					return
+				}
 				defer rc.recover()
 				rc.Log.Infof("::watch cross domain [%s] rc server change", domain)
 				clusterClient.WatchRCServerChange(func(items []*cluster.RCServerItem, err error) {
@@ -104,7 +107,8 @@ func (rc *RCServer) getDomainIPs(items []*cluster.RCServerItem) []string {
 func (rc *RCServer) bindCrossServices(domain string, items []*cluster.RCServerItem) {
 	ips := rc.getDomainIPs(items)
 	allServices := rc.crossService.Get(domain).(cluster.ServiceProviderList)
-	for name := range allServices {	
+	rc.Log.Debug("all:", allServices)
+	for name := range allServices {
 		allServices[name] = ips
 	}
 	rc.crossService.Set(domain, allServices)

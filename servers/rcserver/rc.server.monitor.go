@@ -16,6 +16,7 @@ func (rc *RCServer) startMonitor() {
 			select {
 			case <-tk.C:
 				if rc.needBindRPCService() {
+					rc.Log.Debug("~~~~~~rebind rpc service")
 					rc.rebindLocalServices()
 				}
 			}
@@ -63,7 +64,10 @@ func (rc *RCServer) rebindLocalServices() (err error) {
 		return
 	}
 	rc.currentServices.Set("*", lst)
-	rc.resetCrossDomainServices()
+	err = rc.resetCrossDomainServices()
+	if err != nil {
+		return
+	}
 	services := rc.MergeService()
 	rc.BindSPServers(services, nil)
 	return
@@ -76,7 +80,9 @@ func (rc *RCServer) resetCrossDomainServices() (err error) {
 		return
 	}
 	rc.ResetCrossDomainServices(task)
+	rc.WatchCrossDomain(task)
 	domains := rc.crossDomain.GetAll()
+	rc.Log.Debug("domains:", domains)
 	for domain, cst := range domains {
 		serveritems, err := cst.(cluster.IClusterClient).GetAllRCServerValues()
 		if err != nil {

@@ -96,7 +96,7 @@ type RCServerTask struct {
 func (c CrossDoaminAccessItem) GetServicesMap(domain string) ServiceProviderList {
 	m := make(ServiceProviderList)
 	for _, k := range c.Services {
-		m[k+"@"+domain] = c.Servers
+		m[k+"@"+domain] = []string{}
 	}
 	return m
 }

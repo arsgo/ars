@@ -11,7 +11,7 @@ func (a *AppServer) BindRCServer(configs []*cluster.RCServerItem, err error) err
 	}
 	services := make(map[string][]string)
 	services["*"] = tasks
-	a.Log.Info(" -> bind rc server (", len(services), ")")
+	a.Log.Info(" -> bind rc server (", len(configs), ")")
 	a.rpcClient.ResetRPCServer(services)
 	return nil
 }

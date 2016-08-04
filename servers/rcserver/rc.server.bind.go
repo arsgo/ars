@@ -54,6 +54,7 @@ func (rc *RCServer) BindRCServer() (err error) {
 	rc.startSync.WaitAndAdd(1)
 	rc.clusterClient.WatchRPCServiceChange(func(services map[string][]string, err error) {
 		defer rc.startSync.Done("INIT.SRV.CNG")
+		rc.Log.Info(" |-> rpc services changed")
 		rc.BindSPServers(services, err)
 	})
 	return
@@ -85,13 +86,13 @@ func (rc *RCServer) BindSPServers(services map[string][]string, err error) {
 	if err != nil {
 		return
 	}
-	rc.Log.Info(" |-> rpc services changed")
 	ip := rc.spRPCClient.ResetRPCServer(services)
 	tasks, er := rc.clusterClient.FilterRPCService(services)
 	if er != nil {
 		rc.Log.Error(er)
 		return
 	}
+	rc.Log.Debug("tasks:", tasks)
 	if rc.rcRPCServer.UpdateTasks(tasks) > 0 {
 		rc.Log.Info(" |-> local services has changed:", len(tasks), ",", ip)
 	}
@@ -130,10 +131,14 @@ func (rc *RCServer) MergeService() (lst cluster.ServiceProviderList) {
 	if services != nil {
 		lst = services.(cluster.ServiceProviderList)
 	}
+	rc.Log.Debug("lst:", lst)
 	crossServices := rc.crossService.GetAll()
+	rc.Log.Debug("cross:", crossServices)
 	for _, svs := range crossServices {
 		service := svs.(cluster.ServiceProviderList)
 		for i, v := range service {
+			rc.Log.Debug(i, ",len:", len(v))
+
 			if len(v) > 0 {
 				lst[i] = v
 			} else {
@@ -141,5 +146,6 @@ func (rc *RCServer) MergeService() (lst cluster.ServiceProviderList) {
 			}
 		}
 	}
+	rc.Log.Debug("lst:", lst)
 	return lst
 }

@@ -2,14 +2,15 @@ package cluster
 
 import "time"
 
+//IClusterHandler 集群管理处理程序，用于处理与集群管理器如(zk,etcd)等之前的通信
 type IClusterHandler interface {
 	Exists(path string) bool
-	CreatePath(path string, data string) error
+	CreateNode(path string, data string) error
 	CreateSeqNode(path string, data string) (string, error)
 	CreateTmpNode(path string, data string) (string, error)
 	GetValue(path string) (string, error)
-	GetChildren(path string) ([]string, error)
 	UpdateValue(path string, value string) error
+	GetChildren(path string) ([]string, error)
 	WatchValue(path string, data chan string) error
 	WatchChildren(path string, data chan []string) error
 	WaitForConnected() bool
@@ -18,6 +19,8 @@ type IClusterHandler interface {
 	Reconnect() error
 	Close()
 }
+
+//IClusterClient 集群客户端处理程序，提供appserver,rcserver,spserver与集群之前的交互操作
 type IClusterClient interface {
 	//base.............
 	WaitClusterPathExists(path string, timeout time.Duration, callback func(exists bool))

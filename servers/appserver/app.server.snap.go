@@ -77,11 +77,11 @@ func (app *AppServer) StartRefreshSnap() {
 	}
 }
 func (app *AppServer) resetAppServer() {
-	app.Log.Info("关闭所有服务")
+	app.Log.Debug("关闭所有服务")
 	app.CloseAppServer()
 	app.CloseJobSnap()
 	time.Sleep(time.Second)
-	app.Log.Info("启动所有服务")
+	app.Log.Debug("启动所有服务")
 	app.ResetAPPSnap()
 	app.ResetJobSnap()
 }
