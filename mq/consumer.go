@@ -28,6 +28,7 @@ func NewMQConsumer(task cluster.TaskItem, clusterClient cluster.IClusterClient, 
 	mq.task = task
 	mq.param, err = utility.GetParamsMap(task.Params)
 	if err != nil {
+		fmt.Println("get param error")
 		return
 	}
 	mq.queue = fmt.Sprintf("%s", mq.param["queue"])
@@ -38,6 +39,7 @@ func NewMQConsumer(task cluster.TaskItem, clusterClient cluster.IClusterClient, 
 	}
 	config, err := clusterClient.GetMQConfig(mq.setting)
 	if err != nil {
+		fmt.Println("get config")
 		return
 	}
 	mq.service, err = q.NewMQService(config)

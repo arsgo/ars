@@ -61,7 +61,11 @@ func (r *HTTPScriptServer) Start() {
 		r.Address = ":" + r.Address
 	}
 	r.server = webserver.NewWebServer(r.Address, r.loggerName, r.getHandlers()...)
-	go r.server.Serve()
+	go func(){
+ 		er:=r.server.Serve()
+		 r.Log.Error(er)
+	}()
+
 	r.Log.Infof("::start api server%s", r.Address)
 }
 
