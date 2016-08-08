@@ -90,14 +90,14 @@ func (app *AppServer) resetAppServer() {
 func (app *AppServer) ResetJobSnap() (err error) {
 	paths := app.scriptPorxy.GetTasks()
 	for _, path := range paths {
-		app.clusterClient.UpdateJobConsumerPath(path, app.snap.GetJobSnap(app.jobServer.Address))
+		app.clusterClient.SetNode(path, app.snap.GetJobSnap(app.jobServer.Address))
 	}
 	return nil
 }
 func (app *AppServer) CloseJobSnap() (err error) {
 	paths := app.scriptPorxy.GetTasks()
 	for _, path := range paths {
-		app.clusterClient.CloseJobConsumer(path)
+		app.clusterClient.CloseNode(path)
 	}
 	return nil
 }

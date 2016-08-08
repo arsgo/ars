@@ -6,7 +6,6 @@ func (client *ClusterClient) GetSourceConfig(typeName string, name string) (conf
 	dataMap.Set("type", typeName)
 	dataMap.Set("name", name)
 	path := dataMap.Translate(p_varConfig)
-
 	cfg := client.configCache.Get(path)
 	if cfg != nil {
 		config = cfg.(string)
@@ -14,6 +13,7 @@ func (client *ClusterClient) GetSourceConfig(typeName string, name string) (conf
 	}
 	values, err := client.handler.GetValue(path)
 	if err != nil {
+		client.Log.Errorf(" -> var config:%s 获取数据有误", path)
 		return
 	}
 	config = string(values)
@@ -21,11 +21,11 @@ func (client *ClusterClient) GetSourceConfig(typeName string, name string) (conf
 	client.WatchClusterValueChange(path, func() {
 		values, err := client.handler.GetValue(path)
 		if err != nil {
+			client.Log.Errorf(" -> var config:%s 获取数据有误", path)
 			return
 		}
 		client.configCache.Set(path, string(values))
 	})
-
 	return
 }
 

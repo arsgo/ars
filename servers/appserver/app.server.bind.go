@@ -46,7 +46,7 @@ func (a *AppServer) OnJobCreate(task cluster.TaskItem) (path string) {
 
 //OnJobClose 关闭JOB服务
 func (a *AppServer) OnJobClose(task cluster.TaskItem, path string) {
-	err := a.clusterClient.CloseJobConsumer(path)
+	err := a.clusterClient.CloseNode(path)
 	if err != nil {
 		return
 	}

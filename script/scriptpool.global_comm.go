@@ -1,6 +1,7 @@
 package script
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/arsgo/lib4go/logger"
@@ -11,7 +12,12 @@ func (s *ScriptPool) globalGetParams(ls *lua.LState) (params []interface{}) {
 	c := ls.GetTop()
 	params = make([]interface{}, 0, c)
 	for i := 1; i <= c; i++ {
-		params = append(params, ls.Get(i).String())
+		t := ls.Get(i).Type().String()
+		if t == "userdata" {
+			params = append(params, fmt.Sprintf("%+v", ls.CheckUserData(i).Value))
+		} else {
+			params = append(params, ls.Get(i).String())
+		}
 	}
 	return
 }
@@ -21,7 +27,7 @@ func (s *ScriptPool) globalGetLogger(ls *lua.LState) (lg logger.ILogger, err err
 	lg, err = logger.NewSession(loggerName, sessionID)
 	return
 }
-func (s *ScriptPool) globalInfo(ls *lua.LState) int {	
+func (s *ScriptPool) globalInfo(ls *lua.LState) int {
 	params := s.globalGetParams(ls)
 	if len(params) == 0 {
 		return pushValues(ls)

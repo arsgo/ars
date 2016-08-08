@@ -49,7 +49,7 @@ func (sp *SPServer) ResetSPSnap() {
 	sp.snap.Snap.Script, _ = json.Marshal(sp.scriptPool.GetSnap())
 	sp.snap.Mem = sysinfo.GetAPPMemory()
 	for k, v := range services {
-		sp.clusterClient.UpdateSnap(v, sp.snap.GetSnap(k))
+		sp.clusterClient.SetNode(v, sp.snap.GetSnap(k))
 	}
 }
 

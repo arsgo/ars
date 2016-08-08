@@ -9,7 +9,7 @@ import (
 func (client *ClusterClient) WatchRPCServiceChange(callback func(services map[string][]string, err error)) {
 	client.WaitClusterPathExists(client.rpcPublishPath, client.timeout, func(exists bool) {
 		if !exists {
-			client.Log.Info("service publish config not exists")
+			client.Log.Errorf("services:%s未配置或不存在", client.rpcPublishPath)
 		} else {
 			go func() {
 				defer client.recover()
@@ -17,10 +17,11 @@ func (client *ClusterClient) WatchRPCServiceChange(callback func(services map[st
 			}()
 		}
 	})
-	client.Log.Info("::watch for service config changes ", client.rpcPublishPath)
+	client.Log.Info("::监控services:%s的变化", client.rpcPublishPath)
 	client.WatchClusterValueChange(client.rpcPublishPath, func() {
 		go func() {
 			defer client.recover()
+			client.Log.Info(" -> services:%s 值发生变化", client.rpcPublishPath)
 			callback(client.GetPublishServices())
 		}()
 	})
@@ -30,6 +31,7 @@ func (client *ClusterClient) WatchRPCServiceChange(callback func(services map[st
 func (client *ClusterClient) GetPublishServices() (sp RPCServices, err error) {
 	content, err := client.handler.GetValue(client.rpcPublishPath)
 	if err != nil {
+		client.Log.Errorf(" -> services:%s 获取server数据有误", client.rpcPublishPath)
 		return
 	}
 	sp = make(map[string][]string)
@@ -40,10 +42,10 @@ func (client *ClusterClient) GetPublishServices() (sp RPCServices, err error) {
 //GetLocalServices 过滤RPC服务
 func (client *ClusterClient) GetLocalServices(services map[string][]string) (items []TaskItem, err error) {
 	all, err := client.GetSPServerTask("*")
-	indentity := make(map[string]string)
 	if err != nil {
 		return
 	}
+	indentity := make(map[string]string)
 	for _, v := range all.Tasks {
 		v.Name = client.GetServiceFullPath(v.Name)
 		if _, ok := indentity[v.Name]; !ok {
@@ -75,14 +77,10 @@ func (client *ClusterClient) PublishServices(services RPCServices) (err error) {
 
 	buffer, err := json.Marshal(services)
 	if err != nil {
+		client.Log.Errorf(" -> services转换为json出错：%v", services)
 		return
 	}
-	serviceValue := string(buffer)
-	if client.handler.Exists(client.rpcPublishPath) {
-		err = client.handler.UpdateValue(client.rpcPublishPath, serviceValue)
-	} else {
-		err = client.handler.CreateNode(client.rpcPublishPath, serviceValue)
-	}
+	err = client.SetNode(client.rpcPublishPath, string(buffer))
 	return
 }
 

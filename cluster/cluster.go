@@ -31,7 +31,10 @@ type IClusterClient interface {
 	GetElasticConfig(name string) (string, error)
 	GetDBConfig(name string) (string, error)
 	GetServiceFullPath(name string) string
-	UpdateSnap(path string, snap string) (err error)
+	CreateNode(path string, value string) (string, error)
+	UpdateNode(path string, value string) error
+	CloseNode(path string) error
+	SetNode(path string, value string) error
 	WaitForConnected() bool
 	WaitForDisconnected() bool
 	Reconnect() error
@@ -63,8 +66,6 @@ type IClusterClient interface {
 	//job consumer
 	GetJobConsumers(jobName string) (consumers []string)
 	CreateJobConsumer(jobName string, value string) (string, error)
-	UpdateJobConsumerPath(path string, value string) error
-	CloseJobConsumer(path string) error
 
 	//rpc service..........
 	WatchRPCServiceChange(callback func(services map[string][]string, err error))

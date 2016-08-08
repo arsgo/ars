@@ -10,8 +10,7 @@ import "encoding/json"
 func (client *ClusterClient) WatchSPTaskChange(callback func()) {
 	client.WaitClusterPathExists(client.spConfigPath, client.timeout, func(exists bool) {
 		if !exists {
-			client.Log.Info("sp server config not exists")
-
+			client.Log.Errorf("sp config:%s未配置或不存在", client.spConfigPath)
 		} else {
 			go func() {
 				defer client.recover()
@@ -19,9 +18,9 @@ func (client *ClusterClient) WatchSPTaskChange(callback func()) {
 			}()
 		}
 	})
-	client.Log.Info("::watch for provider config change")
+	client.Log.Infof("::监控sp config:%s的变化", client.spConfigPath)
 	client.WatchClusterValueChange(client.spConfigPath, func() {
-		client.Log.Info(" -> service provider task has changed")
+		client.Log.Infof(" -> sp config:%s 值发生变化", client.spConfigPath)
 		go func() {
 			defer client.recover()
 			callback()
@@ -31,10 +30,10 @@ func (client *ClusterClient) WatchSPTaskChange(callback func()) {
 
 //WatchSPServerChange 监控sp server变化
 func (client *ClusterClient) WatchSPServerChange(changed func(RPCServices, error)) (err error) {
-	client.Log.Info("::watch for service providers changes")
+
 	client.WaitClusterPathExists(client.rpcProviderRootPath, client.timeout, func(exists bool) {
 		if !exists {
-			client.Log.Info("service provider node not exists:", client.rpcProviderRootPath)
+			client.Log.Errorf("sp servers:%s未配置或不存在", client.rpcProviderRootPath)
 		} else {
 			go func() {
 				defer client.recover()
@@ -42,9 +41,11 @@ func (client *ClusterClient) WatchSPServerChange(changed func(RPCServices, error
 			}()
 		}
 	})
+	client.Log.Infof("::监控sp servers:%s的变化", client.rpcProviderRootPath)
 	client.WatchClusterChildrenChange(client.rpcProviderRootPath, func() {
 		go func() {
 			defer client.recover()
+			client.Log.Infof(" -> sp servers:%s 值发生变化", client.rpcProviderRootPath)
 			changed(client.GetSPServerServices())
 		}()
 	})
@@ -54,6 +55,7 @@ func (client *ClusterClient) WatchSPServerChange(changed func(RPCServices, error
 			client.WatchClusterChildrenChange(p, func() {
 				go func() {
 					defer client.recover()
+					client.Log.Infof(" -> sp servers:%s 值发生变化", client.rpcProviderRootPath)
 					changed(client.GetSPServerServices())
 				}()
 			})
@@ -67,6 +69,7 @@ func (client *ClusterClient) GetAllSPServers() (lst map[string][]string, err err
 	lst = make(map[string][]string)
 	serviceList, err := client.handler.GetChildren(client.rpcProviderRootPath)
 	if err != nil {
+		client.Log.Errorf(" -> sp server:%s 获取all servers数据有误", client.rpcProviderRootPath)
 		return
 	}
 	for _, v := range serviceList {
@@ -83,6 +86,7 @@ func (client *ClusterClient) GetSPServerServices() (lst RPCServices, err error) 
 	lst = make(map[string][]string)
 	serviceList, err := client.handler.GetChildren(client.rpcProviderRootPath)
 	if err != nil {
+		client.Log.Errorf(" -> sp server:%s 获取children数据有误", client.rpcProviderRootPath)
 		return
 	}
 
@@ -91,6 +95,7 @@ func (client *ClusterClient) GetSPServerServices() (lst RPCServices, err error) 
 		path := fmt.Sprintf("%s/%s", client.rpcProviderRootPath, value)
 		providerList, er := client.handler.GetChildren(path)
 		if er != nil {
+			client.Log.Errorf(" -> sp server:%s 获取children数据有误", path)
 			continue
 		}
 		for _, l := range providerList {
@@ -107,6 +112,7 @@ func (client *ClusterClient) GetSPServerServices() (lst RPCServices, err error) 
 func (client *ClusterClient) UpdateSPServerTask(config SPServerTask) (err error) {
 	buffer, err := json.Marshal(config)
 	if err != nil {
+		client.Log.Errorf(" -> SPServerTask转换为json出错：%v", config)
 		return
 	}
 	err = client.handler.UpdateValue(client.spServerTaskPath, string(buffer))
@@ -119,10 +125,12 @@ func (client *ClusterClient) GetSPServerTask(ip string) (task SPServerTask, err 
 	task = SPServerTask{}
 	values, err := client.handler.GetValue(client.spServerTaskPath)
 	if err != nil {
+		client.Log.Errorf(" -> sp config:%s 获取数据有误", client.spServerTaskPath)
 		return
 	}
 	err = json.Unmarshal([]byte(values), &task)
 	if err != nil {
+		client.Log.Errorf(" -> sp config：%s json格式有误", values)
 		return
 	}
 	var items []TaskItem
@@ -147,6 +155,7 @@ func (client *ClusterClient) CreateSPServer(name string, port string, value stri
 
 }
 
+//CloseSPServer 关闭sp server节点
 func (client *ClusterClient) CloseSPServer(path string) error {
-	return client.handler.Delete(path)
+	return client.CloseNode(path)
 }

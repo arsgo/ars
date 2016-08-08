@@ -1,20 +1,12 @@
 package cluster
 
 import "encoding/json"
-import "runtime/debug"
-
-//recover 从异常中恢复
-func (client *ClusterClient) recover() {
-	if r := recover(); r != nil {
-		client.Log.Fatal(r, string(debug.Stack()))
-	}
-}
 
 //WatchAppTaskChange 监控APP Server的配置文件变化
 func (client *ClusterClient) WatchAppTaskChange(callback func(config *AppServerTask, err error) error) {
 	client.WaitClusterPathExists(client.appServerTaskPath, client.timeout, func(exists bool) {
 		if !exists {
-			client.Log.Infof("app config not exists:%s", client.appServerTaskPath)
+			client.Log.Errorf("app config:%s未配置或不存在", client.appServerTaskPath)
 		} else {
 			go func() {
 				defer client.recover()
@@ -22,9 +14,9 @@ func (client *ClusterClient) WatchAppTaskChange(callback func(config *AppServerT
 			}()
 		}
 	})
-	client.Log.Info("::watch for app config changes")
+	client.Log.Infof("::监控app config:%s的变化", client.appServerTaskPath)
 	client.WatchClusterValueChange(client.appServerTaskPath, func() {
-		client.Log.Info(" -> app config has changed")
+		client.Log.Infof(" -> app config:%s 值发生变化", client.appServerTaskPath)
 		go func() {
 			defer client.recover()
 			callback(client.GetCurrentAppServerTask())
@@ -34,20 +26,20 @@ func (client *ClusterClient) WatchAppTaskChange(callback func(config *AppServerT
 
 //UpdateAppServerTask 更新AppServer配置文件
 func (client *ClusterClient) UpdateAppServerTask(ip string, config *AppServerTask) (err error) {
+	buffer, err := json.Marshal(config)
+	if err != nil {
+		client.Log.Errorf(" -> *AppServerTask转换为json出错：%v", config)
+		return
+	}
 	nmap := client.dataMap.Copy()
 	nmap.Set("ip", ip)
 	path := nmap.Translate(p_appTaskConfig)
-
-	buffer, err := json.Marshal(config)
-	if err != nil {
-		return
-	}
 	err = client.handler.UpdateValue(path, string(buffer))
 	return
 }
 
 //GetCurrentAppServerTask 获取当前AppServer任务
-func (client *ClusterClient)GetCurrentAppServerTask() (config *AppServerTask, err error){
+func (client *ClusterClient) GetCurrentAppServerTask() (config *AppServerTask, err error) {
 	return client.GetAppServerTask(client.IP)
 }
 
@@ -56,14 +48,15 @@ func (client *ClusterClient) GetAppServerTask(ip string) (config *AppServerTask,
 	nmap := client.dataMap.Copy()
 	nmap.Set("ip", ip)
 	path := nmap.Translate(p_appTaskConfig)
-
 	config = &AppServerTask{}
 	values, err := client.handler.GetValue(path)
 	if err != nil {
+		client.Log.Errorf(" -> app config：%s 获取配置数据有误", path)
 		return
 	}
 	err = json.Unmarshal([]byte(values), &config)
 	if err != nil {
+		client.Log.Errorf(" -> app config：%s json格式有误", path)
 		return
 	}
 	/*jobs, err := client.GetJobTask()

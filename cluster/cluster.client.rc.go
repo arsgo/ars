@@ -5,11 +5,33 @@ import (
 	"fmt"
 )
 
+//WatchRCTaskChange 监控RC Config变化
+func (client *ClusterClient) WatchRCTaskChange(callback func(RCServerTask, error)) {
+	client.WaitClusterPathExists(client.rcServerConfig, client.timeout, func(exists bool) {
+		if !exists {
+			client.Log.Errorf("rc config:%s未配置或不存在", client.rcServerConfig)
+		} else {
+			go func() {
+				defer client.recover()
+				callback(client.GetRCServerTask())
+			}()
+		}
+	})
+	client.Log.Info("::监控rc config:%s的变化", client.rcServerConfig)
+	client.WatchClusterValueChange(client.rcServerConfig, func() {
+		client.Log.Info(" -> rc config:%s 值发生变化", client.rcServerConfig)
+		go func() {
+			defer client.recover()
+			callback(client.GetRCServerTask())
+		}()
+	})
+}
+
 //WatchRCServerChange 监控RC服务器变化,变化后回调指定函数
 func (client *ClusterClient) WatchRCServerChange(callback func([]*RCServerItem, error)) {
 	client.WaitClusterPathExists(client.rcServerRoot, client.timeout, func(exists bool) {
 		if !exists {
-			client.Log.Infof("rc server not exists:%s", client.rcServerRoot)
+			client.Log.Errorf("rc servers:%s未配置或不存在", client.rcServerRoot)
 		} else {
 			go func() {
 				defer client.recover()
@@ -17,9 +39,9 @@ func (client *ClusterClient) WatchRCServerChange(callback func([]*RCServerItem, 
 			}()
 		}
 	})
-	client.Log.Info("::watch for rc server changes")
+	client.Log.Info("::监控rc servers:%s的变化", client.rcServerRoot)
 	client.WatchClusterChildrenChange(client.rcServerRoot, func() {
-		client.Log.Info(" -> rc server has changed")
+		client.Log.Info(" -> rc servers:%s 值发生变化", client.rcServerRoot)
 		go func() {
 			defer client.recover()
 			callback(client.GetAllRCServers())
@@ -31,6 +53,7 @@ func (client *ClusterClient) WatchRCServerChange(callback func([]*RCServerItem, 
 func (client *ClusterClient) UpdateRCServerTask(config RCServerTask) (err error) {
 	buffer, err := json.Marshal(config)
 	if err != nil {
+		client.Log.Errorf(" -> RCServerTask转换为json出错：%v", config)
 		return
 	}
 	err = client.handler.UpdateValue(client.rcServerConfig, string(buffer))
@@ -41,10 +64,15 @@ func (client *ClusterClient) UpdateRCServerTask(config RCServerTask) (err error)
 func (client *ClusterClient) GetRCServerValue(path string) (value *RCServerItem, err error) {
 	content, err := client.handler.GetValue(path)
 	if err != nil {
+		client.Log.Errorf(" -> rc server:%s 获取server数据有误", path)
 		return
 	}
 	value = &RCServerItem{}
 	err = json.Unmarshal([]byte(content), &value)
+	if err != nil {
+		client.Log.Errorf(" -> rc server:%s json格式有误", content)
+		return
+	}
 	value.Path = path
 	return
 }
@@ -57,6 +85,7 @@ func (client *ClusterClient) GetAllRCServers() (servers []*RCServerItem, err err
 		rcPath := fmt.Sprintf("%s/%s", client.rcServerRoot, v)
 		config, err := client.GetRCServerValue(rcPath)
 		if err != nil {
+			client.Log.Errorf(" -> 获取rc server数据有误:%v", err)
 			continue
 		}
 		servers = append(servers, config)
@@ -71,38 +100,17 @@ func (client *ClusterClient) CreateRCServer(value string) (string, error) {
 
 //CloseRCServer close rc server
 func (client *ClusterClient) CloseRCServer(path string) error {
-	return client.handler.Delete(path)
+	return client.CloseNode(path)
 }
 
 //GetRCServerTask 获取RC Server任务
 func (client *ClusterClient) GetRCServerTask() (config RCServerTask, err error) {
 	value, err := client.handler.GetValue(client.rcServerConfig)
 	if err != nil {
+		client.Log.Errorf(" -> rc config：%s 获取配置数据有误", client.rcServerConfig)
 		return
 	}
 	config = RCServerTask{}
 	err = json.Unmarshal([]byte(value), &config)
 	return
-}
-
-//WatchRCTaskChange 监控RC Config变化
-func (client *ClusterClient) WatchRCTaskChange(callback func(RCServerTask, error)) {
-	client.WaitClusterPathExists(client.rcServerConfig, client.timeout, func(exists bool) {
-		if !exists {
-			client.Log.Infof("rc server config not exists:%s", client.rcServerRoot)
-		} else {
-			go func() {
-				defer client.recover()
-				callback(client.GetRCServerTask())
-			}()
-		}
-	})
-	client.Log.Info("::watch for rc server config changes")
-	client.WatchClusterValueChange(client.rcServerConfig, func() {
-		client.Log.Info(" -> rc server config has changed")
-		go func() {
-			defer client.recover()
-			callback(client.GetRCServerTask())
-		}()
-	})
 }

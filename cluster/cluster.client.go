@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -95,6 +96,7 @@ func (client *ClusterClient) WaitClusterPathExists(path string, timeout time.Dur
 	timePiker := time.NewTicker(time.Second * 2)
 	timeoutPiker := time.NewTicker(timeout)
 	closeChan := client.makeCloseChan()
+	exists := false
 CHECKER:
 	for {
 		select {
@@ -102,13 +104,14 @@ CHECKER:
 			break
 		case <-timePiker.C:
 			if client.handler.Exists(path) {
+				exists = true
 				break CHECKER
 			}
 		case <-closeChan:
 			break CHECKER
 		}
 	}
-	callback(client.handler.Exists(path))
+	callback(exists)
 }
 
 //WatchClusterValueChange 等待集群指定路径的值的变化
@@ -124,10 +127,7 @@ func (client *ClusterClient) WatchClusterValueChange(path string, callback func(
 		for {
 			select {
 			case <-changes:
-				{
-					defer client.recover()
-					callback()
-				}
+				callback()
 			case <-closeChan:
 				break START
 			}
@@ -140,19 +140,16 @@ func (client *ClusterClient) WatchClusterValueChange(path string, callback func(
 func (client *ClusterClient) WatchClusterChildrenChange(path string, callback func()) {
 	changes := make(chan []string, 10)
 	go func() {
-		go func() {
-			defer client.recover()
-			client.handler.WatchChildren(path, changes)
-		}()
-		closeChan := client.makeCloseChan()
+		defer client.recover()
+		client.handler.WatchChildren(path, changes)
+	}()
+	closeChan := client.makeCloseChan()
+	go func() {
 	START:
 		for {
 			select {
 			case <-changes:
-				{
-					defer client.recover()
-					callback()
-				}
+				callback()
 			case <-closeChan:
 				break START
 			}
@@ -183,4 +180,11 @@ func (client *ClusterClient) Close() {
 		ch <- 1
 	}
 	client.handler.Close()
+}
+
+//recover 从异常中恢复
+func (client *ClusterClient) recover() {
+	if r := recover(); r != nil {
+		client.Log.Fatal(r, string(debug.Stack()))
+	}
 }
