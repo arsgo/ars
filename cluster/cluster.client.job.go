@@ -16,7 +16,7 @@ func (client *ClusterClient) WatchJobConfigChange(callback func(config map[strin
 	})
 	client.Log.Infof("::监控job config:%s的变化", client.jobConfigPath)
 	client.WatchClusterValueChange(client.jobConfigPath, func() {
-		client.Log.Info(" -> job config:%s 值发生变化", client.jobConfigPath)
+		client.Log.Infof(" -> job config:%s 值发生变化", client.jobConfigPath)
 		callback(client.GetJobTask())
 	})
 }

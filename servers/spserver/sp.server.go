@@ -57,7 +57,7 @@ func (sp *SPServer) init() (err error) {
 	}
 	sp.Log.Infof(" -> 初始化 %s...", cfg.Domain)
 	sp.ip=cfg.IP
-	sp.clusterClient, err = cluster.GetClusterClient(cfg.Domain, cfg.IP, sp.loggerName, cfg.ZKServers...)
+	sp.clusterClient, err = cluster.NewDomainClusterClient(cfg.Domain, cfg.IP, sp.loggerName, cfg.ZKServers...)
 	if err != nil {
 		return
 	}

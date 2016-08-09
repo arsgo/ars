@@ -13,6 +13,7 @@ import (
 
 const (
 	p_varConfig           = "@domain/var/@type/@name"
+	p_appTaskRoot         = "@domain/app/config"
 	p_appTaskConfig       = "@domain/app/config/@ip"
 	p_rcServerTaskConfig  = "@domain/rc/config"
 	p_jobTaskConfig       = "@domain/job/config"
@@ -37,6 +38,7 @@ const (
 type ClusterClient struct {
 	domain              string
 	domainPath          string
+	appTaskRoot         string
 	appServerTaskPath   string
 	rcServerRoot        string
 	rcServerConfig      string
@@ -68,6 +70,7 @@ func NewClusterClient(domain string, ip string, handler IClusterHandler, loggerN
 	client.closeChans = concurrent.NewConcurrentMap()
 	client.appServerTaskPath = client.dataMap.Translate(p_appTaskConfig)
 	client.rcServerRoot = client.dataMap.Translate(p_rcServerRoot)
+	client.appTaskRoot = client.dataMap.Translate(p_appTaskRoot)
 	client.rcServerConfig = client.dataMap.Translate(p_rcServerTaskConfig)
 	client.spConfigPath = client.dataMap.Translate(p_spTaskConfig)
 	client.rpcPublishPath = client.dataMap.Translate(p_servicePublishPath)

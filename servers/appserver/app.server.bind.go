@@ -11,7 +11,7 @@ func (a *AppServer) BindRCServer(configs []*cluster.RCServerItem, err error) err
 	}
 	services := make(map[string][]string)
 	services["*"] = tasks
-	a.Log.Info(" -> bind rc server (", len(configs), ")")
+	a.Log.Info("::bind rc server (", len(configs), ")")
 	a.rpcClient.ResetRPCServer(services)
 	return nil
 }
@@ -22,7 +22,6 @@ func (a *AppServer) BindTask(config *cluster.AppServerTask, err error) (er error
 	if config == nil {
 		return
 	}
-	a.Log.Info("rpc pool size min:", config.Config.RPC.MinSize, ",max:", config.Config.RPC.MaxSize)
 	a.scriptPool.SetPackages(config.Config.Libs...)
 	a.rpcClient.SetPoolSize(config.Config.RPC.MinSize, config.Config.RPC.MaxSize)
 	a.scriptPool.SetPoolSize(config.Config.RPC.MinSize, config.Config.RPC.MaxSize)

@@ -42,6 +42,7 @@ func NewAPPServer() (app *AppServer, err error) {
 	}
 	app.conf, err = config.Get()
 	if err != nil {
+		app.Log.Error(err)
 		return
 	}
 	return
@@ -51,7 +52,7 @@ func NewAPPServer() (app *AppServer, err error) {
 func (app *AppServer) init() (err error) {
 	defer app.recover()
 	app.Log.Infof(" -> 初始化 %s...", app.conf.Domain)
-	app.clusterClient, err = cluster.GetClusterClient(app.conf.Domain, app.conf.IP, app.loggerName, app.conf.ZKServers...)
+	app.clusterClient, err = cluster.NewDomainClusterClient(app.conf.Domain, app.conf.IP, app.loggerName, app.conf.ZKServers...)
 	if err != nil {
 		return
 	}

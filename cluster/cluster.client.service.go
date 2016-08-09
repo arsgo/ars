@@ -17,11 +17,11 @@ func (client *ClusterClient) WatchRPCServiceChange(callback func(services map[st
 			}()
 		}
 	})
-	client.Log.Info("::监控services:%s的变化", client.rpcPublishPath)
+	client.Log.Infof("::监控services:%s的变化", client.rpcPublishPath)
 	client.WatchClusterValueChange(client.rpcPublishPath, func() {
 		go func() {
 			defer client.recover()
-			client.Log.Info(" -> services:%s 值发生变化", client.rpcPublishPath)
+			client.Log.Infof(" -> services:%s 值发生变化", client.rpcPublishPath)
 			callback(client.GetPublishServices())
 		}()
 	})

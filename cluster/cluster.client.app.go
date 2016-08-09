@@ -24,6 +24,12 @@ func (client *ClusterClient) WatchAppTaskChange(callback func(config *AppServerT
 	})
 }
 
+//GetAppServerTaskNames 获取所有app server task名称
+func (client *ClusterClient) GetAppServerTaskNames() (names []string, err error) {
+	names, err = client.handler.GetChildren(client.appTaskRoot)
+	return
+}
+
 //UpdateAppServerTask 更新AppServer配置文件
 func (client *ClusterClient) UpdateAppServerTask(ip string, config *AppServerTask) (err error) {
 	buffer, err := json.Marshal(config)

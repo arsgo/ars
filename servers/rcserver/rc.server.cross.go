@@ -71,7 +71,7 @@ func (rc *RCServer) WatchCrossDomain(task cluster.RCServerTask) {
 	for domain, v := range task.CrossDomainAccess {
 		//为cluster类型时,添加监控
 		if rc.crossDomain.Get(domain) == nil {
-			clusterClient, err := cluster.GetClusterClient(domain, rc.snap.ip, rc.loggerName, v.Servers...)
+			clusterClient, err := cluster.NewDomainClusterClient(domain, rc.snap.ip, rc.loggerName, v.Servers...)
 			if err != nil {
 				rc.Log.Error(err)
 				continue

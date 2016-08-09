@@ -60,7 +60,7 @@ func (rc *RCServer) init() (err error) {
 	}
 	rc.Log.Infof(" -> 初始化 %s...", cfg.Domain)
 	rc.domain = cfg.Domain
-	rc.clusterClient, err = cluster.GetClusterClient(cfg.Domain, cfg.IP, rc.loggerName, cfg.ZKServers...)
+	rc.clusterClient, err = cluster.NewDomainClusterClient(cfg.Domain, cfg.IP, rc.loggerName, cfg.ZKServers...)
 	if err != nil {
 		return
 	}

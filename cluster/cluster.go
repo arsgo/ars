@@ -43,6 +43,7 @@ type IClusterClient interface {
 	//app server..........
 	WatchAppTaskChange(callback func(config *AppServerTask, err error) error)
 	GetCurrentAppServerTask() (config *AppServerTask, err error)
+	GetAppServerTaskNames() ([]string, error)
 	GetAppServerTask(name string) (config *AppServerTask, err error)
 	UpdateAppServerTask(name string, config *AppServerTask) (err error)
 	UpdateAppServerSnap(snap string) error

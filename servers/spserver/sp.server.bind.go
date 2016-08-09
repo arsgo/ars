@@ -21,8 +21,7 @@ func (sp *SPServer) rebindService() {
 	if err != nil {
 		sp.Log.Error(err)
 		return
-	}
-	sp.Log.Info("rpc pool size min:", task.Config.RPC.MinSize, ",max:", task.Config.RPC.MaxSize)
+	}	
 	sp.scriptPool.SetPackages(task.Config.Libs...)
 	sp.rpcClient.SetPoolSize(task.Config.RPC.MinSize, task.Config.RPC.MaxSize)
 	sp.rpcServer.UpdateTasks(task.Tasks)
