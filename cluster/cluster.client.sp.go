@@ -8,7 +8,7 @@ import "encoding/json"
 
 //WatchSPTaskChange 监控SP Task任务变化
 func (client *ClusterClient) WatchSPTaskChange(callback func()) {
-	client.WaitClusterPathExists(client.spConfigPath, client.timeout, func(exists bool) {
+	client.WaitClusterPathExists(client.spConfigPath, client.timeout, func(path string, exists bool) {
 		if !exists {
 			client.Log.Errorf("sp config:%s未配置或不存在", client.spConfigPath)
 		} else {
@@ -31,7 +31,7 @@ func (client *ClusterClient) WatchSPTaskChange(callback func()) {
 //WatchSPServerChange 监控sp server变化
 func (client *ClusterClient) WatchSPServerChange(changed func(RPCServices, error)) (err error) {
 
-	client.WaitClusterPathExists(client.rpcProviderRootPath, client.timeout, func(exists bool) {
+	client.WaitClusterPathExists(client.rpcProviderRootPath, client.timeout, func(path string, exists bool) {
 		if !exists {
 			client.Log.Errorf("sp servers:%s未配置或不存在", client.rpcProviderRootPath)
 		} else {
@@ -69,7 +69,7 @@ func (client *ClusterClient) GetAllSPServers() (lst map[string][]string, err err
 	lst = make(map[string][]string)
 	serviceList, err := client.handler.GetChildren(client.rpcProviderRootPath)
 	if err != nil {
-		client.Log.Errorf(" -> sp server:%s 获取all servers数据有误", client.rpcProviderRootPath)
+		client.Log.Errorf(" -> sp server: %s 获取all servers数据有误", client.rpcProviderRootPath)
 		return
 	}
 	for _, v := range serviceList {
@@ -86,7 +86,7 @@ func (client *ClusterClient) GetSPServerServices() (lst RPCServices, err error) 
 	lst = make(map[string][]string)
 	serviceList, err := client.handler.GetChildren(client.rpcProviderRootPath)
 	if err != nil {
-		client.Log.Errorf(" -> sp server:%s 获取children数据有误", client.rpcProviderRootPath)
+		client.Log.Errorf(" -> sp server: %s 获取children数据有误", client.rpcProviderRootPath)
 		return
 	}
 
@@ -95,7 +95,7 @@ func (client *ClusterClient) GetSPServerServices() (lst RPCServices, err error) 
 		path := fmt.Sprintf("%s/%s", client.rpcProviderRootPath, value)
 		providerList, er := client.handler.GetChildren(path)
 		if er != nil {
-			client.Log.Errorf(" -> sp server:%s 获取children数据有误", path)
+			client.Log.Errorf(" -> sp server: %s 获取children数据有误", path)
 			continue
 		}
 		for _, l := range providerList {
@@ -121,7 +121,6 @@ func (client *ClusterClient) UpdateSPServerTask(config SPServerTask) (err error)
 
 //GetSPServerTask 获取service provider 的任务列表
 func (client *ClusterClient) GetSPServerTask(ip string) (task SPServerTask, err error) {
-
 	task = SPServerTask{}
 	values, err := client.handler.GetValue(client.spServerTaskPath)
 	if err != nil {

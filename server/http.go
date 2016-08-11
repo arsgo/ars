@@ -66,7 +66,7 @@ func (r *HTTPScriptServer) Start() {
 		 r.Log.Error(er)
 	}()
 
-	r.Log.Infof("::start api server%s", r.Address)
+	r.Log.Infof("::start http server:%s", r.Address)
 }
 
 //GetSnap 获取当前服务器快照信息

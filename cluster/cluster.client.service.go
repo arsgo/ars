@@ -7,7 +7,7 @@ import (
 
 //WatchRPCServiceChange 监控已发布的RPC服务变化
 func (client *ClusterClient) WatchRPCServiceChange(callback func(services map[string][]string, err error)) {
-	client.WaitClusterPathExists(client.rpcPublishPath, client.timeout, func(exists bool) {
+	client.WaitClusterPathExists(client.rpcPublishPath, client.timeout, func(path string, exists bool) {
 		if !exists {
 			client.Log.Errorf("services:%s未配置或不存在", client.rpcPublishPath)
 		} else {
@@ -71,16 +71,18 @@ func (client *ClusterClient) PublishServices(services RPCServices) (err error) {
 	client.lastRPCServices = services.Clone()
 	client.publishLock.Unlock()
 	if equal {
-		client.Log.Debug("服务无变化")
 		return
 	}
-
 	buffer, err := json.Marshal(services)
 	if err != nil {
-		client.Log.Errorf(" -> services转换为json出错：%v", services)
+		client.Log.Errorf(" -> services 转换为json出错：%v", services)
 		return
 	}
+	client.Log.Infof(" -> 发布 services:%d", len(services))
 	err = client.SetNode(client.rpcPublishPath, string(buffer))
+	if err != nil {
+		client.Log.Error("服务发布失败:", err)
+	}
 	return
 }
 

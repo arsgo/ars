@@ -11,13 +11,12 @@ import (
 func (rc *RCServer) startMonitor() {
 
 	go func() {
-		tk := time.NewTicker(time.Second * 10)
+		tk := time.NewTicker(time.Second * 30)
 		for {
 			select {
 			case <-tk.C:
 				if rc.needBindRPCService() {
-					rc.Log.Debug("~~~~~~rebind rpc service")
-					rc.rebindLocalServices()
+					rc.timerRebindServices.Push("services 数量小于配置数")
 				}
 			}
 		}
@@ -26,8 +25,9 @@ func (rc *RCServer) startMonitor() {
 START:
 	if rc.clusterClient.WaitForConnected() {
 		if rc.IsMaster {
-			rc.Log.Info(" |-> 已重新连接，重新发布服务")
-			rc.PublishAll()
+			rc.Log.Info(" -> 已重新连接到集群，立即发布所有服务")
+			rc.resetLoalService()
+			rc.timerPublishServices.Push("重新发布服务")
 		}
 		goto START
 	}
@@ -57,7 +57,8 @@ func (rc *RCServer) needBindRPCService() bool {
 }
 
 //rebindLocalServices 重新绑定本地服务
-func (rc *RCServer) rebindLocalServices() (err error) {
+func (rc *RCServer) rebindLocalServices(p ...interface{}) {
+	//	rc.Log.Infof("rebindLocalServices:%v", p)
 	lst, err := rc.clusterClient.GetSPServerServices()
 	if err != nil {
 		rc.Log.Error(err)
@@ -69,20 +70,18 @@ func (rc *RCServer) rebindLocalServices() (err error) {
 		return
 	}
 	services := rc.MergeService()
-	rc.BindSPServers(services, nil)
+	rc.BindServices(services, nil)
 	return
-
 }
+
 func (rc *RCServer) resetCrossDomainServices() (err error) {
 	task, err := rc.clusterClient.GetRCServerTask()
 	if err != nil {
-		rc.Log.Error(err)
 		return
 	}
 	rc.ResetCrossDomainServices(task)
 	rc.WatchCrossDomain(task)
 	domains := rc.crossDomain.GetAll()
-	rc.Log.Debug("domains:", domains)
 	for domain, cst := range domains {
 		serveritems, err := cst.(cluster.IClusterClient).GetAllRCServers()
 		if err != nil {
@@ -91,4 +90,9 @@ func (rc *RCServer) resetCrossDomainServices() (err error) {
 		rc.bindCrossServices(domain, serveritems)
 	}
 	return
+}
+func (rc *RCServer) collectReporter(success int, failed int, err int) {
+	if err > 0 {
+		rc.timerRebindServices.Push("服务请求前发生错误")
+	}
 }

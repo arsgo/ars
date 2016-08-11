@@ -52,14 +52,14 @@ func (rc *RCServer) startRefreshSnap() {
 	rc.clusterClient.SetNode(rc.snap.Path, rc.snap.GetSnap())
 	rc.RefreshSnap()
 	tp := time.NewTicker(time.Second * 60)
-	free := time.NewTicker(time.Second * 122)
+	free := time.NewTicker(time.Second * 302)
 	for {
 		select {
 		case <-tp.C:
-			rc.Log.Info("更新RC Server快照信息")
+			rc.Log.Info(" -> 更新 rc server 快照信息")
 			rc.RefreshSnap()
 		case <-free.C:
-			rc.Log.Infof("清理内存...%dM", sysinfo.GetAPPMemory())
+			rc.Log.Infof(" -> 清理内存...%dM", sysinfo.GetAPPMemory())
 			debug.FreeOSMemory()
 
 		}

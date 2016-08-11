@@ -12,6 +12,7 @@ func main() {
 	appServer, err := NewAPPServer()
 	if err != nil {
 		os.Exit(100)
+		return
 	}
 	f := forever.NewForever(appServer, appServer.Log, "appserver", "appserver")
 	f.Start()

@@ -9,7 +9,10 @@ import (
 func main() {
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	spServer := NewSPServer()
+	spServer, err := NewSPServer()
+	if err != nil {
+		return
+	}
 	f := forever.NewForever(spServer, spServer.Log, "spserver", "spserver")
 	f.Start()
 }

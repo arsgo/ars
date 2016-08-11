@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"runtime"
 
 	"github.com/arsgo/lib4go/forever"
@@ -8,7 +9,11 @@ import (
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	rcServer := NewRCServer()
+	rcServer, err := NewRCServer()
+	if err != nil {
+		os.Exit(100)
+		return
+	}
 	f := forever.NewForever(rcServer, rcServer.Log, "rcserver", "rcserver")
 	f.Start()
 }

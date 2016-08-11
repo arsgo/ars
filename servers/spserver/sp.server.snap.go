@@ -80,9 +80,8 @@ func (sp *SPServer) startRefreshSnap() {
 }
 
 func (sp *SPServer) resetCluster() {
-	sp.Log.Info("关闭所有服务")
+	sp.Log.Debug(" -> 更新所有服务")
 	sp.CloseSPServer()
-	sp.Log.Info("启动所有服务")
 	time.Sleep(time.Second)
 	sp.ResetSPSnap()
 

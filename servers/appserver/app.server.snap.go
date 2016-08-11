@@ -26,6 +26,8 @@ type AppSnap struct {
 	Sys       *base.SysMonitorInfo `json:"sys"`
 	Snap      ExtSnap              `json:"snap"`
 	ip        string
+	port      string
+	path      string
 }
 
 //GetSnap 获取快照信息
@@ -60,28 +62,27 @@ func (app *AppServer) recover() {
 //StartRefreshSnap 启动定时刷新快照信息
 func (app *AppServer) StartRefreshSnap() {
 	defer app.recover()
-	app.ResetAPPSnap()
+	app.snap.path, _ = app.clusterClient.CreateAppServer(app.snap.port, app.snap.GetSnap())
 	app.ResetJobSnap()
 	tp := time.NewTicker(time.Second * 60)
-	free := time.NewTicker(time.Second * 122)
+	free := time.NewTicker(time.Second * 302)
 	for {
 		select {
 		case <-tp.C:
-			app.Log.Info("更新app server快照信息")
+			app.Log.Info(" -> 更新app server快照信息")
 			app.ResetAPPSnap()
 			app.ResetJobSnap()
 		case <-free.C:
-			app.Log.Infof("清理内存...%dM", sysinfo.GetAPPMemory())
+			app.Log.Infof(" -> 清理内存...%dM", sysinfo.GetAPPMemory())
 			debug.FreeOSMemory()
 		}
 	}
 }
 func (app *AppServer) resetAppServer() {
-	app.Log.Debug("关闭所有服务")
+	app.Log.Debug(" -> 更新所有服务")
 	app.CloseAppServer()
 	app.CloseJobSnap()
 	time.Sleep(time.Second)
-	app.Log.Debug("启动所有服务")
 	app.ResetAPPSnap()
 	app.ResetJobSnap()
 }
@@ -104,10 +105,10 @@ func (app *AppServer) CloseJobSnap() (err error) {
 
 //ResetAPPSnap 刷新APP快照信息
 func (app *AppServer) ResetAPPSnap() (err error) {
-	return app.clusterClient.UpdateAppServerSnap(app.snap.GetSnap())
+	return app.clusterClient.SetNode(app.snap.path, app.snap.GetSnap())
 }
 
 //CloseAppServer 关闭 APP Server
 func (app *AppServer) CloseAppServer() (err error) {
-	return app.clusterClient.CloseAppServer()
+	return app.clusterClient.CloseAppServer(app.snap.path)
 }

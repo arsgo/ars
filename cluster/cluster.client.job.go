@@ -4,7 +4,7 @@ import "encoding/json"
 
 //WatchJobConfigChange 监控JOB配置变化
 func (client *ClusterClient) WatchJobConfigChange(callback func(config map[string]JobItem, err error)) {
-	client.WaitClusterPathExists(client.jobConfigPath, client.timeout, func(exists bool) {
+	client.WaitClusterPathExists(client.jobConfigPath, client.timeout, func(path string,exists bool) {
 		if exists {
 			go func() {
 				defer client.recover()
@@ -24,7 +24,7 @@ func (client *ClusterClient) WatchJobConfigChange(callback func(config map[strin
 //GetJobTask 获取JOB配置信息
 func (client *ClusterClient) GetJobTask() (items map[string]JobItem, err error) {
 	path := client.jobConfigPath
-	if !client.handler.Exists(path) {
+	if _,ok:=client.handler.Exists(path);!ok {
 		client.Log.Errorf("job config:%s未配置或不存在:", path)
 		return
 	}

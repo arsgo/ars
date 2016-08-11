@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/arsgo/ars/base"
 	"github.com/arsgo/ars/cluster"
@@ -22,30 +23,33 @@ var (
 
 //SPServer SPServer
 type SPServer struct {
-	Log            logger.ILogger
-	startSync      base.Sync
-	domain         string
-	mode           string
-	serviceConfig  string
-	mqService      *mq.MQConsumerService
-	rpcClient      *rpc.RPCClient
-	rpcServer      *server.RPCServer  //RPC 服务器
-	rpcScriptProxy *proxy.ScriptProxy //RPC Server 脚本处理程序
-	clusterClient  cluster.IClusterClient
-	scriptPool     *script.ScriptPool //脚本引擎池
-	dbPool         *concurrent.ConcurrentMap
-	snap           SPSnap
-	loggerName     string
-	version        string
-	ip	string
+	Log                 logger.ILogger
+	startSync           base.Sync
+	domain              string
+	mode                string
+	serviceConfig       string
+	timerReloadRCServer *base.TimerCall
+	mqService           *mq.MQConsumerService
+	rpcClient           *rpc.RPCClient
+	rpcServer           *server.RPCServer  //RPC 服务器
+	rpcScriptProxy      *proxy.ScriptProxy //RPC Server 脚本处理程序
+	clusterClient       cluster.IClusterClient
+	scriptPool          *script.ScriptPool //脚本引擎池
+	dbPool              *concurrent.ConcurrentMap
+	snap                SPSnap
+	loggerName          string
+	version             string
+	ip                  string
 }
 
 //NewSPServer 创建SP server服务器
-func NewSPServer() *SPServer {
-	sp := &SPServer{loggerName: "sp.server", version: "0.1.10"}
+func NewSPServer() (sp *SPServer, err error) {
+	sp = &SPServer{loggerName: "sp.server", version: "0.1.10"}
 	sp.startSync = base.NewSync(2)
-	sp.Log, _ = logger.Get(sp.loggerName)
-	return sp
+	sp.timerReloadRCServer = base.NewTimerCall(time.Second*5, time.Microsecond, sp.reloadRCServer)
+	sp.Log, err = logger.Get(sp.loggerName)
+	sp.dbPool = concurrent.NewConcurrentMap()
+	return
 }
 
 //init 初始化服务器
@@ -56,7 +60,7 @@ func (sp *SPServer) init() (err error) {
 		return
 	}
 	sp.Log.Infof(" -> 初始化 %s...", cfg.Domain)
-	sp.ip=cfg.IP
+	sp.ip = cfg.IP
 	sp.clusterClient, err = cluster.NewDomainClusterClient(cfg.Domain, cfg.IP, sp.loggerName, cfg.ZKServers...)
 	if err != nil {
 		return
@@ -71,16 +75,15 @@ func (sp *SPServer) init() (err error) {
 	sp.rpcScriptProxy = proxy.NewScriptProxy(sp.clusterClient, sp.scriptPool, sp.loggerName)
 	sp.rpcScriptProxy.OnOpenTask = sp.OnSPServiceCreate
 	sp.rpcScriptProxy.OnCloseTask = sp.OnSPServiceClose
-	sp.rpcServer = server.NewRPCServer(sp.rpcScriptProxy, sp.loggerName)
+	sp.rpcServer = server.NewRPCServer(sp.rpcScriptProxy, sp.loggerName, sp.collectReporter)
 	sp.mqService, err = mq.NewMQConsumerService(sp.clusterClient, mq.NewMQScriptHandler(sp.scriptPool, sp.loggerName), sp.loggerName)
-	sp.dbPool = concurrent.NewConcurrentMap()
 	return
 }
 
 //Start 启动SP Server服务器
 func (sp *SPServer) Start() (err error) {
 	defer sp.recover()
-	sp.Log.Info(" -> 启动SP Server...")
+	sp.Log.Info(" -> 启动 sp server...")
 	if err = sp.init(); err != nil {
 		sp.Log.Error(err)
 		return
@@ -101,17 +104,16 @@ func (sp *SPServer) Start() (err error) {
 	sp.startSync.Wait()
 	go sp.startRefreshSnap()
 	go sp.startMonitor()
-	sp.Log.Info(" -> SP Server 启动完成...")
+	sp.Log.Info(" -> sp server 启动完成...")
 	return nil
 }
 
 //Stop 停止SP Server服务器
 func (sp *SPServer) Stop() error {
 	defer sp.recover()
-	sp.Log.Info(" -> 退出SP Server...")
+	sp.Log.Info(" -> 退出 sp server...")
 	sp.clusterClient.Close()
 	sp.rpcClient.Close()
 	sp.rpcServer.Stop()
-	sp.Log.Info("::sp server closed")
 	return nil
 }

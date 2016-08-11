@@ -7,7 +7,7 @@ import (
 
 //WatchRCTaskChange 监控RC Config变化
 func (client *ClusterClient) WatchRCTaskChange(callback func(RCServerTask, error)) {
-	client.WaitClusterPathExists(client.rcServerConfig, client.timeout, func(exists bool) {
+	client.WaitClusterPathExists(client.rcServerConfig, client.timeout, func(path string,exists bool) {
 		if !exists {
 			client.Log.Errorf("rc config:%s未配置或不存在", client.rcServerConfig)
 		} else {
@@ -29,7 +29,7 @@ func (client *ClusterClient) WatchRCTaskChange(callback func(RCServerTask, error
 
 //WatchRCServerChange 监控RC服务器变化,变化后回调指定函数
 func (client *ClusterClient) WatchRCServerChange(callback func([]*RCServerItem, error)) {
-	client.WaitClusterPathExists(client.rcServerRoot, client.timeout, func(exists bool) {
+	client.WaitClusterPathExists(client.rcServerRoot, client.timeout, func(path string,exists bool) {
 		if !exists {
 			client.Log.Errorf("rc servers:%s未配置或不存在", client.rcServerRoot)
 		} else {
@@ -79,7 +79,11 @@ func (client *ClusterClient) GetRCServerValue(path string) (value *RCServerItem,
 
 //GetAllRCServers 获取所有RC服务器信息
 func (client *ClusterClient) GetAllRCServers() (servers []*RCServerItem, err error) {
-	rcs, _ := client.handler.GetChildren(client.rcServerRoot)
+	rcs, err := client.handler.GetChildren(client.rcServerRoot)
+	if err != nil {
+		client.Log.Errorf(" -> 获取所有rc servers 出错:%s,%v", client.rcServerRoot, err)
+		return
+	}
 	servers = []*RCServerItem{}
 	for _, v := range rcs {
 		rcPath := fmt.Sprintf("%s/%s", client.rcServerRoot, v)
@@ -112,5 +116,8 @@ func (client *ClusterClient) GetRCServerTask() (config RCServerTask, err error) 
 	}
 	config = RCServerTask{}
 	err = json.Unmarshal([]byte(value), &config)
+	if err != nil {
+		client.Log.Errorf(" -> rc config：%s 配置数据json格式有误，%v", client.rcServerConfig, err)
+	}
 	return
 }

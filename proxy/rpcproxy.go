@@ -49,12 +49,12 @@ func (h *RPCClientProxy) GetTasks() map[string]cluster.TaskItem {
 //OpenTask 启动新的任务
 func (h *RPCClientProxy) OpenTask(task cluster.TaskItem) {
 	h.tasks.Set(task.Name, task)
-	h.Log.Info("::start service:", task.Name)
+	h.Log.Info("::启动 service:", task.Name)
 }
 
 //CloseTask 关闭任务
 func (h *RPCClientProxy) CloseTask(ti cluster.TaskItem) {
-	h.Log.Info(" -> close service:", ti.Name)
+	h.Log.Info(" -> 关闭 service:", ti.Name)
 	h.tasks.Delete(ti.Name)
 }
 

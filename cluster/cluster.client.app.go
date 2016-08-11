@@ -4,7 +4,7 @@ import "encoding/json"
 
 //WatchAppTaskChange 监控APP Server的配置文件变化
 func (client *ClusterClient) WatchAppTaskChange(callback func(config *AppServerTask, err error) error) {
-	client.WaitClusterPathExists(client.appServerTaskPath, client.timeout, func(exists bool) {
+	client.WaitClusterPathExists(client.appServerTaskPath, client.timeout, func(path string, exists bool) {
 		if !exists {
 			client.Log.Errorf("app config:%s未配置或不存在", client.appServerTaskPath)
 		} else {
@@ -75,4 +75,15 @@ func (client *ClusterClient) GetAppServerTask(ip string) (config *AppServerTask,
 		}
 	}*/
 	return
+}
+func (client *ClusterClient) CreateAppServer(port string, snap string) (path string, err error) {
+	data := client.dataMap.Copy()
+	data.Set("ip", client.IP)
+	data.Set("port", port)
+	path = data.Translate(p_appServerPath)
+	err = client.SetNode(path, snap)
+	return
+}
+func (d *ClusterClient) CloseAppServer(path string) (err error) {
+	return d.CloseNode(path)
 }

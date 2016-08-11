@@ -1,12 +1,13 @@
 package main
 
-import "github.com/arsgo/ars/cluster"
+import (
+	"strings"
+
+	"github.com/arsgo/ars/cluster"
+)
 
 //BindCrossAccess 绑定垮域访问服务
 func (rc *RCServer) BindCrossAccess(task cluster.RCServerTask) (err error) {
-	//if !rc.IsMaster {
-	//	return
-	//}
 	rc.ResetCrossDomainServices(task)
 	rc.WatchCrossDomain(task)
 	return
@@ -31,7 +32,7 @@ func (rc *RCServer) ResetCrossDomainServices(task cluster.RCServerTask) {
 			continue
 		}
 		//检查本地服务是否与远程服务一致
-		currentServices := svs.(cluster.RPCServices)                    //本地服务
+		currentServices := svs.(cluster.RPCServices)                            //本地服务
 		remoteServices := task.CrossDomainAccess[domain].GetServicesMap(domain) //远程服务
 		//删除更新服务
 		for name := range currentServices {
@@ -71,10 +72,16 @@ func (rc *RCServer) WatchCrossDomain(task cluster.RCServerTask) {
 	for domain, v := range task.CrossDomainAccess {
 		//为cluster类型时,添加监控
 		if rc.crossDomain.Get(domain) == nil {
-			clusterClient, err := cluster.NewDomainClusterClient(domain, rc.snap.ip, rc.loggerName, v.Servers...)
-			if err != nil {
-				rc.Log.Error(err)
-				continue
+			var clusterClient cluster.IClusterClient
+			var err error
+			if rc.isInServerList(v.Servers) {
+				clusterClient = rc.clusterClient
+			} else {
+				clusterClient, err = cluster.NewDomainClusterClient(domain, rc.snap.ip, rc.loggerName, v.Servers...)
+				if err != nil {
+					rc.Log.Error(err)
+					continue
+				}
 			}
 
 			//将服务添加到服务列表
@@ -87,9 +94,7 @@ func (rc *RCServer) WatchCrossDomain(task cluster.RCServerTask) {
 					return
 				}
 				defer rc.recover()
-				rc.Log.Infof("::watch cross domain [%s] rc server change", domain)
 				clusterClient.WatchRCServerChange(func(items []*cluster.RCServerItem, err error) {
-					rc.Log.Infof("::cross domain [%s] rc server changed,%d", domain, len(items))
 					rc.bindCrossServices(domain, items)
 					rc.PublishNow()
 				})
@@ -107,9 +112,23 @@ func (rc *RCServer) getDomainIPs(items []*cluster.RCServerItem) []string {
 func (rc *RCServer) bindCrossServices(domain string, items []*cluster.RCServerItem) {
 	ips := rc.getDomainIPs(items)
 	allServices := rc.crossService.Get(domain).(cluster.RPCServices)
-	rc.Log.Debug("all:", allServices)
 	for name := range allServices {
 		allServices[name] = ips
 	}
 	rc.crossService.Set(domain, allServices)
+}
+func (rc *RCServer) isInServerList(lst []string) bool {
+	for _, i := range lst {
+		exits := false
+		for _, j := range rc.clusterServers {
+			if strings.EqualFold(i, j) {
+				exits = true
+				break
+			}
+		}
+		if !exits {
+			return false
+		}
+	}
+	return true
 }

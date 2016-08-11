@@ -21,7 +21,7 @@ const (
 	p_servicePublishPath  = "@domain/sp/publish"
 	p_serviceProviderRoot = "@domain/sp/servers"
 
-	p_appServerPath                    = "@domain/app/servers/@ip"
+	p_appServerPath                    = "@domain/app/servers/@ip@port"
 	p_serviceProviderPath              = "@domain/sp/servers/@serviceName/@ip@port"
 	p_rcServerRoot                     = "@domain/rc/servers"
 	p_rcServerClusterClientBase        = "@domain/rc/servers/rc_"
@@ -46,7 +46,6 @@ type ClusterClient struct {
 	spConfigPath        string
 	rpcPublishPath      string
 	rpcProviderRootPath string
-	appServerPath       string
 	spServerTaskPath    string
 	closeChans          *concurrent.ConcurrentMap
 	lastRPCServices     RPCServices
@@ -76,7 +75,6 @@ func NewClusterClient(domain string, ip string, handler IClusterHandler, loggerN
 	client.rpcPublishPath = client.dataMap.Translate(p_servicePublishPath)
 	client.rpcProviderRootPath = client.dataMap.Translate(p_serviceProviderRoot)
 	client.jobConfigPath = client.dataMap.Translate(p_jobTaskConfig)
-	client.appServerPath = client.dataMap.Translate(p_appServerPath)
 	client.spServerTaskPath = client.dataMap.Translate(p_spTaskConfig)
 	client.Log, err = logger.Get(loggerName)
 	client.timeout = time.Hour * 10000
@@ -90,31 +88,33 @@ func (client *ClusterClient) makeCloseChan() chan int {
 }
 
 //WaitClusterPathExists  等待集群中的指定配置出现,不存在时持续等待
-func (client *ClusterClient) WaitClusterPathExists(path string, timeout time.Duration, callback func(exists bool)) {
-	if client.handler.Exists(path) {
-		callback(true)
+func (client *ClusterClient) WaitClusterPathExists(path string, timeout time.Duration, callback func(p string, exists bool)) {
+	if p, ok := client.handler.Exists(path); ok {
+		callback(p, true)
 		return
 	}
-	callback(false)
+	callback("", false)
 	timePiker := time.NewTicker(time.Second * 2)
 	timeoutPiker := time.NewTicker(timeout)
 	closeChan := client.makeCloseChan()
 	exists := false
+	npath := ""
 CHECKER:
 	for {
 		select {
 		case <-timeoutPiker.C:
 			break
 		case <-timePiker.C:
-			if client.handler.Exists(path) {
+			if v, ok := client.handler.Exists(path); ok {
 				exists = true
+				npath = v
 				break CHECKER
 			}
 		case <-closeChan:
 			break CHECKER
 		}
 	}
-	callback(exists)
+	callback(npath, exists)
 }
 
 //WatchClusterValueChange 等待集群指定路径的值的变化

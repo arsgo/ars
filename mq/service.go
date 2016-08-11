@@ -47,6 +47,7 @@ func (mq *MQConsumerService) UpdateTasks(tasks []cluster.TaskItem) (err error) {
 	currentConsumers := mq.consumers.GetAll()
 	for k, v := range currentConsumers {
 		if _, ok := consumers[k]; !ok {
+			mq.Log.Info(" -> 关闭 mq consumer:", k)
 			v.(*MQConsumer).Stop()
 			mq.consumers.Delete(k)
 		}
@@ -67,7 +68,7 @@ func (mq *MQConsumerService) createConsumer(args ...interface{}) (r interface{},
 		return mq.handler.Handle(tk, msg, utility.GetSessionID())
 	})
 	if err != nil {
-		mq.Log.Fatal("mq create error:", err)
+		mq.Log.Error("mq consumer 启动失败:", err)
 		return
 	}
 	mq.Log.Infof("::start mq consumer:[%s] %s", v.Name, v.Script)

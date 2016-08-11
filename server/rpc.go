@@ -25,6 +25,7 @@ type RPCServer struct {
 	Log           logger.ILogger
 	loggerName    string
 	snap          *base.ServerSnap
+	collector     *base.Collector
 }
 
 //Tasks 任务列表
@@ -42,9 +43,10 @@ type IRPCHandler interface {
 }
 
 //NewRPCServer 创建RPC服务器
-func NewRPCServer(handler IRPCHandler, loggerName string) (server *RPCServer) {
+func NewRPCServer(handler IRPCHandler, loggerName string, callback base.CollectorCallBack) (server *RPCServer) {
 	server = &RPCServer{loggerName: loggerName, snap: &base.ServerSnap{}}
-	server.serverHandler = NewRPCHandlerProxy(handler, loggerName, server.snap)
+	server.collector = base.NewCollector(callback, time.Second)
+	server.serverHandler = NewRPCHandlerProxy(handler, loggerName, server.snap, server.collector)
 	server.Log, _ = logger.Get(loggerName)
 	return server
 }
@@ -52,6 +54,11 @@ func NewRPCServer(handler IRPCHandler, loggerName string) (server *RPCServer) {
 //UpdateTasks 更新任务列表
 func (r *RPCServer) UpdateTasks(tasks []cluster.TaskItem) int {
 	return r.serverHandler.UpdateTasks(tasks)
+}
+
+//GetServices 获取所有服务信息
+func (r *RPCServer) GetServices() []string {
+	return r.serverHandler.GetServices()
 }
 
 //Start 启动RPC服务器
@@ -80,19 +87,30 @@ type RPCHandlerProxy struct {
 	handler    IRPCHandler
 	Log        logger.ILogger
 	snap       *base.ServerSnap
+	collector  *base.Collector
 	domain     string
 	loggerName string
 }
 
 //NewRPCHandlerProxy 创建RPC默认处理程序
-func NewRPCHandlerProxy(h IRPCHandler, loggerName string, snap *base.ServerSnap) *RPCHandlerProxy {
+func NewRPCHandlerProxy(h IRPCHandler, loggerName string, snap *base.ServerSnap, collector *base.Collector) *RPCHandlerProxy {
 	conf, _ := config.Get()
-	handler := &RPCHandlerProxy{snap: snap, loggerName: loggerName, domain: conf.Domain}
+	handler := &RPCHandlerProxy{snap: snap, loggerName: loggerName, domain: conf.Domain, collector: collector}
 	handler.tasks = Tasks{}
 	handler.handler = h
 	handler.tasks.Services = concurrent.NewConcurrentMap() //make(map[string]cluster.TaskItem)
 	handler.Log, _ = logger.Get(loggerName)
 	return handler
+}
+
+//GetServices 获取所有服务信息
+func (r *RPCHandlerProxy) GetServices() (v []string) {
+	svs := r.tasks.Services.GetAll()
+	v = make([]string, 0, len(svs))
+	for i := range svs {
+		v = append(v, i)
+	}
+	return v
 }
 
 //UpdateTasks 更新服务列表
@@ -105,18 +123,20 @@ func (r *RPCHandlerProxy) UpdateTasks(tasks []cluster.TaskItem) int {
 	services := r.tasks.Services.GetAll()
 	for i, v := range tks {
 		if _, ok := services[i]; !ok {
-			r.tasks.Services.Set(i, v) //添加新任务
+			if r.tasks.Services.Set(i, v) { //添加新任务
+				count++
+			}
 			r.handler.OpenTask(v)
-			count++
 		}
 	}
 	for i, v := range services {
 		if _, ok := tks[i]; !ok {
 			r.handler.CloseTask(v.(cluster.TaskItem))
 			r.tasks.Services.Delete(i)
-			count++
 		} else {
-			r.tasks.Services.Set(i, tks[i]) //更新可能已经变化的服务
+			if r.tasks.Services.Set(i, tks[i]) { //更新可能已经变化的服务
+				count++
+			}
 		}
 	}
 	return count
@@ -133,7 +153,6 @@ func (r *RPCHandlerProxy) getDomain(name string) string {
 
 //getTaskItem 根据名称获取一个分组
 func (r *RPCHandlerProxy) getTaskItem(name string) (item cluster.TaskItem, err error) {
-
 	group := r.tasks.Services.Get(name)
 	if group == nil {
 		group = r.tasks.Services.Get("*" + r.getDomain(name))
@@ -146,6 +165,7 @@ func (r *RPCHandlerProxy) getTaskItem(name string) (item cluster.TaskItem, err e
 		item.Name = name
 		return
 	}
+	r.collector.Error()
 	err = fmt.Errorf("not find service(%s@%s.rpc.server):%s,%d", r.loggerName, r.domain, name, r.tasks.Services.GetLength())
 	return
 }
@@ -163,6 +183,9 @@ func (r *RPCHandlerProxy) Request(name string, input string, session string) (re
 	}
 	if currentErr != nil {
 		r.Log.Error(currentErr)
+		r.collector.Failed()
+	} else {
+		r.collector.Success()
 	}
 	log.Info("--> rpc response(recv):", name, result)
 	return

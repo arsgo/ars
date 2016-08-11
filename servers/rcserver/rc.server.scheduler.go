@@ -10,59 +10,55 @@ import (
 
 //BindJobScheduler 绑定RC服务器的JOB任务
 func (rc *RCServer) BindJobScheduler(jobs map[string]cluster.JobItem, err error) {
-	if err != nil {
-		rc.Log.Error(err)
-		return
-	}
-
 	scheduler.Stop()
-
-	if len(jobs) == 0 {
+	if err != nil || len(jobs) == 0 {
+		rc.Log.Info("获取scheduler配置失败或未配置")
 		return
 	}
-	var jobCount int
+
+	var currentJobs int
 	for _, v := range jobs {
 		if v.Concurrency <= 0 || !v.Enable {
 			continue
 		}
-		jobCount++
+		currentJobs++
+		rc.Log.Infof("::启动scheduler: %s", v.Name)
 		scheduler.AddTask(v.Trigger, scheduler.NewTask(v, func(v interface{}) {
 			task := v.(cluster.JobItem)
 			consumers := rc.clusterClient.GetJobConsumers(task.Name)
 			total := jobs[task.Name].Concurrency
-			index := 0
+			runSucess := 0
 			for i := 0; i < len(consumers); i++ {
+				rc.Log.Infof(" -> 运行scheduler(%s)[%s]", task.Name, consumers[i])
 				client := rpcservice.NewRPCClient(consumers[i], rc.loggerName)
 				if client.Open() != nil {
-					rc.Log.Infof("open rpc server(%s) error ", consumers[i])
+					rc.Log.Errorf("运行scheduler失败,无法连接到服务器: %s", consumers[i])
 					continue
 				}
 				result, err := client.Request(task.Name, "{}", utility.GetSessionID())
 				client.Close()
 				if err != nil {
-					rc.Log.Error(err)
+					rc.Log.Errorf("调用scheduler失败,%v", err)
 					continue
 				}
 				if !base.ResultIsSuccess(result) {
-					rc.Log.Infof(" ->call job(%s - %v) failed %s", task.Name, consumers[i], result)
+					rc.Log.Errorf(" -> 调用scheduler(%s-%s)返回失败:%s", task.Name, consumers[i], result)
 					continue
 				} else {
-					rc.Log.Infof(" ->call job(%s - %s) success", task.Name, consumers[i])
+					rc.Log.Infof(" -> scheduler(%s-%s)执行成功", task.Name, consumers[i])
 				}
-				index++
-				if index >= total {
+				runSucess++
+				if runSucess >= total {
 					continue
 				}
 			}
-			if index < total {
-				rc.Log.Infof("job(%s) has executed (%d/%d),consumers:%d", task.Name, index, total, len(consumers))
+			if runSucess < total {
+				rc.Log.Errorf(" -> scheduler(%s)未完全执行成功,已执行: %d次, 总共: %d次", task.Name, runSucess, total)
 			}
-
 		}))
 	}
-	if jobCount > 0 {
-		rc.Log.Infof("job config has changed:%d", jobCount)
+	if currentJobs > 0 {
 		scheduler.Start()
 	}
-
+	rc.Log.Infof("::当前已启动的scheduler数:%d", currentJobs)
 }

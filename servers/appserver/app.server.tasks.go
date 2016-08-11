@@ -35,17 +35,20 @@ func (a *AppServer) getJobConsumerTask(tasks []cluster.TaskItem) (tks []cluster.
 }
 func (a *AppServer) bindMQConsumer(tasks []cluster.TaskItem) {
 	conusmers := a.getMQConsumerTask(tasks)
+	if len(conusmers) == 0 {
+		a.Log.Info("没有可用mq consumer或未配置")
+	}
 	a.mqService.UpdateTasks(conusmers)
 }
 func (a *AppServer) bindJobConsumer(tasks []cluster.TaskItem) {
 	conusmers := a.getJobConsumerTask(tasks)
 	a.jobServer.Stop()
 	if len(conusmers) == 0 {
+		a.Log.Info("没有可用job consumer或未配置")
 		return
 	}
 	a.jobServer.Start()
 	a.jobServer.UpdateTasks(conusmers)
-
 }
 
 //BindLocalTask 绑定本地任务，包括MQ Consumer,Job Consumer

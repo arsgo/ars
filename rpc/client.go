@@ -121,9 +121,9 @@ func (r *RPCClient) ResetRPCServer(servers map[string][]string) string {
 			r.services.Delete(k) //移除已不存在的服务
 		}
 	}
-	if len(setServer) > 0 || len(delServer) > 0 {
+	/*if len(setServer) > 0 || len(delServer) > 0 {
 		r.Log.Debugf(" >-reset rpc server:set:%v,delete:%v,ip:%v", setServer, delServer, aips)
-	}
+	}*/
 	r.pool.Register(ips)
 	return strings.Join(aips, ",")
 }

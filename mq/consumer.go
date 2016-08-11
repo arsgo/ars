@@ -1,7 +1,6 @@
 package mq
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -28,18 +27,18 @@ func NewMQConsumer(task cluster.TaskItem, clusterClient cluster.IClusterClient, 
 	mq.task = task
 	mq.param, err = utility.GetParamsMap(task.Params)
 	if err != nil {
-		fmt.Println("get param error")
+		err = fmt.Errorf("mq consumer创建失败，获取mq参数失败:%s", task.Params)
 		return
 	}
 	mq.queue = fmt.Sprintf("%s", mq.param["queue"])
 	mq.setting = fmt.Sprintf("%s", mq.param["mq"])
 	if strings.EqualFold(mq.queue, "") || strings.EqualFold(mq.setting, "") {
-		err = errors.New("queue name  or mq name  is nil in params")
+		err = fmt.Errorf("mq consumer创建失败，queue或setting不能为空：%s", task.Params)
 		return
 	}
 	config, err := clusterClient.GetMQConfig(mq.setting)
 	if err != nil {
-		fmt.Println("get config")
+		err = fmt.Errorf("mq consumer创建失败，配置文件格式有误：%s", mq.setting)
 		return
 	}
 	mq.service, err = q.NewMQService(config)

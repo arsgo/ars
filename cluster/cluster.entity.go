@@ -32,9 +32,11 @@ type ServerConfig struct {
 }
 
 type RootConfig struct {
-	Status string         `json:"status"`
-	RPC    RPCPoolSetting `json:"rpc"`
-	Libs   []string       `json:"libs"`
+	Status      string         `json:"status"`
+	RPC         RPCPoolSetting `json:"rpc"`
+	Libs        []string       `json:"libs"`
+	DisableRPC  bool           `json:"disable-rpc"`
+	SnapRefresh int            `json:"refresh"`
 }
 type AppServerTask struct {
 	LocalJobs []JobItem     `json:"jobs"`

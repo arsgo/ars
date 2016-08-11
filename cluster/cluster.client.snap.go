@@ -12,17 +12,10 @@ func (d *ClusterClient) CloseNode(path string) (err error) {
 	return d.handler.Delete(path)
 }
 func (d *ClusterClient) SetNode(path string, value string) (err error) {
-	if d.handler.Exists(path) {
+	if _, ok := d.handler.Exists(path); !ok {
 		_, err = d.CreateNode(path, value)
 	} else {
 		err = d.UpdateNode(path, value)
 	}
 	return
-}
-
-func (d *ClusterClient) UpdateAppServerSnap(snap string) (err error) {
-	return d.SetNode(d.appServerPath, snap)
-}
-func (d *ClusterClient) CloseAppServer() (err error) {
-	return d.CloseNode(d.appServerPath)
 }
