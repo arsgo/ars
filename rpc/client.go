@@ -9,7 +9,6 @@ package rpc
 import (
 	"errors"
 	"fmt"
-	"runtime/debug"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -81,9 +80,9 @@ func (r *RPCClient) Close() {
 }
 
 func (rc *RPCClient) recover() {
-	if r := recover(); r != nil {
-		rc.Log.Fatal(r, string(debug.Stack()))
-	}
+	//if r := recover(); r != nil {
+	//	rc.Log.Fatal(r, string(debug.Stack()))
+	//	}
 }
 
 func (r *RPCClient) GetServices() map[string]interface{} {

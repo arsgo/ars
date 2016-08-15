@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"runtime/debug"
 	"strings"
 
 	"github.com/arsgo/ars/servers/config"
@@ -80,7 +79,7 @@ func (s *RPCServerPool) Register(svs map[string]string) {
 					s.Log.Error(err)
 					return
 				}
-				s.servers.Set(ip, &rpcServerService{IP:ip, Status: true}) //set ->add
+				s.servers.Set(ip, &rpcServerService{IP: ip, Status: true}) //set ->add
 			}(ip)
 		}
 	}
@@ -165,7 +164,7 @@ func (p *RPCServerPool) Get(group string, svName string, input string) (result [
 	return
 }
 func (n *RPCServerPool) recover() {
-	if r := recover(); r != nil {
-		n.Log.Fatal(r, string(debug.Stack()))
-	}
+	//if r := recover(); r != nil {
+	//n.Log.Fatal(r, string(debug.Stack()))
+	//	}
 }

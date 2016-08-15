@@ -87,7 +87,7 @@ func (sp *SPServer) resetCluster() {
 
 }
 func (sp *SPServer) recover() {
-	if r := recover(); r != nil {
-		sp.Log.Fatal(r, string(debug.Stack()))
-	}
+	//	if r := recover(); r != nil {
+	///	sp.Log.Fatal(r, string(debug.Stack()))
+	//	}
 }

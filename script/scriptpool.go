@@ -34,7 +34,7 @@ func getScriptInputArgs(input string, params string) (r string) {
 
 	buffer, err := json.Marshal(&args)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("get script args error:", err)
 	}
 	r = string(buffer)
 	return

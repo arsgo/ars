@@ -1,7 +1,6 @@
 package main
 
 import (
-	"runtime/debug"
 	"time"
 
 	"github.com/arsgo/ars/base"
@@ -121,7 +120,7 @@ func (rc *RCServer) Stop() error {
 	return nil
 }
 func (rc *RCServer) recover() {
-	if r := recover(); r != nil {
-		rc.Log.Fatal(r, string(debug.Stack()))
-	}
+	//if r := recover(); r != nil {
+	//	rc.Log.Fatal(r, string(debug.Stack()))
+	//	}
 }

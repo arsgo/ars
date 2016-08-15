@@ -54,9 +54,9 @@ func (as AppSnap) GetJobSnap(server string) string {
 }
 
 func (app *AppServer) recover() {
-	if r := recover(); r != nil {
-		app.Log.Error(r, string(debug.Stack()))
-	}
+	//if r := recover(); r != nil {
+	//	app.Log.Error(r, string(debug.Stack()))
+	//	}
 }
 
 //StartRefreshSnap 启动定时刷新快照信息

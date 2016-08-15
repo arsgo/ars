@@ -133,6 +133,7 @@ func (r *RPCHandlerProxy) UpdateTasks(tasks []cluster.TaskItem) int {
 		if _, ok := tks[i]; !ok {
 			r.handler.CloseTask(v.(cluster.TaskItem))
 			r.tasks.Services.Delete(i)
+			count++
 		} else {
 			if r.tasks.Services.Set(i, tks[i]) { //更新可能已经变化的服务
 				count++

@@ -61,9 +61,9 @@ func (r *HTTPScriptServer) Start() {
 		r.Address = ":" + r.Address
 	}
 	r.server = webserver.NewWebServer(r.Address, r.loggerName, r.getHandlers()...)
-	go func(){
- 		er:=r.server.Serve()
-		 r.Log.Error(er)
+	go func() {
+		er := r.server.Serve()
+		r.Log.Error(er)
 	}()
 
 	r.Log.Infof("::start http server:%s", r.Address)
@@ -91,8 +91,8 @@ func NewHTTPScriptController(r *HTTPScriptServer, config *cluster.ServerRouteCon
 
 func (r *HTTPScriptController) getBodyText(request *http.Request) string {
 	body, err := ioutil.ReadAll(request.Body)
-	if err != nil {
-		fmt.Println(err)
+	if err != nil {		
+		fmt.Println("http.get.body.error:", err)
 		return ""
 	}
 	return string(body)

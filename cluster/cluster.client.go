@@ -1,7 +1,6 @@
 package cluster
 
 import (
-	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -187,7 +186,7 @@ func (client *ClusterClient) Close() {
 
 //recover 从异常中恢复
 func (client *ClusterClient) recover() {
-	if r := recover(); r != nil {
-		client.Log.Fatal(r, string(debug.Stack()))
-	}
+	//if r := recover(); r != nil {
+	//	client.Log.Fatal(r, string(debug.Stack()))
+	//}
 }
