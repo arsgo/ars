@@ -69,17 +69,17 @@ func (app *AppServer) StartRefreshSnap() {
 	for {
 		select {
 		case <-tp.C:
-			app.Log.Info(" -> 更新app server快照信息")
+			app.snapLogger.Info(" -> 更新app server快照信息")
 			app.ResetAPPSnap()
 			app.ResetJobSnap()
 		case <-free.C:
-			app.Log.Infof(" -> 清理内存...%dM", sysinfo.GetAPPMemory())
+			app.snapLogger.Infof(" -> 清理内存...%dM", sysinfo.GetAPPMemory())
 			debug.FreeOSMemory()
 		}
 	}
 }
 func (app *AppServer) resetAppServer() {
-	app.Log.Debug(" -> 更新所有服务")
+	app.snapLogger.Info(" -> 更新所有服务")
 	app.CloseAppServer()
 	app.CloseJobSnap()
 	time.Sleep(time.Second)

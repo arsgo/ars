@@ -1,6 +1,7 @@
 package main
 
 import (
+	"runtime/debug"
 	"time"
 
 	"github.com/arsgo/ars/base"
@@ -58,7 +59,7 @@ func NewRCServer() (rc *RCServer, err error) {
 	if err != nil {
 		return
 	}
-	//rc.snapLogger.Show(false)
+	rc.snapLogger.Show(false)
 	return
 }
 
@@ -119,8 +120,9 @@ func (rc *RCServer) Stop() error {
 	rc.clusterClient.Close()
 	return nil
 }
-func (rc *RCServer) recover() {
-	//if r := recover(); r != nil {
-	//	rc.Log.Fatal(r, string(debug.Stack()))
-	//	}
+func (rc *RCServer) recover() (err error) {
+	if r := recover(); r != nil {
+		err = r.(error)
+		rc.Log.Fatal(r, string(debug.Stack()))
+	}
 }

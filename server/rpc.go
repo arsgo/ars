@@ -178,7 +178,7 @@ func (r *RPCHandlerProxy) Request(name string, input string, session string) (re
 	log.Info("--> rpc request(recv):", name, input)
 	task, currentErr := r.getTaskItem(name)
 	if currentErr != nil {
-		result = base.GetErrorResult("500", currentErr.Error())
+		result = base.GetErrorResult(base.ERR_NOT_FIND_SRVS, currentErr.Error())
 	} else {
 		result, currentErr = r.handler.Request(task, input, session)
 	}
@@ -194,32 +194,12 @@ func (r *RPCHandlerProxy) Request(name string, input string, session string) (re
 
 //Send 执行RPC Send服务
 func (r *RPCHandlerProxy) Send(name string, input string, data []byte) (result string, err error) {
-	r.Log.Info("-> recv send:", name)
-	task, er := r.getTaskItem(name)
-	if er != nil {
-		return base.GetErrorResult("500", er.Error()), nil
-	}
-	result, er = r.handler.Send(task, input, data)
-	if er != nil {
-		r.Log.Error(er)
-		result = base.GetErrorResult("500", er.Error())
-	} else {
-		r.Log.Info(result)
-	}
+
 	return
 }
 
 //Get 执行RPC Get服务
 func (r *RPCHandlerProxy) Get(name string, input string) (buffer []byte, err error) {
-	r.Log.Info("-> recv get:", name)
-	task, er := r.getTaskItem(name)
-	if er != nil {
-		return []byte(base.GetErrorResult("500", er.Error())), nil
-	}
-	buffer, er = r.handler.Get(task, input)
-	if er != nil {
-		r.Log.Error(er)
-		buffer = []byte(base.GetErrorResult("500", er.Error()))
-	}
+
 	return
 }

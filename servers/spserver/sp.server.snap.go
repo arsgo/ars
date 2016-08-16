@@ -70,17 +70,17 @@ func (sp *SPServer) startRefreshSnap() {
 	for {
 		select {
 		case <-tp.C:
-			sp.Log.Info("更新sp server快照信息")
+			sp.snapLogger.Info("更新sp server快照信息")
 			sp.ResetSPSnap()
 		case <-free.C:
-			sp.Log.Infof("清理内存...%dM", sysinfo.GetAPPMemory())
+			sp.snapLogger.Infof("清理内存...%dM", sysinfo.GetAPPMemory())
 			debug.FreeOSMemory()
 		}
 	}
 }
 
 func (sp *SPServer) resetCluster() {
-	sp.Log.Debug(" -> 更新所有服务")
+	sp.snapLogger.Info(" -> 更新所有服务")
 	sp.CloseSPServer()
 	time.Sleep(time.Second)
 	sp.ResetSPSnap()

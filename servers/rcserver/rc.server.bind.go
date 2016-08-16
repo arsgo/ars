@@ -93,9 +93,10 @@ func (rc *RCServer) BindServices(services map[string][]string, err error) {
 		rc.Log.Infof(" -> 本地服务已更新:%v", services)
 		rc.snapLogger.Infof("--------------------services-----------------\n\t\t\t\t\t  %+v\n\t\t\t\t\t  ----------------------------------------------",
 			rc.rcRPCServer.GetServices())
-	} else {
-		rc.Log.Infof(" -> 本地无更新:%v, %v", services, rc.rcRPCServer.GetServices())
 	}
+	//else {
+	//rc.Log.Infof(" -> 本地无更新:%v, %v", services, rc.rcRPCServer.GetServices())
+	//	}
 }
 
 //PublishNow 立即发布服务

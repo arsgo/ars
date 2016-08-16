@@ -56,10 +56,10 @@ func (rc *RCServer) startRefreshSnap() {
 	for {
 		select {
 		case <-tp.C:
-			rc.Log.Info(" -> 更新 rc server 快照信息")
+			rc.snapLogger.Info(" -> 更新 rc server 快照信息")
 			rc.RefreshSnap()
 		case <-free.C:
-			rc.Log.Infof(" -> 清理内存...%dM", sysinfo.GetAPPMemory())
+			rc.snapLogger.Infof(" -> 清理内存...%dM", sysinfo.GetAPPMemory())
 			debug.FreeOSMemory()
 
 		}

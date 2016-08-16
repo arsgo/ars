@@ -65,7 +65,7 @@ func (h *ScriptProxy) Request(ti cluster.TaskItem, input string, session string)
 	sresult, smap, err := h.scriptPool.Call(ti.Script, base.NewInvokeContext(h.loggerName, session, input, ti.Params, ""))
 	result, _, er := h.getResult(sresult, smap, err)
 	if er != nil {
-		result = base.GetErrorResult("500", er.Error())
+		result = base.GetErrorResult(base.ERR_NOT_FIND_SRVS, er.Error())
 	} else {
 		result = base.GetDataResult(result, base.IsRaw(smap))
 	}

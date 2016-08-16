@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/arsgo/ars/base"
@@ -22,23 +21,6 @@ import (
 	"github.com/arsgo/lib4go/logger"
 	"github.com/arsgo/lib4go/utility"
 )
-
-//serviceItem 服务信息
-type serviceItem struct {
-	service []string
-	index   int32
-	mutex   sync.Mutex
-}
-
-//getOne 获取一个可用的服务
-func (i *serviceItem) getOne() string {
-	if len(i.service) == 0 {
-		return ""
-	}
-	index := atomic.AddInt32(&i.index, 1)
-	cindex := index % int32(len(i.service))
-	return i.service[cindex]
-}
 
 //RPCClient RPCClient
 type RPCClient struct {
@@ -108,7 +90,7 @@ func (r *RPCClient) ResetRPCServer(servers map[string][]string) string {
 		}
 		if len(v) > 0 {
 			setServer = append(setServer, n)
-			r.services.Set(n, &serviceItem{service: v}) //添加新服务
+			r.services.Set(n, base.NewServiceItem(v)) //添加新服务
 		} else {
 			delServer = append(delServer, n)
 			r.services.Delete(n) //移除无可用IP的服务
@@ -120,9 +102,6 @@ func (r *RPCClient) ResetRPCServer(servers map[string][]string) string {
 			r.services.Delete(k) //移除已不存在的服务
 		}
 	}
-	/*if len(setServer) > 0 || len(delServer) > 0 {
-		r.Log.Debugf(" >-reset rpc server:set:%v,delete:%v,ip:%v", setServer, delServer, aips)
-	}*/
 	r.pool.Register(ips)
 	return strings.Join(aips, ",")
 }
@@ -153,7 +132,6 @@ func (r *RPCClient) GetAsyncResult(session string) (rt interface{}, err interfac
 				}
 			}
 		}
-
 	} else {
 		err = fmt.Sprint("not find session:", session)
 	}
@@ -169,8 +147,9 @@ func (r *RPCClient) getDomain(name string) string {
 	return "@" + items[1]
 }
 
-//getGroupName 根据名称获取一个分组
-func (r *RPCClient) getGroupName(name string) string {
+//getGroup 根据名称获取一个分组
+func (r *RPCClient) getGroup(cmd string) (g *base.ServiceGroup, name string, err error) {
+	name = r.client.GetServiceFullPath(cmd)
 	group := r.services.Get(name)
 	if group == nil {
 		group = r.services.Get("*" + r.getDomain(name))
@@ -178,23 +157,13 @@ func (r *RPCClient) getGroupName(name string) string {
 	if group == nil {
 		group = r.services.Get("*")
 	}
-
 	if group != nil {
-		return group.(*serviceItem).getOne()
+		g = group.(*base.ServiceItem).GetGroup()
+	} else {
+		err = errors.New(fmt.Sprint("not find rpc server(", r.loggerName, "@", r.domain, ".rpc.client):", name, " in service list",
+			r.services.GetLength()))
 	}
-	return ""
-}
-func (r *RPCClient) createSnap(p ...interface{}) (interface{}, error) {
-	ss := &base.ProxySnap{}
-	ss.ElapsedTime = base.ServerSnap{}
-	return ss, nil
-}
-func (r *RPCClient) setLifeTime(name string, start time.Time) {
-	_, snap, _ := r.snaps.Add(name, r.createSnap)
-	if snap == nil {
-		return
-	}
-	snap.(*base.ProxySnap).ElapsedTime.Add(start)
+	return
 }
 
 //Request 发送Request请求
@@ -202,39 +171,45 @@ func (r *RPCClient) Request(cmd string, input string, session string) (result st
 	defer r.recover()
 	clogger, _ := logger.NewSession(r.loggerName, session)
 	clogger.Info("--> rpc request(send):", cmd, input)
-	name := r.client.GetServiceFullPath(cmd)
-	group := r.getGroupName(name)
-	if strings.EqualFold(group, "") {
-		result = base.GetErrorResult("500", "not find rpc server(", r.loggerName, "@", r.domain, ".rpc.client):", name, " in service list",
-			r.services.GetLength())
+	group, name, err := r.getGroup(cmd)
+	if err != nil {
+		result = base.GetErrorResult(base.ERR_NOT_FIND_SRVS, err.Error())
+		return
+	}
+	groupName := cmd
+	defer clogger.Info("--> rpc response(send):", cmd, result)
+	defer r.setLifeTime(groupName, time.Now())
+START:
+	groupName, err = group.GetNext()
+	if err != nil {
+		if strings.EqualFold(result, "") {
+			msg := fmt.Sprint("not find rpc server(", r.loggerName, "@", r.domain, ".rpc.client):", name, " in service list",
+				r.services.GetLength())
+			result = base.GetErrorResult(base.ERR_NOT_FIND_SRVS, msg)
+		}
 		err = errors.New(result)
 		return
 	}
-	defer r.setLifeTime(group, time.Now())
-	result, er := r.pool.Request(group, name, input, session)
-	if er != nil {
-		result = base.GetErrorResult("500", er.Error())
+	result, err = r.pool.Request(groupName, name, input, session)
+	if err != nil {
+		result = base.GetErrorResult(base.ERR_NOT_FIND_SRVS, err.Error())
 	} else {
 		result = base.GetDataResult(result, false)
 	}
-	clogger.Info("--> rpc response(send):", cmd, result)
+	if strings.EqualFold(base.GetResult(result).Code, base.ERR_NOT_FIND_SRVS) {
+		goto START
+	}
+
 	return
 }
 
 //Send 发送Send请求
 func (r *RPCClient) Send(cmd string, input string, data string) (result string, err error) {
-	name := r.client.GetServiceFullPath(cmd)
-	result, _ = r.pool.Send(r.getGroupName(name), name, input, []byte(data))
 	return
 }
 
 //Get 发送Gety请求
 func (r *RPCClient) Get(cmd string, input string) (result string, err error) {
-	name := r.client.GetServiceFullPath(cmd)
-	data, _ := r.pool.Get(r.getGroupName(name), name, input)
-	if err != nil {
-		result = string(data)
-	}
 	return
 }
 
@@ -297,4 +272,16 @@ func (r *RPCClient) GetSnap() []interface{} {
 	poolSnaps := r.pool.GetSnap()
 	snaps := r.snaps.GetAll()
 	return base.GetProxySnap(poolSnaps, snaps)
+}
+func (r *RPCClient) createSnap(p ...interface{}) (interface{}, error) {
+	ss := &base.ProxySnap{}
+	ss.ElapsedTime = base.ServerSnap{}
+	return ss, nil
+}
+func (r *RPCClient) setLifeTime(name string, start time.Time) {
+	_, snap, _ := r.snaps.Add(name, r.createSnap)
+	if snap == nil {
+		return
+	}
+	snap.(*base.ProxySnap).ElapsedTime.Add(start)
 }

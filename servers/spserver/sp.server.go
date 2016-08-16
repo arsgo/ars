@@ -24,6 +24,7 @@ var (
 //SPServer SPServer
 type SPServer struct {
 	Log                 logger.ILogger
+	snapLogger          logger.ILogger
 	startSync           base.Sync
 	domain              string
 	mode                string
@@ -48,6 +49,14 @@ func NewSPServer() (sp *SPServer, err error) {
 	sp.startSync = base.NewSync(2)
 	sp.timerReloadRCServer = base.NewTimerCall(time.Second*5, time.Microsecond, sp.reloadRCServer)
 	sp.Log, err = logger.Get(sp.loggerName)
+	if err != nil {
+		return
+	}
+	sp.snapLogger, err = logger.Get("sp.snap")
+	if err != nil {
+		return
+	}
+	sp.snapLogger.Show(false)
 	sp.dbPool = concurrent.NewConcurrentMap()
 	return
 }

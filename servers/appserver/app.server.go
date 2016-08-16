@@ -20,6 +20,7 @@ type AppServer struct {
 	domain              string
 	startSync           base.Sync
 	Log                 logger.ILogger
+	snapLogger          logger.ILogger
 	clusterClient       cluster.IClusterClient
 	timerReloadRCServer *base.TimerCall
 	disableRPC          bool
@@ -46,6 +47,11 @@ func NewAPPServer() (app *AppServer, err error) {
 	if err != nil {
 		return
 	}
+	app.snapLogger, err = logger.Get("app.snap")
+	if err != nil {
+		return
+	}
+	app.snapLogger.Show(false)
 	app.conf, err = config.Get()
 	if err != nil {
 		app.Log.Error(err)
@@ -76,6 +82,7 @@ func (app *AppServer) init() (err error) {
 	if err != nil {
 		return
 	}
+
 	app.snap = AppSnap{ip: app.conf.IP, appserver: app, Version: app.version}
 	app.snap.Address = app.conf.IP
 	return

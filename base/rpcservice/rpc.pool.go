@@ -85,6 +85,7 @@ func (s *RPCServerPool) Register(svs map[string]string) {
 	}
 }
 
+//Request 发送request请求
 func (p *RPCServerPool) Request(group string, svName string, input string, session string) (result string, err error) {
 	defer p.recover()
 	if strings.EqualFold(group, "") {
@@ -117,23 +118,6 @@ START:
 }
 func (p *RPCServerPool) Send(group string, svName string, input string, data []byte) (result string, err error) {
 	defer p.recover()
-	if strings.EqualFold(group, "") {
-		err = errors.New("not find rpc server and name cant be nil")
-		return
-	}
-
-	o, err := p.pool.Get(group)
-	if err != nil {
-		err = errors.New("not find rpc server")
-		return
-	}
-	obj := o.(*RPCClient)
-	result, err = obj.Send(svName, input, data)
-	if err != nil {
-		p.pool.Unusable(svName, obj)
-	} else {
-		p.pool.Recycle(group, o)
-	}
 	return
 }
 
@@ -144,23 +128,6 @@ func (p *RPCServerPool) GetSnap() pool.ObjectPoolSnap {
 
 func (p *RPCServerPool) Get(group string, svName string, input string) (result []byte, err error) {
 	defer p.recover()
-	if strings.EqualFold(group, "") {
-		err = errors.New("not find rpc server and name cant be nil")
-		return
-	}
-
-	o, err := p.pool.Get(group)
-	if err != nil {
-		err = fmt.Errorf("not find rpc server:%s", err)
-		return
-	}
-	obj := o.(*RPCClient)
-	result, err = obj.Get(svName, input)
-	if err != nil {
-		p.pool.Unusable(svName, obj)
-	} else {
-		p.pool.Recycle(group, o)
-	}
 	return
 }
 func (n *RPCServerPool) recover() {
