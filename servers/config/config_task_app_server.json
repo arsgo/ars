@@ -1,0 +1,69 @@
+{
+    "config": {
+        "status": "run",
+        "rpc": {
+            "min": 1,
+            "max": 2
+        },
+        "libs": [
+            "./scripts",
+            "./scripts/xlib"
+        ]
+    },
+    "tasks": [
+        {
+            "name": "mq_consumer",
+            "type": "mq",
+            "method": "consume",
+            "script": "./scripts/mq_recv.lua",
+            "params": "mq=stomp&queue=delivery"
+        },
+        {
+            "name": "auto_call_rpc",
+            "trigger": "0/10 * * * * ?",
+            "type": "job",
+            "method": "local",
+            "script": "./scripts/rpc.lua"
+        },
+        {
+            "name": "auto_send_message",
+            "type": "job",
+            "method": "consume",
+            "script": "./scripts/mq_send.lua",
+            "params": "mq=stomp&queue=delivery"
+        }
+    ],
+    "api": {
+        "type": "http",
+        "address": "1016",
+        "routes": [
+            {
+                "path": "/system/md5",
+                "method": "get",
+                "script": "./scripts/md5.lua",
+                "chaset": "gbk",
+                "min": 1,
+                "max": 5
+            },
+            {
+                "path": "/system/rpc",
+                "method": "*",
+                "script": "./scripts/rpc.lua",
+                "min": 10,
+                "max": 20
+            },
+            {
+                "path": "/system/query",
+                "method": "get",
+                "script": "./scripts/query.lua",
+                "params": "id=1"
+            },
+            {
+                "path": "/system/mq",
+                "method": "get",
+                "script": "./scripts/mq_send.lua",
+                "params": "mq=stomp&queue=delivery"
+            }
+        ]
+    }
+}
