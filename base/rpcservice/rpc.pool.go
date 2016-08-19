@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"runtime/debug"
 	"strings"
 
 	"github.com/arsgo/ars/servers/config"
@@ -46,7 +47,6 @@ func NewRPCServerPool(minSize int, maxSize int, loggerName string) *RPCServerPoo
 func (s *RPCServerPool) ResetAllPoolSize(minSize int, maxSize int) {
 	s.MinSize = minSize
 	s.MaxSize = maxSize
-	s.pool.ResetAllPoolSize(minSize, maxSize)
 }
 
 //Close 关闭连接池
@@ -131,7 +131,7 @@ func (p *RPCServerPool) Get(group string, svName string, input string) (result [
 	return
 }
 func (n *RPCServerPool) recover() {
-	//if r := recover(); r != nil {
-	//n.Log.Fatal(r, string(debug.Stack()))
-	//	}
+	if r := recover(); r != nil {
+		n.Log.Fatal(r, string(debug.Stack()))
+	}
 }

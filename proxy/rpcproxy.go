@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"runtime/debug"
 	"sync"
 
 	"github.com/arsgo/ars/cluster"
@@ -92,7 +93,7 @@ func (h *RPCClientProxy) getResult(result []string, er error) (r string, err err
 }
 
 func (h *RPCClientProxy) recover() {
-	//	if r := recover(); r != nil {
-	//	h.Log.Fatal(r, string(debug.Stack()))
-	//	}
+	if r := recover(); r != nil {
+		h.Log.Fatal(r, string(debug.Stack()))
+	}
 }

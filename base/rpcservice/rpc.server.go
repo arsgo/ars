@@ -3,6 +3,7 @@ package rpcservice
 import (
 	"fmt"
 	"log"
+	"runtime/debug"
 	"time"
 
 	"git.apache.org/thrift.git/lib/go/thrift"
@@ -12,9 +13,9 @@ import (
 )
 
 func (n *RPCServer) recover() {
-	//if r := recover(); r != nil {
-	//	n.log.Fatal(r, string(debug.Stack()))
-	//	}
+	if r := recover(); r != nil {
+		n.log.Fatal(r, string(debug.Stack()))
+	}
 }
 func (r *RPCServer) Serve() (er error) {
 	defer r.recover()

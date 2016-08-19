@@ -1,7 +1,8 @@
 [
     {
-        "name": "auto_send_message",
-        "trigger": "0/30 * * * * ?",
-        "concurrency": 1
+        "name": "auto_call_rpc",
+        "trigger": "0/10 * * * * ?",
+        "concurrency": 1,
+        "disable": true
     }
 ]

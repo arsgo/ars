@@ -1,13 +1,16 @@
 package server
 
 import (
+	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/transform"
 
 	"github.com/arsgo/ars/base"
 	"github.com/arsgo/ars/base/rpcservice"
@@ -77,7 +80,7 @@ func (r *HTTPScriptServer) GetSnap() base.ServerSnap {
 //getHandlers 获取基于LUA的路由处理程序
 func (r *HTTPScriptServer) getHandlers() (handlers []webserver.WebHandler) {
 	for _, v := range r.routes {
-		handler := webserver.WebHandler{Path: v.Path, Method: v.Method, Script: v.Script, LoggerName: r.loggerName}
+		handler := webserver.WebHandler{Path: v.Path, Encoding: v.Encoding, Method: v.Method, Script: v.Script, LoggerName: r.loggerName}
 		handler.Handler = NewHTTPScriptController(r, v, r.snap).Handle
 		handlers = append(handlers, handler)
 	}
@@ -89,15 +92,15 @@ func NewHTTPScriptController(r *HTTPScriptServer, config *cluster.ServerRouteCon
 	return &HTTPScriptController{server: r, config: config, snap: snap, loggerName: r.loggerName}
 }
 
-func (r *HTTPScriptController) getBodyText(request *http.Request) string {
+func (r *HTTPScriptController) getBodyText(encoding string, request *http.Request) (content string, err error) {
 	body, err := ioutil.ReadAll(request.Body)
-	if err != nil {		
-		fmt.Println("http.get.body.error:", err)
-		return ""
+	if err != nil {
+		return
 	}
-	return string(body)
+	content = changeEncodingData(encoding, body)
+	return
 }
-func (r *HTTPScriptController) getPostValues(body string) (rt map[string]string) {
+func (r *HTTPScriptController) getPostValues(encoding string, body string) (rt map[string]string, err error) {
 	rt = make(map[string]string)
 	values, err := url.ParseQuery(body)
 	if err != nil {
@@ -105,22 +108,28 @@ func (r *HTTPScriptController) getPostValues(body string) (rt map[string]string)
 	}
 	for i, v := range values {
 		if len(v) > 0 && !strings.EqualFold(v[0], "") {
-			rt[i] = v[0]
+			rt[i] = changeEncodingData(encoding, []byte(v[0]))
 		}
 	}
-	return rt
+	return
 }
 
 //Handle 脚本处理程序(r *HttpScriptController) Handle(ctx *web.Context)
 func (r *HTTPScriptController) Handle(context *webserver.Context) {
 	defer r.snap.Add(time.Now())
-	body := r.getBodyText(context.Request)
+	body, err := r.getBodyText(context.Encoding, context.Request)
+	if err != nil {
+		context.Log.Error("获取POST数据异常:", err)
+	}
 	context.Request.ParseForm()
-	params := r.getPostValues(body)
+	params, err := r.getPostValues(context.Encoding, body)
+	if err != nil {
+		context.Log.Error("解析POST数据异常:", err)
+	}
 	if len(context.Request.Form) > 0 {
 		for k, v := range context.Request.Form {
 			if len(v) > 0 && len(v[0]) > 0 && !strings.EqualFold(v[0], "") {
-				params[k] = v[0]
+				params[k] = changeEncodingData(context.Encoding, []byte(v[0]))
 			}
 		}
 	}
@@ -187,4 +196,17 @@ func (r *HTTPScriptController) setResponse(context *webserver.Context, config ma
 		}
 	}
 	context.Log.Infof("api.response:[%d,%v]%s", code, context.PassTime(), responseContent)
+}
+func changeEncodingData(encoding string, data []byte) (content string) {
+	if !strings.EqualFold(encoding, "GBK") && !strings.EqualFold(encoding, "GB2312") {
+		content = string(data)
+		return
+	}
+	buffer, err := ioutil.ReadAll(transform.NewReader(bytes.NewReader(data), simplifiedchinese.GBK.NewDecoder()))
+	if err != nil {
+		content = string(data)
+		return
+	}
+	content = string(buffer)
+	return
 }

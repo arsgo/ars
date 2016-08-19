@@ -146,7 +146,7 @@ func (client *ClusterClient) GetSPServerTask(ip string) (task SPServerTask, err 
 //CreateSPServer 创建服务提供节点
 func (client *ClusterClient) CreateSPServer(name string, port string, value string) (string, error) {
 	data := client.dataMap.Copy()
-	data.Set("serviceName", strings.TrimSuffix(name, client.domainPath))
+	data.Set("serviceName", strings.TrimSuffix(name, client.domainName))
 	data.Set("ip", client.IP)
 	data.Set("port", port)
 	path := data.Translate(p_serviceProviderPath)

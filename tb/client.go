@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -32,10 +33,10 @@ func NewTCPClient(address string, commandName string, params string) *TCPClient 
 
 func (c *TCPClient) Reqeust() (resp *response) {
 	defer func() {
-		//	if err := recover(); nil != err {
-		//	Log.Fatal(err, string(debug.Stack()))
-		//	resp = &response{success: false, url: c.address, useTime: 0}
-		//	}
+		if err := recover(); nil != err {
+			Log.Fatal(err, string(debug.Stack()))
+			resp = &response{success: false, url: c.address, useTime: 0}
+		}
 	}()
 
 	startTime := time.Now()

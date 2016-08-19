@@ -45,7 +45,7 @@ func (a *AppServer) BindTask(config *cluster.AppServerTask, err error) (er error
 	a.rpcClient.SetPoolSize(config.Config.RPC.MinSize, config.Config.RPC.MaxSize)
 	a.scriptPool.SetPoolSize(config.Config.RPC.MinSize, config.Config.RPC.MaxSize)
 	a.BindHttpServer(config.Server)
-	a.BindLocalJobs(config.LocalJobs)
+//	a.BindLocalJobs(config.Tasks)
 	a.BindLocalTask(config.Tasks)
 	return
 }

@@ -36,7 +36,7 @@ START:
 }
 func (rc *RCServer) needBindRPCService() bool {
 	nmap := make(map[string]bool)
-	cdomain := strings.Replace(strings.TrimLeft(rc.domain, "/"), "/", ".", -1)
+	cdomain := strings.Replace(strings.TrimLeft(rc.conf.Domain, "/"), "/", ".", -1)
 	nmap[cdomain] = false
 	all := rc.crossDomain.GetAll()
 	for i := range all {

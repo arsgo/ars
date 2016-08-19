@@ -1,8 +1,0 @@
-{
-    "type": "stomp",
-    "address": "192.168.101.161:61613",
-    "accept-version": "1.1",
-    "persistent": "true",
-    "ack": "client-individual",
-    "dest": "topic"
-}

@@ -15,6 +15,13 @@ type ExtSnap struct {
 	RPC    json.RawMessage `json:"rpc"`
 }
 
+type JobSnap struct {
+	Address string `json:"address"`
+	Server  string `json:"server"`
+	Version string `json:"version"`
+	Last    string `json:"last"`
+}
+
 //AppSnap  app server快照信息
 type AppSnap struct {
 	appserver *AppServer
@@ -45,18 +52,19 @@ func (as AppSnap) GetSnap() string {
 
 //GetJobSnap 获取快照信息
 func (as AppSnap) GetJobSnap(server string) string {
-	snap := as
-	snap.Server = fmt.Sprint(snap.ip, server)
+	var snap JobSnap
+	snap.Address = as.Address
+	snap.Version = as.Version
+	snap.Server = fmt.Sprint(as.ip, server)
 	snap.Last = time.Now().Format("20060102150405")
-	snap.Sys, _ = base.GetSysMonitorInfo()
 	buffer, _ := json.Marshal(&snap)
 	return string(buffer)
 }
 
 func (app *AppServer) recover() {
-	//if r := recover(); r != nil {
-	//	app.Log.Error(r, string(debug.Stack()))
-	//	}
+	if r := recover(); r != nil {
+		app.Log.Fatal(r, string(debug.Stack()))
+	}
 }
 
 //StartRefreshSnap 启动定时刷新快照信息
@@ -91,7 +99,8 @@ func (app *AppServer) resetAppServer() {
 func (app *AppServer) ResetJobSnap() (err error) {
 	paths := app.scriptPorxy.GetTasks()
 	for _, path := range paths {
-		app.clusterClient.SetNode(path, app.snap.GetJobSnap(app.jobServer.Address))
+		nsnap := app.snap.GetJobSnap(app.jobServer.Address)
+		app.clusterClient.SetNode(path, nsnap)
 	}
 	return nil
 }

@@ -19,9 +19,9 @@ func newRPCClientFactory(ip string, loggerName string) *rpcClientFactory {
 }
 func (j *rpcClientFactory) Create() (p pool.Object, err error) {
 	defer func() {
-		//	i//f r := recover(); r != nil {
-		//return
-		//	}
+		if r := recover(); r != nil {
+			return
+		}
 	}()
 	if j.isClose {
 		err = errors.New("factory is closed")

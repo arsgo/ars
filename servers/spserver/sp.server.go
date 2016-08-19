@@ -26,7 +26,6 @@ type SPServer struct {
 	Log                 logger.ILogger
 	snapLogger          logger.ILogger
 	startSync           base.Sync
-	domain              string
 	mode                string
 	serviceConfig       string
 	timerReloadRCServer *base.TimerCall
@@ -38,14 +37,14 @@ type SPServer struct {
 	scriptPool          *script.ScriptPool //脚本引擎池
 	dbPool              *concurrent.ConcurrentMap
 	snap                SPSnap
-	loggerName          string
-	version             string
-	ip                  string
+	conf       *config.SysConfig
+	loggerName string
+	version    string
 }
 
 //NewSPServer 创建SP server服务器
-func NewSPServer() (sp *SPServer, err error) {
-	sp = &SPServer{loggerName: "sp.server", version: "0.1.10"}
+func NewSPServer(conf *config.SysConfig) (sp *SPServer, err error) {
+	sp = &SPServer{loggerName: "sp.server", version: "0.1.10", conf: conf}
 	sp.startSync = base.NewSync(2)
 	sp.timerReloadRCServer = base.NewTimerCall(time.Second*5, time.Microsecond, sp.reloadRCServer)
 	sp.Log, err = logger.Get(sp.loggerName)
@@ -64,18 +63,12 @@ func NewSPServer() (sp *SPServer, err error) {
 //init 初始化服务器
 func (sp *SPServer) init() (err error) {
 	defer sp.recover()
-	cfg, err := config.Get()
+	sp.Log.Infof(" -> 初始化 %s...", sp.conf.Domain)
+	sp.clusterClient, err = cluster.NewDomainClusterClient( sp.conf.Domain,  sp.conf.IP, sp.loggerName,  sp.conf.ZKServers...)
 	if err != nil {
 		return
 	}
-	sp.Log.Infof(" -> 初始化 %s...", cfg.Domain)
-	sp.ip = cfg.IP
-	sp.clusterClient, err = cluster.NewDomainClusterClient(cfg.Domain, cfg.IP, sp.loggerName, cfg.ZKServers...)
-	if err != nil {
-		return
-	}
-	sp.domain = cfg.Domain
-	sp.snap = SPSnap{ip: cfg.IP, Version: sp.version}
+	sp.snap = SPSnap{ip:  sp.conf.IP, Version: sp.version}
 	sp.rpcClient = rpc.NewRPCClient(sp.clusterClient, sp.loggerName)
 	sp.scriptPool, err = script.NewScriptPool(sp.clusterClient, sp.rpcClient, sp.GetScriptBinder(), sp.loggerName)
 	if err != nil {

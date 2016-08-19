@@ -91,5 +91,5 @@ func (client *ClusterClient) GetServiceFullPath(name string) string {
 	if strings.Contains(name, "@") {
 		return name
 	}
-	return name + client.domainPath
+	return name + client.domainName
 }

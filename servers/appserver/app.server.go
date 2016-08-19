@@ -38,8 +38,8 @@ type AppServer struct {
 }
 
 //NewAPPServer 创建APP Server服务器
-func NewAPPServer() (app *AppServer, err error) {
-	app = &AppServer{loggerName: "app.server", version: "0.1.10"}
+func NewAPPServer(conf *config.SysConfig) (app *AppServer, err error) {
+	app = &AppServer{loggerName: "app.server", version: "0.1.10", conf: conf}
 	app.timerReloadRCServer = base.NewTimerCall(time.Second*5, time.Microsecond, app.reloadRCServer)
 	app.startSync = base.NewSync(2)
 	app.JobAddress = make(map[string]string)
@@ -52,11 +52,6 @@ func NewAPPServer() (app *AppServer, err error) {
 		return
 	}
 	app.snapLogger.Show(false)
-	app.conf, err = config.Get()
-	if err != nil {
-		app.Log.Error(err)
-		return
-	}
 	return
 }
 

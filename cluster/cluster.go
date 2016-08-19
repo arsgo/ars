@@ -4,6 +4,7 @@ import "time"
 
 //IClusterHandler 集群管理处理程序，用于处理与集群管理器如(zk,etcd)等之前的通信
 type IClusterHandler interface {
+	Open()
 	Exists(path ...string) (string, bool)
 	CreateNode(path string, data string) error
 	CreateSeqNode(path string, data string) (string, error)
@@ -23,6 +24,8 @@ type IClusterHandler interface {
 //IClusterClient 集群客户端处理程序，提供appserver,rcserver,spserver与集群之前的交互操作
 type IClusterClient interface {
 	//base.............
+	GetHandler() IClusterHandler
+	GetDomainName() string
 	WaitClusterPathExists(path string, timeout time.Duration, callback func(path string, exists bool))
 	WatchClusterValueChange(path string, callback func())
 	WatchClusterChildrenChange(path string, callback func())

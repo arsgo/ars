@@ -31,7 +31,7 @@ func (sp *SPServer) BindRCServer(configs []*cluster.RCServerItem, err error) (er
 
 //rebindService 重新绑定SP所有服务列表
 func (sp *SPServer) rebindService() {
-	task, err := sp.clusterClient.GetSPServerTask(sp.ip)
+	task, err := sp.clusterClient.GetSPServerTask(sp.conf.IP)
 	if err != nil {
 		sp.Log.Error(err)
 		return
@@ -41,7 +41,7 @@ func (sp *SPServer) rebindService() {
 
 	if sp.rpcServer.UpdateTasks(task.Tasks) > 0 {
 		sp.Log.Info(" -> 本地服务已更新:", len(task.Tasks))
-		sp.Log.Infof("--------------------services-----------------\n\t\t\t\t\t  %+v\n\t\t\t\t\t  ----------------------------------------------",
+		sp.snapLogger.Infof("--------------------services-----------------\n\t\t\t\t\t  %+v\n\t\t\t\t\t  ----------------------------------------------",
 			sp.rpcServer.GetServices())
 	}
 	err = sp.mqService.UpdateTasks(task.Tasks)

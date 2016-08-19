@@ -18,10 +18,9 @@ func (rc *RCServer) BindJobScheduler(jobs map[string]cluster.JobItem, err error)
 		rc.Log.Info("获取scheduler配置失败或未配置")
 		return
 	}
-
 	var currentJobs int
 	for _, v := range jobs {
-		if v.Concurrency <= 0 || !v.Enable {
+		if v.Concurrency <= 0 || v.Disable {
 			continue
 		}
 		currentJobs++
@@ -39,13 +38,17 @@ func (rc *RCServer) BindJobScheduler(jobs map[string]cluster.JobItem, err error)
 }
 
 func (rc *RCServer) startJobFlow(task cluster.JobItem, consumers []string, session string) {
+	if len(consumers) == 0 {
+		rc.Log.Errorf("--> 无法运行scheduler(%s),无可用的consumer", task.Name)
+		return
+	}
 	avaliable := base.NewAvaliableMap(consumers)
 	data := make(chan int, task.Concurrency)
 	clogger, err := logger.NewSession(rc.loggerName, session)
 	if err != nil {
 		clogger = rc.Log
 	}
-	clogger.Infof(" -> 运行scheduler(%s)[%d,%d]", task.Name, task.Concurrency, len(consumers))
+	clogger.Infof("--> start scheduler[ %s %d,%d]", task.Name, task.Concurrency, len(consumers))
 	for i := 0; i < task.Concurrency; i++ {
 		data <- i
 	}
@@ -74,9 +77,9 @@ START:
 		}
 	}
 	if success < task.Concurrency {
-		clogger.Errorf(" -> scheduler(%s)未完全执行成功,已执行: %d次, 总共: %d次", task.Name, success, task.Concurrency)
+		clogger.Errorf("--> end scheduler(%s)未全部执行成功[%d/%d],consumer:%d", task.Name, success, task.Concurrency, len(consumers))
 	} else {
-		clogger.Infof(" -> 执行成功scheduler(%s)", task.Name)
+		clogger.Infof("--> end scheduler(%s)全部执行成功(%d次)", task.Name, task.Concurrency)
 	}
 }
 
@@ -96,7 +99,7 @@ func (rc *RCServer) runJob(task cluster.JobItem, consumer string, session string
 		return
 	}
 	if !base.ResultIsSuccess(result) {
-		err = fmt.Errorf(" -> 调用scheduler(%s-%s)返回失败:%s", task.Name, consumer, result)
+		err = fmt.Errorf("--> 调用scheduler(%s-%s)返回失败:%s", task.Name, consumer, result)
 	}
 	return
 }

@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"errors"
+	"runtime/debug"
 
 	"github.com/arsgo/ars/base"
 	"github.com/arsgo/ars/cluster"
@@ -93,7 +94,7 @@ func (h *ScriptProxy) getResult(result []string, params map[string]string, er er
 	return
 }
 func (h *ScriptProxy) recover() {
-	//	if r := recover(); r != nil {
-	//	h.Log.Fatal(r, string(debug.Stack()))
-	//	}
+	if r := recover(); r != nil {
+		h.Log.Fatal(r, string(debug.Stack()))
+	}
 }

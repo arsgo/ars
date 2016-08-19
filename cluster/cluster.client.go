@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -36,7 +37,7 @@ const (
 //ClusterClient 集群客户端
 type ClusterClient struct {
 	domain              string
-	domainPath          string
+	domainName          string
 	appTaskRoot         string
 	appServerTaskPath   string
 	rcServerRoot        string
@@ -59,8 +60,8 @@ type ClusterClient struct {
 
 func NewClusterClient(domain string, ip string, handler IClusterHandler, loggerName string) (client *ClusterClient, err error) {
 	client = &ClusterClient{configCache: concurrent.NewConcurrentMap()}
-	client.domain = "/" + strings.TrimLeft(strings.Replace(domain, ".", "/", -1), "/")
-	client.domainPath = "@" + strings.Replace(strings.TrimLeft(client.domain, "/"), "/", ".", -1)
+	client.domain = "/" + strings.Trim(strings.Replace(domain, ".", "/", -1), "/")
+	client.domainName = "@" + strings.Replace(strings.Trim(client.domain, "/"), "/", ".", -1)
 	client.IP = ip
 	client.dataMap = utility.NewDataMap()
 	client.dataMap.Set("domain", client.domain)
@@ -78,12 +79,19 @@ func NewClusterClient(domain string, ip string, handler IClusterHandler, loggerN
 	client.Log, err = logger.Get(loggerName)
 	client.timeout = time.Hour * 10000
 	client.handler = handler
+	client.handler.Open()
 	return
 }
 func (client *ClusterClient) makeCloseChan() chan int {
 	closeChan := make(chan int, 1)
 	client.closeChans.Set(utility.GetGUID(), closeChan)
 	return closeChan
+}
+func (client *ClusterClient) GetDomainName() string {
+	return client.domainName
+}
+func (client *ClusterClient) GetHandler() IClusterHandler {
+	return client.handler
 }
 
 //WaitClusterPathExists  等待集群中的指定配置出现,不存在时持续等待
@@ -186,7 +194,7 @@ func (client *ClusterClient) Close() {
 
 //recover 从异常中恢复
 func (client *ClusterClient) recover() {
-	//if r := recover(); r != nil {
-	//	client.Log.Fatal(r, string(debug.Stack()))
-	//}
+	if r := recover(); r != nil {
+		client.Log.Fatal(r, string(debug.Stack()))
+	}
 }

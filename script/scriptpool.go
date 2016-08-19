@@ -59,9 +59,9 @@ func NewScriptPool(clusterClient cluster.IClusterClient, rpcclient *rpc.RPCClien
 	p.rpcclient = rpcclient
 	p.pool = s.NewLuaPool()
 	p.Log, err = logger.Get(loggerName)
-	p.pool.RegisterLibs(p.bindGlobalLibs(extlibs))
-	p.pool.RegisterModules(p.bindModules())
-	p.pool.RegisterGlobal(p.bindGlobal())
+	p.pool.Binder.RegisterLibs(p.bindGlobalLibs(extlibs))
+	p.pool.Binder.RegisterModules(p.bindModules())
+	p.pool.Binder.RegisterGlobal(p.bindGlobal())
 	return
 }
 func (s *ScriptPool) SetPoolSize(minSize int, maxSize int) {
@@ -79,7 +79,7 @@ func (s *ScriptPool) SetPackages(path ...string) {
 	for _, v := range path {
 		npath = append(npath, utility.GetExcPath(v, "bin"))
 	}
-	s.pool.SetPackages(npath...)
+	s.pool.Binder.SetPackages(npath...)
 }
 func (s *ScriptPool) createSnap(p ...interface{}) (interface{}, error) {
 	ss := &base.ProxySnap{}

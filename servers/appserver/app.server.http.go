@@ -26,9 +26,9 @@ func (a *AppServer) BindHttpServer(config *cluster.ServerConfig) {
 	}
 
 	needCreate := a.httpServer == nil
-	needStart := a.httpServer != nil && !strings.EqualFold(a.httpServer.Address, config.Address)
+	needStart := a.httpServer != nil && !strings.EqualFold(strings.Trim(a.httpServer.Address, ":"), config.Address)
 	if needStart {
-		a.Log.Info("端口号已变更，停止api server")
+		a.Log.Info("端口号已变更，停止api server:", a.httpServer.Address, config.Address)
 		a.httpServer.Stop()
 	}
 

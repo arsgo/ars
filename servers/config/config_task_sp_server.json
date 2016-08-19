@@ -1,30 +1,35 @@
 {
-    "rpc-pool": {
-        "min": 1,
-        "max": 2
+    "config": {
+        "status": "run",
+        "rpc": {
+            "min": 1,
+            "max": 2
+        },
+        "libs": [
+            "./scripts",
+            "./scripts/xlib"
+        ]
     },
     "tasks": [
         {
-            "name": "get_pay_order",
+            "name": "system.md5",
             "ip": "*",
             "mode": "share",
             "type": "rpc",
             "method": "request",
             "script": "./scripts/md5.lua",
             "params": "mq=kafka/kafka01",
-            "min": 1,
-            "max": 2
+            "min": 10,
+            "max": 20
         },
         {
             "name": "mq_consumer",
             "ip": "*",
             "mode": "share",
             "type": "mq",
-            "method": "request",
-            "script": "./scripts/mq_consumer.lua",
-            "params": "mq=stomp&queue=delivery",
-            "min": 1,
-            "max": 2
+            "method": "consumer",
+            "script": "./scripts/mq_recv.lua",
+            "params": "mq=stomp&queue=delivery"
         }
     ]
 }

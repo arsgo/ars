@@ -174,6 +174,7 @@ func (r *RPCHandlerProxy) getTaskItem(name string) (item cluster.TaskItem, err e
 //Request 执行RPC Request服务
 func (r *RPCHandlerProxy) Request(name string, input string, session string) (result string, err error) {
 	defer r.snap.Add(time.Now())
+	start := time.Now()
 	log, _ := logger.NewSession(r.loggerName, session)
 	log.Info("--> rpc request(recv):", name, input)
 	task, currentErr := r.getTaskItem(name)
@@ -188,7 +189,7 @@ func (r *RPCHandlerProxy) Request(name string, input string, session string) (re
 	} else {
 		r.collector.Success()
 	}
-	log.Info("--> rpc response(recv):", name, result)
+	log.Infof("--> rpc response(recv,%v):%s,%s", time.Now().Sub(start), name, result)
 	return
 }
 

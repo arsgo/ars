@@ -11,19 +11,20 @@ type JobItem struct {
 	MinSize     int    `json:"min"`
 	MaxSize     int    `json:"max"`
 	Concurrency int    `json:"concurrency"`
-	Enable      bool   `json:"enable"`
+	Disable     bool   `json:"disable"`
 }
 type RPCPoolSetting struct {
 	MinSize int `json:"min"`
 	MaxSize int `json:"max"`
 }
 type ServerRouteConfig struct {
-	Path    string `json:"path"`
-	Method  string `json:"method"`
-	Script  string `json:"script"`
-	Params  string `json:"params"`
-	MinSize int    `json:"min"`
-	MaxSize int    `json:"max"`
+	Path     string `json:"path"`
+	Method   string `json:"method"`
+	Script   string `json:"script"`
+	Params   string `json:"params"`
+	Encoding string `json:"chaset"`
+	MinSize  int    `json:"min"`
+	MaxSize  int    `json:"max"`
 }
 type ServerConfig struct {
 	Address    string               `json:"address"`
@@ -39,10 +40,9 @@ type RootConfig struct {
 	SnapRefresh int            `json:"refresh"`
 }
 type AppServerTask struct {
-	LocalJobs []JobItem     `json:"jobs"`
-	Tasks     []TaskItem    `json:"tasks"`
-	Server    *ServerConfig `json:"server"`
-	Config    RootConfig    `json:"config"`
+	Tasks  []TaskItem    `json:"tasks"`
+	Server *ServerConfig `json:"api"`
+	Config RootConfig    `json:"config"`
 }
 
 //---------------------------------------------------------
@@ -75,6 +75,7 @@ type TaskItem struct {
 	Trigger string `json:"trigger"`
 	MinSize int    `json:"min"`
 	MaxSize int    `json:"max"`
+	Disable bool   `json:"disable"`
 }
 type SPServerTask struct {
 	Config RootConfig `json:"config"`

@@ -9,6 +9,7 @@ package rpc
 import (
 	"errors"
 	"fmt"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -62,9 +63,9 @@ func (r *RPCClient) Close() {
 }
 
 func (rc *RPCClient) recover() {
-	//if r := recover(); r != nil {
-	//	rc.Log.Fatal(r, string(debug.Stack()))
-	//	}
+	if r := recover(); r != nil {
+		rc.Log.Fatal(r, string(debug.Stack()))
+	}
 }
 
 func (r *RPCClient) GetServices() map[string]interface{} {
@@ -169,6 +170,7 @@ func (r *RPCClient) getGroup(cmd string) (g *base.ServiceGroup, name string, err
 //Request 发送Request请求
 func (r *RPCClient) Request(cmd string, input string, session string) (result string, err error) {
 	defer r.recover()
+	start := time.Now()
 	clogger, _ := logger.NewSession(r.loggerName, session)
 	clogger.Info("--> rpc request(send):", cmd, input)
 	group, name, err := r.getGroup(cmd)
@@ -177,7 +179,9 @@ func (r *RPCClient) Request(cmd string, input string, session string) (result st
 		return
 	}
 	groupName := cmd
-	defer clogger.Info("--> rpc response(send):", cmd, result)
+	defer func() {
+		clogger.Infof("--> rpc response(send,%v):%s,%s", time.Now().Sub(start), cmd, result)
+	}()
 	defer r.setLifeTime(groupName, time.Now())
 START:
 	groupName, err = group.GetNext()

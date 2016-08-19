@@ -89,10 +89,10 @@ func readConfig() (config *SysConfig, err error) {
 	return config, err
 
 }
-func getDefConfig() *SysConfig {
+func GetDefConfig() *SysConfig {
 	c := &SysConfig{}
 	c.ZKServers = []string{"192.168.101.161:2181"} // []string{"171.221.206.81:2181"} //
-	c.Domain = "/grs/weixin"
+	c.Domain = "/grs/core"
 	c.Mask = []string{"192.168", "172.16"}
 	c.IP = utility.GetLocalIPAddress(c.Mask...)
 	return c

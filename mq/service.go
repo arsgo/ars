@@ -1,6 +1,7 @@
 package mq
 
 import (
+	"runtime/debug"
 	"strings"
 
 	"github.com/arsgo/ars/cluster"
@@ -24,9 +25,9 @@ type MQConsumerService struct {
 }
 
 func (mq *MQConsumerService) recover() {
-	//if r := recover(); r != nil {
-	//	mq.Log.Fatal(r, string(debug.Stack()))
-	//}
+	if r := recover(); r != nil {
+		mq.Log.Fatal(r, string(debug.Stack()))
+	}
 }
 
 //NewMQConsumerService 创建MQ

@@ -74,7 +74,7 @@ func (rc *RCServer) resetLoalService() {
 		if err != nil {
 			continue
 		}
-		rc.crossService.Set(domain, crossService)
+		rc.crossServices.Set(domain, crossService)
 	}
 }
 
@@ -86,13 +86,13 @@ func (rc *RCServer) BindServices(services map[string][]string, err error) {
 	rc.spRPCClient.ResetRPCServer(services)
 	tasks, er := rc.clusterClient.GetLocalServices(services)
 	if er != nil {
-		rc.Log.Info(" -> 更新本地服务出错:", er)
+		rc.Log.Info(" -> 获取本地服务出错:", er)
 		return
 	}
-	if rc.rcRPCServer.UpdateTasks(tasks) > 0 {
-		rc.Log.Infof(" -> 本地服务已更新:%v", services)
-		rc.snapLogger.Infof("--------------------services-----------------\n\t\t\t\t\t  %+v\n\t\t\t\t\t  ----------------------------------------------",
-			rc.rcRPCServer.GetServices())
+	if c := rc.rcRPCServer.UpdateTasks(tasks); c > 0 {
+		rc.Log.Info(" -> 本地服务已更新")
+		rc.snapLogger.Infof("--------------------services-----------------\n\t\t\t\t\t  %+v\n\t\t\t\t\t  ----------------------------------------------%+v\n\t\t\t\t\t  ----------------------------------------------",
+			rc.rcRPCServer.GetServices(), services)
 	}
 	//else {
 	//rc.Log.Infof(" -> 本地无更新:%v, %v", services, rc.rcRPCServer.GetServices())
@@ -122,9 +122,15 @@ func (rc *RCServer) MergeService() (lst cluster.RPCServices) {
 	lst = make(map[string][]string)
 	services := rc.currentServices.Get("*")
 	if services != nil {
-		lst = services.(cluster.RPCServices)
+		cservices := services.(cluster.RPCServices)
+		currentDomain := rc.clusterClient.GetDomainName()
+		for name, values := range cservices {
+			if strings.HasSuffix(name, currentDomain) {
+				lst[name] = values
+			}
+		}
 	}
-	crossServices := rc.crossService.GetAll()
+	crossServices := rc.crossServices.GetAll()
 	for _, svs := range crossServices {
 		service := svs.(cluster.RPCServices)
 		for i, v := range service {

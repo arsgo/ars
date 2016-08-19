@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -34,9 +35,9 @@ func NewRPCClientTimeout(address string, timeout time.Duration, loggerName strin
 	return
 }
 func (n *RPCClient) recover() {
-	//	if r := recover(); r != nil {
-	//n.Log.Fatal(r, string(debug.Stack()))
-	//	}
+	if r := recover(); r != nil {
+		n.Log.Fatal(r, string(debug.Stack()))
+	}
 }
 func (client *RPCClient) Open() (err error) {
 	defer client.recover()
