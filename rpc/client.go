@@ -77,7 +77,8 @@ func (r *RPCClient) GetServiceCount() int {
 }
 
 //ResetRPCServer 重置所有RPC服务器
-func (r *RPCClient) ResetRPCServer(servers map[string][]string) string {
+func (r *RPCClient) ResetRPCServer(servers map[string][]string) (count int) {
+	count = 0
 	ips := make(map[string]string) //构建IP列表，用于注册服务
 	aips := []string{}
 	service := r.services.GetAll()
@@ -91,20 +92,24 @@ func (r *RPCClient) ResetRPCServer(servers map[string][]string) string {
 		}
 		if len(v) > 0 {
 			setServer = append(setServer, n)
-			r.services.Set(n, base.NewServiceItem(v)) //添加新服务
+			if r.services.Set(n, base.NewServiceItem(v)) { //添加新服务
+				count++
+			}
 		} else {
 			delServer = append(delServer, n)
 			r.services.Delete(n) //移除无可用IP的服务
+			count++
 		}
 	}
 	for k := range service {
 		if _, ok := servers[k]; !ok {
 			delServer = append(delServer, k)
 			r.services.Delete(k) //移除已不存在的服务
+			count++
 		}
 	}
 	r.pool.Register(ips)
-	return strings.Join(aips, ",")
+	return
 }
 
 //GetAsyncResult 获取异步请求结果

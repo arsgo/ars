@@ -7,7 +7,7 @@ import (
 
 //WatchRCTaskChange 监控RC Config变化
 func (client *ClusterClient) WatchRCTaskChange(callback func(RCServerTask, error)) {
-	client.WaitClusterPathExists(client.rcServerConfig, client.timeout, func(path string,exists bool) {
+	client.WaitClusterPathExists(client.rcServerConfig, client.timeout, func(path string, exists bool) {
 		if !exists {
 			client.Log.Errorf("rc config:%s未配置或不存在", client.rcServerConfig)
 		} else {
@@ -29,7 +29,7 @@ func (client *ClusterClient) WatchRCTaskChange(callback func(RCServerTask, error
 
 //WatchRCServerChange 监控RC服务器变化,变化后回调指定函数
 func (client *ClusterClient) WatchRCServerChange(callback func([]*RCServerItem, error)) {
-	client.WaitClusterPathExists(client.rcServerRoot, client.timeout, func(path string,exists bool) {
+	client.WaitClusterPathExists(client.rcServerRoot, client.timeout, func(path string, exists bool) {
 		if !exists {
 			client.Log.Errorf("rc servers:%s未配置或不存在", client.rcServerRoot)
 		} else {
@@ -92,7 +92,9 @@ func (client *ClusterClient) GetAllRCServers() (servers []*RCServerItem, err err
 			client.Log.Errorf(" -> 获取rc server数据有误:%v", err)
 			continue
 		}
-		servers = append(servers, config)
+		if len(config.Address) > 0 {
+			servers = append(servers, config)
+		}
 	}
 	return
 }

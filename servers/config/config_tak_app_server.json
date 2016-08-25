@@ -10,33 +10,34 @@
             "./scripts/xlib"
         ]
     },
-    "jobs": [
-        {
-            "name": "auto_call_rpc",
-            "trigger": "0/10 * * * * ?",
-            "script": "./scripts/rpc.lua",
-            "enable": true
-        }
-    ],
     "tasks": [
         {
-            "name": "mq_consumer",
+            "name": "delivery_recv",
             "type": "mq",
             "method": "consume",
             "script": "./scripts/mq_recv.lua",
             "params": "mq=stomp&queue=delivery"
         },
         {
-            "name": "auto_send_message",
+            "name": "auto_call_rpc",
+            "trigger": "0/10 * * * * ?",
+            "type": "job",
+            "method": "local",
+            "script": "./scripts/rpc.lua"
+        },
+        {
+            "name": "send_msg",
             "type": "job",
             "method": "consume",
             "script": "./scripts/mq_send.lua",
-            "params": "mq=stomp&queue=delivery"
+            "params": "mq=stomp&queue=delivery",
+            "disable": false
         }
     ],
-    "server": {
+    "api": {
         "type": "http",
         "address": "1016",
+        "disable": false,
         "routes": [
             {
                 "path": "/system/md5",

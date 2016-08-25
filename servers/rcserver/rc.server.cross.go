@@ -17,13 +17,28 @@ func (rc *RCServer) BindCrossAccess(task cluster.RCServerTask) (err error) {
 	return
 }
 
+func (rc *RCServer) checkDomain(domain string, item cluster.CrossDoaminAccessItem) bool {
+	if !strings.EqualFold("@"+domain, rc.clusterClient.GetDomainName()) {
+		return true
+	}
+	return !rc.isInServerList(item.Servers)
+}
+
 //ResetCrossDomainServices 重置跨域服务
 func (rc *RCServer) ResetCrossDomainServices(task cluster.RCServerTask) {
+
 	//添加、关闭、更新跨域服务器
 	localCrossServices := rc.crossServices.GetAll()
 	//添加不存在的域和服务器
 	for domain, item := range task.CrossDomainAccess {
+		if item.Disable {
+			continue
+		}
 		if _, ok := localCrossServices[domain]; ok {
+			continue
+		}
+		if !rc.checkDomain(domain, item) {
+			rc.Log.Error(" -> 域配置有误，不能与当前域相同:", domain)
 			continue
 		}
 		crossData := item.GetServicesMap(domain) //转换为服务映射表
@@ -35,6 +50,12 @@ func (rc *RCServer) ResetCrossDomainServices(task cluster.RCServerTask) {
 			rc.crossServices.Delete(domain) //不存在域,则删除
 			continue
 		}
+		if v, ok := task.CrossDomainAccess[domain]; ok && v.Disable {
+			rc.crossServices.Delete(domain) //域已禁用,则删除
+			rc.Log.Error(" -> 域配置已禁用:", domain)
+			continue
+		}
+
 		//检查本地服务是否与远程服务一致
 		currentServices := svs.(cluster.RPCServices)                            //本地服务
 		remoteServices := task.CrossDomainAccess[domain].GetServicesMap(domain) //远程服务
@@ -60,7 +81,7 @@ func (rc *RCServer) WatchCrossDomain(task cluster.RCServerTask) {
 	//关闭域
 	localDomains := rc.crossDomain.GetAll()
 	for domain, clt := range localDomains {
-		if _, ok := task.CrossDomainAccess[domain]; !ok {
+		if v, ok := task.CrossDomainAccess[domain]; !ok || (ok && v.Disable) {
 			rc.Log.Info(" -> 关闭外部域:", domain)
 			client := clt.(cluster.IClusterClient)
 			client.Close()
@@ -70,17 +91,20 @@ func (rc *RCServer) WatchCrossDomain(task cluster.RCServerTask) {
 
 	//监控域
 	for domain, v := range task.CrossDomainAccess {
+		if !rc.checkDomain(domain, v) || v.Disable {
+			continue
+		}
 		//为cluster类型时,添加监控
 		if rc.crossDomain.Get(domain) == nil {
 			var clusterClient cluster.IClusterClient
 			var err error
 			if rc.isInServerList(v.Servers) {
 				rc.Log.Info(" -> 启动外部域:", domain)
-				clusterClient, err = cluster.NewDomainClusterClientHandler(domain, rc.snap.ip, rc.loggerName, rc.clusterClient.GetHandler())
+				clusterClient, err = cluster.NewDomainClusterClientHandler(domain, rc.conf.IP, rc.loggerName, rc.clusterClient.GetHandler())
 
 			} else {
 				rc.Log.Info(" -> 启动外部域:", domain)
-				clusterClient, err = cluster.NewDomainClusterClient(domain, rc.snap.ip, rc.loggerName, v.Servers...)
+				clusterClient, err = cluster.NewDomainClusterClient(domain, rc.conf.IP, rc.loggerName, v.Servers...)
 			}
 			if err != nil {
 				rc.Log.Error(err)
@@ -98,6 +122,9 @@ func (rc *RCServer) WatchCrossDomain(task cluster.RCServerTask) {
 				}
 				defer rc.recover()
 				clusterClient.WatchRCServerChange(func(items []*cluster.RCServerItem, err error) {
+					if !rc.crossDomain.Exists(domain) {
+						return
+					}
 					rc.bindCrossServices(domain, items)
 					rc.PublishNow()
 				})

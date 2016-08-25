@@ -19,13 +19,15 @@ import (
 
 //RPCServer RPC服务器
 type RPCServer struct {
+	servicesPath  *concurrent.ConcurrentMap
 	Address       string
+	Available     bool
 	serverHandler *RPCHandlerProxy
 	server        *rpcservice.RPCServer
 	Log           logger.ILogger
 	loggerName    string
 	snap          *base.ServerSnap
-	collector     *base.Collector
+	collector     base.ICollector
 }
 
 //Tasks 任务列表
@@ -35,25 +37,36 @@ type Tasks struct {
 
 //IRPCHandler RPC处理函数
 type IRPCHandler interface {
-	OpenTask(cluster.TaskItem)
-	CloseTask(cluster.TaskItem)
+	OpenTask(cluster.TaskItem) string
+	CloseTask(cluster.TaskItem, string)
 	Request(cluster.TaskItem, string, string) (string, error)
 	Send(cluster.TaskItem, string, []byte) (string, error)
 	Get(cluster.TaskItem, string) ([]byte, error)
 }
 
 //NewRPCServer 创建RPC服务器
-func NewRPCServer(handler IRPCHandler, loggerName string, callback base.CollectorCallBack) (server *RPCServer) {
-	server = &RPCServer{loggerName: loggerName, snap: &base.ServerSnap{}}
-	server.collector = base.NewCollector(callback, time.Second)
-	server.serverHandler = NewRPCHandlerProxy(handler, loggerName, server.snap, server.collector)
+func NewRPCServer(handler IRPCHandler, loggerName string, collector base.ICollector) (server *RPCServer) {
+	server = &RPCServer{loggerName: loggerName, snap: &base.ServerSnap{}, collector: collector}
+	server.serverHandler = NewRPCHandlerProxy(server, handler, loggerName, server.snap, server.collector)
+	server.servicesPath = concurrent.NewConcurrentMap()
 	server.Log, _ = logger.Get(loggerName)
 	return server
 }
 
 //UpdateTasks 更新任务列表
-func (r *RPCServer) UpdateTasks(tasks []cluster.TaskItem) int {
-	return r.serverHandler.UpdateTasks(tasks)
+func (r *RPCServer) UpdateTasks(tasks []cluster.TaskItem) (c int) {
+	c, r.Available = r.serverHandler.UpdateTasks(tasks)
+	return
+}
+
+//GetServicePath  获取当前服务路径
+func (r *RPCServer) GetServicePath() (paths map[string]string) {
+	paths = make(map[string]string)
+	services := r.servicesPath.GetAll()
+	for name, path := range services {
+		paths[name] = path.(string)
+	}
+	return
 }
 
 //GetServices 获取所有服务信息
@@ -83,19 +96,21 @@ func (r *RPCServer) GetSnap() base.ServerSnap {
 
 //RPCHandlerProxy RPCHandler代理程序
 type RPCHandlerProxy struct {
+	server     *RPCServer
 	tasks      Tasks
 	handler    IRPCHandler
+	Available  bool
 	Log        logger.ILogger
 	snap       *base.ServerSnap
-	collector  *base.Collector
+	collector  base.ICollector
 	domain     string
 	loggerName string
 }
 
 //NewRPCHandlerProxy 创建RPC默认处理程序
-func NewRPCHandlerProxy(h IRPCHandler, loggerName string, snap *base.ServerSnap, collector *base.Collector) *RPCHandlerProxy {
+func NewRPCHandlerProxy(server *RPCServer, h IRPCHandler, loggerName string, snap *base.ServerSnap, collector base.ICollector) *RPCHandlerProxy {
 	conf, _ := config.Get()
-	handler := &RPCHandlerProxy{snap: snap, loggerName: loggerName, domain: conf.Domain, collector: collector}
+	handler := &RPCHandlerProxy{server: server, snap: snap, loggerName: loggerName, domain: conf.Domain, collector: collector, Available: false}
 	handler.tasks = Tasks{}
 	handler.handler = h
 	handler.tasks.Services = concurrent.NewConcurrentMap() //make(map[string]cluster.TaskItem)
@@ -114,7 +129,7 @@ func (r *RPCHandlerProxy) GetServices() (v []string) {
 }
 
 //UpdateTasks 更新服务列表
-func (r *RPCHandlerProxy) UpdateTasks(tasks []cluster.TaskItem) int {
+func (r *RPCHandlerProxy) UpdateTasks(tasks []cluster.TaskItem) (int, bool) {
 	count := 0
 	tks := make(map[string]cluster.TaskItem)
 	for _, v := range tasks {
@@ -124,14 +139,19 @@ func (r *RPCHandlerProxy) UpdateTasks(tasks []cluster.TaskItem) int {
 	for i, v := range tks {
 		if _, ok := services[i]; !ok {
 			if r.tasks.Services.Set(i, v) { //添加新任务
+				path := r.handler.OpenTask(v)
+				r.server.servicesPath.Set(i, path)
 				count++
 			}
-			r.handler.OpenTask(v)
 		}
 	}
 	for i, v := range services {
 		if _, ok := tks[i]; !ok {
-			r.handler.CloseTask(v.(cluster.TaskItem))
+			tk := v.(cluster.TaskItem)
+			value := r.server.servicesPath.Get(tk.Name)
+			if value != nil {
+				r.handler.CloseTask(tk, value.(string))
+			}
 			r.tasks.Services.Delete(i)
 			count++
 		} else {
@@ -140,7 +160,8 @@ func (r *RPCHandlerProxy) UpdateTasks(tasks []cluster.TaskItem) int {
 			}
 		}
 	}
-	return count
+	r.Available = r.tasks.Services.GetLength() > 0
+	return count, r.Available
 }
 
 //getDomain 获取domain
@@ -166,7 +187,6 @@ func (r *RPCHandlerProxy) getTaskItem(name string) (item cluster.TaskItem, err e
 		item.Name = name
 		return
 	}
-	r.collector.Error()
 	err = fmt.Errorf("not find service(%s@%s.rpc.server):%s,%d", r.loggerName, r.domain, name, r.tasks.Services.GetLength())
 	return
 }
@@ -177,19 +197,25 @@ func (r *RPCHandlerProxy) Request(name string, input string, session string) (re
 	start := time.Now()
 	log, _ := logger.NewSession(r.loggerName, session)
 	log.Info("--> rpc request(recv):", name, input)
+	defer log.Infof("--> rpc response(recv,%v):%s,%s", time.Now().Sub(start), name, result)
 	task, currentErr := r.getTaskItem(name)
 	if currentErr != nil {
 		result = base.GetErrorResult(base.ERR_NOT_FIND_SRVS, currentErr.Error())
-	} else {
-		result, currentErr = r.handler.Request(task, input, session)
+		r.Log.Error(currentErr)
+		r.collector.Error(name)
+		return
 	}
+	result, currentErr = r.handler.Request(task, input, session)
 	if currentErr != nil {
 		r.Log.Error(currentErr)
-		r.collector.Failed()
-	} else {
-		r.collector.Success()
+		r.collector.Failed(name)
+		return
 	}
-	log.Infof("--> rpc response(recv,%v):%s,%s", time.Now().Sub(start), name, result)
+	if base.GetResult(result).Code == base.ERR_NOT_FIND_SRVS {
+		r.collector.Error(name)
+		return
+	}
+	r.collector.Success(name)
 	return
 }
 

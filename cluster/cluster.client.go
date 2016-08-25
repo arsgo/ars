@@ -21,17 +21,21 @@ const (
 	p_servicePublishPath  = "@domain/sp/publish"
 	p_serviceProviderRoot = "@domain/sp/servers"
 
-	p_appServerPath                    = "@domain/app/servers/@ip@port"
+	p_appServerPath                    = "@domain/app/api.servers/@ip@port"
 	p_serviceProviderPath              = "@domain/sp/servers/@serviceName/@ip@port"
 	p_rcServerRoot                     = "@domain/rc/servers"
 	p_rcServerClusterClientBase        = "@domain/rc/servers/rc_"
 	p_appServerClusterClientPathFormat = "@domain/app/servers/@ip"
 
-	p_jobConsumerClusterClientBase    = "@domain/job/servers/@jobName/job_"
+	p_MQConsumerClusterClientBase = "@domain/app/mq.consumers/@name/mq_"
+
+	p_jobConsumerClusterClientBase    = "@domain/app/job.consumers/@jobName/job_"
 	p_rcServerClusterServerPathFormat = "@domain/rc/servers/@name"
 
-	p_jobConsumerNamedRootForamt         = "@domain/job/servers/@jobName"
-	p_jobConsumerClusterClientPathFormat = "@domain/job/servers/@jobName/@path"
+	p_localjobClusterClientBase = "@domain/app/job.locals/@jobName/job_"
+
+	p_jobConsumerNamedRootForamt         = "@domain/app/job.consumers/@jobName"
+	p_jobConsumerClusterClientPathFormat = "@domain/app/job.consumers/@jobName/@path"
 )
 
 //ClusterClient 集群客户端
@@ -92,79 +96,6 @@ func (client *ClusterClient) GetDomainName() string {
 }
 func (client *ClusterClient) GetHandler() IClusterHandler {
 	return client.handler
-}
-
-//WaitClusterPathExists  等待集群中的指定配置出现,不存在时持续等待
-func (client *ClusterClient) WaitClusterPathExists(path string, timeout time.Duration, callback func(p string, exists bool)) {
-	if p, ok := client.handler.Exists(path); ok {
-		callback(p, true)
-		return
-	}
-	callback("", false)
-	timePiker := time.NewTicker(time.Second * 2)
-	timeoutPiker := time.NewTicker(timeout)
-	closeChan := client.makeCloseChan()
-	exists := false
-	npath := ""
-CHECKER:
-	for {
-		select {
-		case <-timeoutPiker.C:
-			break
-		case <-timePiker.C:
-			if v, ok := client.handler.Exists(path); ok {
-				exists = true
-				npath = v
-				break CHECKER
-			}
-		case <-closeChan:
-			break CHECKER
-		}
-	}
-	callback(npath, exists)
-}
-
-//WatchClusterValueChange 等待集群指定路径的值的变化
-func (client *ClusterClient) WatchClusterValueChange(path string, callback func()) {
-	changes := make(chan string, 10)
-	go func() {
-		defer client.recover()
-		client.handler.WatchValue(path, changes)
-	}()
-	closeChan := client.makeCloseChan()
-	go func() {
-	START:
-		for {
-			select {
-			case <-changes:
-				callback()
-			case <-closeChan:
-				break START
-			}
-		}
-	}()
-
-}
-
-//WatchClusterChildrenChange 监控集群指定路径的子节点变化
-func (client *ClusterClient) WatchClusterChildrenChange(path string, callback func()) {
-	changes := make(chan []string, 10)
-	go func() {
-		defer client.recover()
-		client.handler.WatchChildren(path, changes)
-	}()
-	closeChan := client.makeCloseChan()
-	go func() {
-	START:
-		for {
-			select {
-			case <-changes:
-				callback()
-			case <-closeChan:
-				break START
-			}
-		}
-	}()
 }
 
 //WaitForConnected 监控是否已链接到当前服务器

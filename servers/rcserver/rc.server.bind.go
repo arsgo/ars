@@ -4,33 +4,40 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/arsgo/ars/cluster"
+	"github.com/arsgo/ars/snap"
+	"github.com/arsgo/lib4go/utility"
 )
 
 //BindRCServer 绑定服务
 func (rc *RCServer) BindRCServer() (err error) {
-	rc.snap.Address = fmt.Sprint(rc.snap.ip, rc.rcRPCServer.Address)
-	rc.snap.Path, err = rc.clusterClient.CreateRCServer(rc.snap.GetSnap())
+	rc.snap.Address = fmt.Sprint(rc.conf.IP, rc.rcRPCServer.Address)
+	rc.snap.path, err = rc.clusterClient.CreateRCServer(rc.snap.GetServicesSnap(snap.GetData()))
 	if err != nil {
 		return
 	}
-
 	rc.clusterClient.WatchRCServerChange(func(items []*cluster.RCServerItem, err error) {
 		isMaster := rc.IsMasterServer(items)
 		if isMaster && !rc.IsMaster {
 			rc.IsMaster = true
-			rc.snap.Server = SERVER_MASTER
+			rc.snap.Server = cluster.SERVER_MASTER
+			rc.setDefSnap()
 			rc.Log.Info(" -> 当前服务是 [", rc.snap.Server, "]")
 			go rc.clusterClient.WatchRCTaskChange(func(task cluster.RCServerTask, err error) {
 				if err != nil {
 					return
 				}
+
+				rc.snap.Refresh = utility.GetMax2(task.SnapRefresh, 120, 60)
+				if task.SnapRefresh > 0 && task.SnapRefresh < 60 {
+					rc.Log.Error(" -> 快照刷新时间不能低于60秒", rc.snap.Refresh)
+				}
+				snap.ResetTicker(time.Second * time.Duration(rc.snap.Refresh))
 				rc.spRPCClient.SetPoolSize(task.RPCPoolSetting.MinSize, task.RPCPoolSetting.MaxSize)
 				rc.BindCrossAccess(task)
-			})
-			go rc.clusterClient.WatchJobConfigChange(func(config map[string]cluster.JobItem, err error) {
-				rc.BindJobScheduler(config, err)
+				rc.BindJobScheduler(task.Jobs, err)
 			})
 			go rc.clusterClient.WatchSPServerChange(func(lst cluster.RPCServices, err error) {
 				defer rc.startSync.Done("INIT.SERVER")
@@ -43,7 +50,8 @@ func (rc *RCServer) BindRCServer() (err error) {
 
 		} else if !isMaster {
 			rc.IsMaster = false
-			rc.snap.Server = SERVER_SLAVE
+			rc.snap.Server = cluster.SERVER_SLAVE
+			rc.setDefSnap()
 			rc.Log.Info(" -> 当前服务是 [", rc.snap.Server, "]")
 			go rc.clusterClient.WatchRCTaskChange(func(task cluster.RCServerTask, err error) {
 				defer rc.startSync.Done("INIT.SERVER")
@@ -114,7 +122,7 @@ func (rc *RCServer) IsMasterServer(items []*cluster.RCServerItem) bool {
 		servers = append(servers, v.Path)
 	}
 	sort.Sort(sort.StringSlice(servers))
-	return len(servers) == 0 || strings.EqualFold(rc.snap.Path, servers[0])
+	return len(servers) == 0 || strings.EqualFold(rc.snap.path, servers[0])
 }
 
 //MergeService 合并所有服务

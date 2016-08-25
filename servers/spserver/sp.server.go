@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"runtime/debug"
 	"time"
 
 	"github.com/arsgo/ars/base"
@@ -28,6 +29,8 @@ type SPServer struct {
 	startSync           base.Sync
 	mode                string
 	serviceConfig       string
+	rpcServerCollector  *base.Collector
+	mqConsumerCollector *base.Collector
 	timerReloadRCServer *base.TimerCall
 	mqService           *mq.MQConsumerService
 	rpcClient           *rpc.RPCClient
@@ -37,14 +40,16 @@ type SPServer struct {
 	scriptPool          *script.ScriptPool //脚本引擎池
 	dbPool              *concurrent.ConcurrentMap
 	snap                SPSnap
-	conf       *config.SysConfig
-	loggerName string
-	version    string
+	conf                *config.SysConfig
+	loggerName          string
+	version             string
 }
 
 //NewSPServer 创建SP server服务器
 func NewSPServer(conf *config.SysConfig) (sp *SPServer, err error) {
 	sp = &SPServer{loggerName: "sp.server", version: "0.1.10", conf: conf}
+	sp.rpcServerCollector = base.NewCollector()
+	sp.mqConsumerCollector = base.NewCollector()
 	sp.startSync = base.NewSync(2)
 	sp.timerReloadRCServer = base.NewTimerCall(time.Second*5, time.Microsecond, sp.reloadRCServer)
 	sp.Log, err = logger.Get(sp.loggerName)
@@ -64,11 +69,11 @@ func NewSPServer(conf *config.SysConfig) (sp *SPServer, err error) {
 func (sp *SPServer) init() (err error) {
 	defer sp.recover()
 	sp.Log.Infof(" -> 初始化 %s...", sp.conf.Domain)
-	sp.clusterClient, err = cluster.NewDomainClusterClient( sp.conf.Domain,  sp.conf.IP, sp.loggerName,  sp.conf.ZKServers...)
+	sp.clusterClient, err = cluster.NewDomainClusterClient(sp.conf.Domain, sp.conf.IP, sp.loggerName, sp.conf.ZKServers...)
 	if err != nil {
 		return
 	}
-	sp.snap = SPSnap{ip:  sp.conf.IP, Version: sp.version}
+	sp.snap = SPSnap{Version: sp.version, spserver: sp}
 	sp.rpcClient = rpc.NewRPCClient(sp.clusterClient, sp.loggerName)
 	sp.scriptPool, err = script.NewScriptPool(sp.clusterClient, sp.rpcClient, sp.GetScriptBinder(), sp.loggerName)
 	if err != nil {
@@ -77,8 +82,9 @@ func (sp *SPServer) init() (err error) {
 	sp.rpcScriptProxy = proxy.NewScriptProxy(sp.clusterClient, sp.scriptPool, sp.loggerName)
 	sp.rpcScriptProxy.OnOpenTask = sp.OnSPServiceCreate
 	sp.rpcScriptProxy.OnCloseTask = sp.OnSPServiceClose
-	sp.rpcServer = server.NewRPCServer(sp.rpcScriptProxy, sp.loggerName, sp.collectReporter)
-	sp.mqService, err = mq.NewMQConsumerService(sp.clusterClient, mq.NewMQScriptHandler(sp.scriptPool, sp.loggerName), sp.loggerName)
+	sp.rpcServer = server.NewRPCServer(sp.rpcScriptProxy, sp.loggerName, sp.rpcServerCollector)
+	handler := mq.NewMQScriptHandler(sp.scriptPool, sp.loggerName, sp.OnMQConsumerCreate, sp.OnMQConsumerClose)
+	sp.mqService, err = mq.NewMQConsumerService(sp.clusterClient, handler, sp.loggerName, sp.mqConsumerCollector)
 	return
 }
 
@@ -94,7 +100,7 @@ func (sp *SPServer) Start() (err error) {
 		return
 	}
 	sp.rpcServer.Start()
-	sp.snap.Address = fmt.Sprint(sp.snap.ip, sp.rpcServer.Address)
+	sp.snap.Address = fmt.Sprint(sp.conf.IP, sp.rpcServer.Address)
 	sp.clusterClient.WatchSPTaskChange(func() {
 		defer sp.startSync.Done("INIT.TASK.BIND")
 		sp.rebindService()
@@ -118,4 +124,10 @@ func (sp *SPServer) Stop() error {
 	sp.rpcClient.Close()
 	sp.rpcServer.Stop()
 	return nil
+}
+
+func (sp *SPServer) recover() {
+	if r := recover(); r != nil {
+		sp.Log.Fatal(r, string(debug.Stack()))
+	}
 }

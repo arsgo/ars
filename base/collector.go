@@ -1,41 +1,78 @@
 package base
 
 import (
+	"fmt"
 	"sync/atomic"
-	"time"
+
+	"github.com/arsgo/lib4go/concurrent"
 )
 
-type CollectorCallBack func(s int, f int, e int)
+type ICollector interface {
+	Success(...interface{})
+	Failed(...interface{})
+	Error(...interface{})
+	Juge(v bool, name ...interface{})
+}
+type Execution struct {
+	Success int32 `json:"success"`
+	Failed  int32 `json:"failed"`
+	Error   int32 `json:"error"`
+}
 
 //Collector 采集器
 type Collector struct {
-	timer    time.Duration
-	callback CollectorCallBack
-	success  int32
-	failed   int32
-	err      int32
+	data *concurrent.ConcurrentMap
 }
 
-func NewCollector(callback CollectorCallBack, timer time.Duration) *Collector {
-	r := &Collector{callback: callback, timer: timer}
-	go r.callNow()
+func NewCollector() *Collector {
+	r := &Collector{}
+	r.data = concurrent.NewConcurrentMap()
 	return r
 }
-func (r *Collector) Success() {
-	atomic.AddInt32(&r.success, 1)
+func (r *Collector) getExecution(name ...interface{}) (d *Execution, err error) {
+	exec, err := r.data.GetOrAdd(fmt.Sprint(name...), func(p ...interface{}) (interface{}, error) {
+		return &Execution{}, nil
+	})
+	if err != nil {
+		return
+	}
+	d = exec.(*Execution)
+	return
 }
-func (r *Collector) Failed() {
-	atomic.AddInt32(&r.failed, 1)
+func (r *Collector) Success(name ...interface{}) {
+	if data, err := r.getExecution(name...); err == nil {
+		atomic.AddInt32(&data.Success, 1)
+	}
+
 }
-func (r *Collector) Error() {
-	atomic.AddInt32(&r.err, 1)
+func (r *Collector) Failed(name ...interface{}) {
+	if data, err := r.getExecution(name...); err == nil {
+		atomic.AddInt32(&data.Failed, 1)
+	}
 }
-func (r *Collector) callNow() {
-	timer := time.NewTicker(r.timer)
-	for {
-		select {
-		case <-timer.C:
-			r.callback(int(atomic.SwapInt32(&r.success, 0)), int(atomic.SwapInt32(&r.failed, 0)), int(atomic.SwapInt32(&r.err, 0)))
+func (r *Collector) Error(name ...interface{}) {
+	if data, err := r.getExecution(name...); err == nil {
+		atomic.AddInt32(&data.Error, 1)
+	}
+}
+
+func (r *Collector) Juge(v bool, name ...interface{}) {
+	if data, err := r.getExecution(name...); err == nil {
+		if v {
+			atomic.AddInt32(&data.Success, 1)
+		} else {
+			atomic.AddInt32(&data.Failed, 1)
 		}
 	}
+}
+
+func (r *Collector) Get() map[string]interface{} {
+	return r.data.GetAllAndClear()
+}
+func (r *Collector) GetByName(name string) interface{} {
+	v := r.data.GetAndDel(name)
+	if v == nil {
+		return struct{}{}
+	}
+	return v
 }

@@ -21,19 +21,17 @@ type RPCClientProxy struct {
 	clusterClient cluster.IClusterClient
 	client        *rpc.RPCClient
 	Log           logger.ILogger
-	snap          ISnap
 	lock          sync.RWMutex
 }
 
 //NewRPCClientProxy 构建JNewRPCClientProxy处理对象
-func NewRPCClientProxy(client cluster.IClusterClient, rpcClient *rpc.RPCClient, snap ISnap, loggerName string) *RPCClientProxy {
-	job := &RPCClientProxy{}
-	job.clusterClient = client
-	job.client = rpcClient
-	job.snap = snap
-	job.tasks = concurrent.NewConcurrentMap()
-	job.Log, _ = logger.Get(loggerName)
-	return job
+func NewRPCClientProxy(client cluster.IClusterClient, rpcClient *rpc.RPCClient, loggerName string) *RPCClientProxy {
+	proxy := &RPCClientProxy{}
+	proxy.clusterClient = client
+	proxy.client = rpcClient
+	proxy.tasks = concurrent.NewConcurrentMap()
+	proxy.Log, _ = logger.Get(loggerName)
+	return proxy
 }
 
 //GetTasks 获取当前已注册task列表
@@ -47,13 +45,14 @@ func (h *RPCClientProxy) GetTasks() map[string]cluster.TaskItem {
 }
 
 //OpenTask 启动新的任务
-func (h *RPCClientProxy) OpenTask(task cluster.TaskItem) {
+func (h *RPCClientProxy) OpenTask(task cluster.TaskItem) string {
 	h.tasks.Set(task.Name, task)
 	h.Log.Info("::启动 service:", task.Name)
+	return ""
 }
 
 //CloseTask 关闭任务
-func (h *RPCClientProxy) CloseTask(ti cluster.TaskItem) {
+func (h *RPCClientProxy) CloseTask(ti cluster.TaskItem, path string) {
 	h.Log.Info(" -> 关闭 service:", ti.Name)
 	h.tasks.Delete(ti.Name)
 }

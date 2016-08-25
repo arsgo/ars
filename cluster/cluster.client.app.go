@@ -87,3 +87,11 @@ func (client *ClusterClient) CreateAppServer(port string, snap string) (path str
 func (d *ClusterClient) CloseAppServer(path string) (err error) {
 	return d.CloseNode(path)
 }
+
+//CreateMQConsumer 创建mq conusmer
+func (client *ClusterClient) CreateMQConsumer(name string, value string) (string, error) {
+	data := client.dataMap.Copy()
+	data.Set("name", name)
+	path := data.Translate(p_MQConsumerClusterClientBase)
+	return client.handler.CreateSeqNode(path, value)
+}

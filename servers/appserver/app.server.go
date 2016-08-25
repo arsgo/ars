@@ -1,6 +1,7 @@
 package main
 
 import (
+	"runtime/debug"
 	"time"
 
 	"github.com/arsgo/ars/base"
@@ -11,6 +12,7 @@ import (
 	"github.com/arsgo/ars/script"
 	"github.com/arsgo/ars/server"
 	"github.com/arsgo/ars/servers/config"
+	"github.com/arsgo/lib4go/concurrent"
 	"github.com/arsgo/lib4go/logger"
 )
 
@@ -23,14 +25,19 @@ type AppServer struct {
 	snapLogger          logger.ILogger
 	clusterClient       cluster.IClusterClient
 	timerReloadRCServer *base.TimerCall
+	jobServerCollector  *base.Collector
+	jobLocalCollector   *base.Collector
+	mqConsumerCollector *base.Collector
+	scriptCollector     *base.Collector
 	disableRPC          bool
 	scriptPorxy         *proxy.ScriptProxy //本地脚本处理
 	jobServer           *server.RPCServer  //接收JOB事件调用,改事件将触发脚本执行
 	rpcClient           *rpc.RPCClient     //RPC远程调用客户端,调用RC Server提供的RPC服务
 	scriptPool          *script.ScriptPool //脚本池,用于缓存JOB Consumer脚本和本地task任务执行脚本
-	httpServer          *server.HTTPScriptServer
+	apiServer           *server.HTTPScriptServer
+	apiServerCollector  *base.Collector
 	mqService           *mq.MQConsumerService
-	snapRefresh         time.Duration
+	localJobPaths       *concurrent.ConcurrentMap
 	snap                AppSnap
 	loggerName          string
 	conf                *config.SysConfig
@@ -41,6 +48,12 @@ type AppServer struct {
 func NewAPPServer(conf *config.SysConfig) (app *AppServer, err error) {
 	app = &AppServer{loggerName: "app.server", version: "0.1.10", conf: conf}
 	app.timerReloadRCServer = base.NewTimerCall(time.Second*5, time.Microsecond, app.reloadRCServer)
+	app.localJobPaths = concurrent.NewConcurrentMap()
+	app.jobServerCollector = base.NewCollector()
+	app.apiServerCollector = base.NewCollector()
+	app.jobLocalCollector = base.NewCollector()
+	app.mqConsumerCollector = base.NewCollector()
+	app.scriptCollector = base.NewCollector()
 	app.startSync = base.NewSync(2)
 	app.JobAddress = make(map[string]string)
 	app.Log, err = logger.Get(app.loggerName)
@@ -51,7 +64,7 @@ func NewAPPServer(conf *config.SysConfig) (app *AppServer, err error) {
 	if err != nil {
 		return
 	}
-	app.snapLogger.Show(false)
+	//app.snapLogger.Show(false)
 	return
 }
 
@@ -65,20 +78,21 @@ func (app *AppServer) init() (err error) {
 	}
 	app.domain = app.conf.Domain
 	app.rpcClient = rpc.NewRPCClient(app.clusterClient, app.loggerName)
-	app.scriptPool, err = script.NewScriptPool(app.clusterClient, app.rpcClient, make(map[string]interface{}), app.loggerName)
+	app.scriptPool, err = script.NewScriptPool(app.clusterClient, app.rpcClient, make(map[string]interface{}), app.loggerName, app.scriptCollector)
 	if err != nil {
 		return
 	}
 	app.scriptPorxy = proxy.NewScriptProxy(app.clusterClient, app.scriptPool, app.loggerName)
-	app.scriptPorxy.OnOpenTask = app.OnJobCreate
-	app.scriptPorxy.OnCloseTask = app.OnJobClose
-	app.jobServer = server.NewRPCServer(app.scriptPorxy, app.loggerName, app.collectReporter)
-	app.mqService, err = mq.NewMQConsumerService(app.clusterClient, mq.NewMQScriptHandler(app.scriptPool, app.loggerName), app.loggerName)
+	app.scriptPorxy.OnOpenTask = app.OnRemoteJobCreate
+	app.scriptPorxy.OnCloseTask = app.OnRemoteJobClose
+
+	app.jobServer = server.NewRPCServer(app.scriptPorxy, app.loggerName, app.jobServerCollector)
+	hander := mq.NewMQScriptHandler(app.scriptPool, app.loggerName, app.OnMQConsumerCreate, app.OnMQConsumerClose, app.mqConsumerCollector)
+	app.mqService, err = mq.NewMQConsumerService(app.clusterClient, hander, app.loggerName, app.mqConsumerCollector)
 	if err != nil {
 		return
 	}
-
-	app.snap = AppSnap{ip: app.conf.IP, appserver: app, Version: app.version}
+	app.snap = AppSnap{appserver: app, Version: app.version, Server: "0:0", Refresh: 60}
 	app.snap.Address = app.conf.IP
 	return
 }
@@ -108,7 +122,8 @@ func (app *AppServer) Start() (err error) {
 
 	app.startSync.Wait()
 	go app.startMonitor()
-	go app.StartRefreshSnap()
+	go app.startRefreshSnap()
+	go app.clearMem()
 
 	app.Log.Info(" -> app server 启动完成...")
 	return nil
@@ -119,11 +134,21 @@ func (app *AppServer) Stop() error {
 	defer app.recover()
 	app.Log.Info(" -> 退出 app server...")
 	app.clusterClient.Close()
+	app.Log.Info("close rpc client")
 	app.rpcClient.Close()
+	app.Log.Info("close scriptpool ")
 	app.scriptPool.Close()
+	app.Log.Info("close job server")
 	app.jobServer.Stop()
-	if app.httpServer != nil {
-		app.httpServer.Stop()
+	app.Log.Info("close api server")
+	if app.apiServer != nil {
+		app.apiServer.Stop()
 	}
 	return nil
+}
+
+func (app *AppServer) recover() {
+	if r := recover(); r != nil {
+		app.Log.Fatal(r, string(debug.Stack()))
+	}
 }

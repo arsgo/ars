@@ -24,6 +24,9 @@ type scriptInputArgs struct {
 
 //getScriptInputArgs 获取脚本输入参数
 func getScriptInputArgs(input string, params string) (r string) {
+	if strings.EqualFold(input, "") {
+		input = "{}"
+	}
 	args := scriptInputArgs{}
 	args.Input = []byte(input)
 	text, err := utility.GetParams(params)
@@ -34,7 +37,7 @@ func getScriptInputArgs(input string, params string) (r string) {
 
 	buffer, err := json.Marshal(&args)
 	if err != nil {
-		fmt.Println("get script args error:", err)
+		fmt.Printf("get script args error:%v,%v\n", err, args)
 	}
 	r = string(buffer)
 	return
@@ -48,12 +51,13 @@ type ScriptPool struct {
 	rpcclient     *rpc.RPCClient
 	snaps         *concurrent.ConcurrentMap
 	mqservices    *concurrent.ConcurrentMap
+	collector     base.ICollector
 }
 
 //NewScriptPool 创建脚本POOl
 func NewScriptPool(clusterClient cluster.IClusterClient, rpcclient *rpc.RPCClient, extlibs map[string]interface{},
-	loggerName string) (p *ScriptPool, err error) {
-	p = &ScriptPool{snaps: concurrent.NewConcurrentMap()}
+	loggerName string, collector base.ICollector) (p *ScriptPool, err error) {
+	p = &ScriptPool{snaps: concurrent.NewConcurrentMap(), collector: collector}
 	p.mqservices = concurrent.NewConcurrentMap()
 	p.clusterClient = clusterClient
 	p.rpcclient = rpcclient

@@ -70,6 +70,9 @@ type IClusterClient interface {
 	//job consumer
 	GetJobConsumers(jobName string) (consumers []string)
 	CreateJobConsumer(jobName string, value string) (string, error)
+	CreateLocalJob(jobName string, value string) (string, error)
+	//mq consumer
+	CreateMQConsumer(name string, value string) (string, error)
 
 	//rpc service..........
 	WatchRPCServiceChange(callback func(services map[string][]string, err error))

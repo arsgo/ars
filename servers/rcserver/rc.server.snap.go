@@ -2,67 +2,65 @@ package main
 
 import (
 	"encoding/json"
-	"runtime/debug"
 	"time"
 
-	"github.com/arsgo/ars/base"
+	"github.com/arsgo/ars/snap"
 	"github.com/arsgo/lib4go/sysinfo"
 )
-
-type ExtSnap struct {
-	Server json.RawMessage `json:"server"`
-	RPC    json.RawMessage `json:"rpc"`
-}
 
 //RCSnap RC server快照信息
 type RCSnap struct {
 	rcServer *RCServer
-	Domain   string               `json:"domain"`
-	Path     string               `json:"path"`
-	Address  string               `json:"address"`
-	Server   string               `json:"server"`
-	Version  string               `json:"version"`
-	Last     string               `json:"last"`
-	Mem      uint64               `json:"mem"`
-	Sys      *base.SysMonitorInfo `json:"sys"`
-	Snap     ExtSnap              `json:"snap"`
-	ip       string
+	Domain   string `json:"domain"`
+	path     string
+	Address  string      `json:"address"`
+	Server   string      `json:"server"`
+	Refresh  int         `json:"refresh"`
+	Version  string      `json:"version"`
+	CPU      string      `json:"cpu"`
+	Mem      string      `json:"mem"`
+	Disk     string      `json:"disk"`
+	Last     string      `json:"last"`
+	Snap     interface{} `json:"snap"`
+	Cache    interface{} `json:"cache"`
 }
 
-//GetSnap 获取RC服务的快照信息
-func (rs RCSnap) GetSnap() string {
+//GetServicesSnap 获取RC服务的快照信息
+func (rs RCSnap) GetServicesSnap(services map[string]interface{}) string {
 	snap := rs
 	snap.Last = time.Now().Format("20060102150405")
-	snap.Sys, _ = base.GetSysMonitorInfo()
-	snap.Snap.Server, _ = json.Marshal(rs.rcServer.rcRPCServer.GetSnap())
-	snap.Snap.RPC, _ = json.Marshal(rs.rcServer.spRPCClient.GetSnap())
-	snap.Mem = sysinfo.GetAPPMemory()
+	snap.CPU = sysinfo.GetAvaliabeCPU().Used
+	snap.Mem = sysinfo.GetAvaliabeMem().Used
+	snap.Disk = sysinfo.GetAvaliabeDisk().Used
+
+	rpcs := rs.rcServer.rpcServerCollector.Get()
+	if len(rpcs) > 0 {
+		services["rpc"] = rpcs
+	}
+	schedulers := rs.rcServer.schedulerCollector.Get()
+	if len(schedulers) > 0 {
+		services["jobs"] = schedulers
+	}
+	cache := make(map[string]interface{})
+	cache["rpc"] = rs.rcServer.spRPCClient.GetSnap()
+	snap.Cache = cache
+	snap.Snap = services
+
 	buffer, _ := json.Marshal(&snap)
 	return string(buffer)
-}
-
-//RefreshSnap 刷新快照信息
-func (rc *RCServer) RefreshSnap() {
-	rc.clusterClient.SetNode(rc.snap.Path, rc.snap.GetSnap())
 }
 
 //startRefreshSnap 启动定时刷新
 func (rc *RCServer) startRefreshSnap() {
 	defer rc.recover()
-	rc.clusterClient.SetNode(rc.snap.Path, rc.snap.GetSnap())
-	rc.RefreshSnap()
-	tp := time.NewTicker(time.Second * 60)
-	free := time.NewTicker(time.Second * 302)
-	for {
-		select {
-		case <-tp.C:
-			rc.snapLogger.Info(" -> 更新 rc server 快照信息")
-			rc.RefreshSnap()
-		case <-free.C:
-			rc.snapLogger.Infof(" -> 清理内存...%dM", sysinfo.GetAPPMemory())
-			debug.FreeOSMemory()
+	snap.Bind(time.Second*time.Duration(rc.snap.Refresh), rc.updateSnap)
+}
 
-		}
-	}
+func (rc *RCServer) setDefSnap() {
+	rc.updateSnap(snap.GetData())
+}
 
+func (rc *RCServer) updateSnap(services map[string]interface{}) {
+	rc.snapLogger.Info(" -> 更新 rc server快照信息")
+	rc.clusterClient.SetNode(rc.snap.path, rc.snap.GetServicesSnap(services))
 }

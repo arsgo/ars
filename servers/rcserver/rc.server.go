@@ -14,11 +14,6 @@ import (
 	"github.com/arsgo/lib4go/logger"
 )
 
-const (
-	SERVER_MASTER = "master"
-	SERVER_SLAVE  = "slave"
-)
-
 //RCServer RC Server
 type RCServer struct {
 	clusterClient        cluster.IClusterClient
@@ -26,6 +21,8 @@ type RCServer struct {
 	clusterServers       []string
 	isReconnect          bool
 	IsMaster             bool
+	rpcServerCollector   *base.Collector
+	schedulerCollector   *base.Collector
 	currentServices      *concurrent.ConcurrentMap
 	crossDomain          *concurrent.ConcurrentMap //map[string]cluster.IClusterClient
 	crossServices        *concurrent.ConcurrentMap //map[string]map[string][]string
@@ -44,12 +41,14 @@ type RCServer struct {
 
 //NewRCServer 创建RC Server服务器
 func NewRCServer(conf *config.SysConfig) (rc *RCServer, err error) {
-	rc = &RCServer{loggerName: "rc.server", version: "0.1.10", conf: conf}
+	rc = &RCServer{loggerName: "rc.server", version: "0.1.15", conf: conf}
 	rc.currentServices = concurrent.NewConcurrentMap()
 	rc.crossDomain = concurrent.NewConcurrentMap()
 	rc.crossServices = concurrent.NewConcurrentMap()
 	rc.timerRebindServices = base.NewTimerCall(time.Second*5, time.Millisecond, rc.rebindLocalServices)
 	rc.timerPublishServices = base.NewTimerCall(time.Second*3, time.Second, rc.PublishNow)
+	rc.rpcServerCollector = base.NewCollector()
+	rc.schedulerCollector = base.NewCollector()
 	rc.startSync = base.NewSync(1)
 	rc.Log, err = logger.Get(rc.loggerName)
 	if err != nil {
@@ -59,7 +58,7 @@ func NewRCServer(conf *config.SysConfig) (rc *RCServer, err error) {
 	if err != nil {
 		return
 	}
-	rc.snapLogger.Show(false)
+	//rc.snapLogger.Show(false)
 	return
 }
 
@@ -67,16 +66,15 @@ func NewRCServer(conf *config.SysConfig) (rc *RCServer, err error) {
 func (rc *RCServer) init() (err error) {
 	defer rc.recover()
 	rc.Log.Infof(" -> 初始化 %s...", rc.conf.Domain)
-
 	rc.clusterServers = rc.conf.ZKServers
 	rc.clusterClient, err = cluster.NewDomainClusterClient(rc.conf.Domain, rc.conf.IP, rc.loggerName, rc.conf.ZKServers...)
 	if err != nil {
 		return
 	}
 	rc.spRPCClient = rpc.NewRPCClient(rc.clusterClient, rc.loggerName)
-	rc.snap = RCSnap{Domain: rc.conf.Domain, Server: SERVER_SLAVE, ip: rc.conf.IP, rcServer: rc, Version: rc.version}
-	rc.rcRPCHandler = proxy.NewRPCClientProxy(rc.clusterClient, rc.spRPCClient, rc.snap, rc.loggerName)
-	rc.rcRPCServer = server.NewRPCServer(rc.rcRPCHandler, rc.loggerName, rc.collectReporter)
+	rc.snap = RCSnap{Domain: rc.conf.Domain, Server: cluster.SERVER_UNKNOWN, rcServer: rc, Version: rc.version, Refresh: 60}
+	rc.rcRPCHandler = proxy.NewRPCClientProxy(rc.clusterClient, rc.spRPCClient, rc.loggerName)
+	rc.rcRPCServer = server.NewRPCServer(rc.rcRPCHandler, rc.loggerName, rc.rpcServerCollector)
 	return
 }
 
@@ -102,6 +100,7 @@ func (rc *RCServer) Start() (err error) {
 	rc.startSync.Wait()
 	go rc.startRefreshSnap()
 	go rc.startMonitor()
+	go rc.clearMem()
 	rc.Log.Info(" -> rc server 启动完成...")
 	return
 }
@@ -112,7 +111,7 @@ func (rc *RCServer) Stop() error {
 	defer rc.recover()
 	rc.spRPCClient.Close()
 	rc.rcRPCServer.Stop()
-	rc.clusterClient.CloseRCServer(rc.snap.Path)
+	rc.clusterClient.CloseRCServer(rc.snap.path)
 	rc.clusterClient.Close()
 	cross := rc.crossDomain.GetAll()
 	for _, v := range cross {
@@ -123,7 +122,6 @@ func (rc *RCServer) Stop() error {
 }
 func (rc *RCServer) recover() (err error) {
 	if r := recover(); r != nil {
-		//err = r.(error)
 		rc.Log.Fatal(r, string(debug.Stack()))
 	}
 	return

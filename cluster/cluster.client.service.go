@@ -79,7 +79,11 @@ func (client *ClusterClient) PublishServices(services RPCServices) (err error) {
 		return
 	}
 	client.Log.Infof(" -> 发布 services:%d", len(services))
-	err = client.SetNode(client.rpcPublishPath, string(buffer))
+	if _, ok := client.handler.Exists(client.rpcPublishPath); !ok {
+		client.handler.CreateNode(client.rpcPublishPath, string(buffer))
+	} else {
+		client.handler.UpdateValue(client.rpcPublishPath, string(buffer))
+	}
 	if err != nil {
 		client.Log.Error("服务发布失败:", err)
 	}

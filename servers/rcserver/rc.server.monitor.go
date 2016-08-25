@@ -25,11 +25,9 @@ func (rc *RCServer) startMonitor() {
 START:
 	if rc.clusterClient.WaitForConnected() {
 		if rc.IsMaster {
-			rc.Log.Info(" -> 已重新连接到集群，立即发布所有服务")
-			rc.RefreshSnap()
+			rc.Log.Info(" -> 已重新连接到集群，立即发布所有服务")		
 			rc.resetLoalService()
 			rc.timerPublishServices.Push("重新发布服务")
-
 		}
 		goto START
 	}
@@ -92,9 +90,4 @@ func (rc *RCServer) resetCrossDomainServices() (err error) {
 		rc.bindCrossServices(domain, serveritems)
 	}
 	return
-}
-func (rc *RCServer) collectReporter(success int, failed int, err int) {
-	if err > 0 {
-		rc.timerRebindServices.Push("服务请求前发生错误")
-	}
 }

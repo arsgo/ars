@@ -1,8 +1,0 @@
-[
-    {
-        "name": "auto_call_rpc",
-        "trigger": "0/10 * * * * ?",
-        "concurrency": 1,
-        "disable": true
-    }
-]

@@ -7,13 +7,12 @@ import (
 	"github.com/arsgo/ars/base"
 	"github.com/arsgo/ars/cluster"
 	"github.com/arsgo/ars/script"
-	"github.com/arsgo/lib4go/concurrent"
 	"github.com/arsgo/lib4go/logger"
 )
 
 //ScriptProxy 基于脚本的RPC代理服务
 type ScriptProxy struct {
-	tasks         *concurrent.ConcurrentMap
+	//	tasks         *concurrent.ConcurrentMap
 	clusterClient cluster.IClusterClient
 	scriptPool    *script.ScriptPool
 	Log           logger.ILogger
@@ -27,37 +26,25 @@ func NewScriptProxy(client cluster.IClusterClient, pool *script.ScriptPool, logg
 	job := &ScriptProxy{loggerName: loggerName}
 	job.clusterClient = client
 	job.scriptPool = pool
-	job.tasks = concurrent.NewConcurrentMap()
+	//	job.tasks = concurrent.NewConcurrentMap()
 	job.Log, _ = logger.Get(loggerName)
 	return job
 }
 
-//GetTasks 获取当前已注册服务列表
-func (h *ScriptProxy) GetTasks() map[string]string {
-	data := make(map[string]string)
-	service := h.tasks.GetAll()
-	for i, v := range service {
-		data[i] = v.(string)
-	}
-	return data
-}
-
 //OpenTask 启动新的任务
-func (h *ScriptProxy) OpenTask(task cluster.TaskItem) {
+func (h *ScriptProxy) OpenTask(task cluster.TaskItem) string {
 	path := task.Name
 	if h.OnOpenTask != nil {
 		path = h.OnOpenTask(task)
 	}
-	h.tasks.Set(task.Name, path)
+	return path
 }
 
 //CloseTask 关闭任务
-func (h *ScriptProxy) CloseTask(ti cluster.TaskItem) {
-	value := h.tasks.Get(ti.Name)
-	if value != nil && h.OnCloseTask != nil {
-		h.OnCloseTask(ti, value.(string))
+func (h *ScriptProxy) CloseTask(ti cluster.TaskItem, path string) {
+	if h.OnCloseTask != nil {
+		h.OnCloseTask(ti, path)
 	}
-	h.tasks.Delete(ti.Name)
 }
 
 //Request 执行Request请求

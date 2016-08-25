@@ -55,7 +55,7 @@ func (sp *SPServer) rebindService() {
 func (sp *SPServer) OnSPServiceCreate(task cluster.TaskItem) (path string) {
 	sp.scriptPool.PreLoad(task.Script, task.MinSize, task.MaxSize)
 	path, err := sp.clusterClient.CreateSPServer(task.Name, sp.rpcServer.Address,
-		sp.snap.GetSnap(task.Name))
+		sp.snap.getDefSnap(task.Name))
 	if err != nil {
 		sp.Log.Errorf("创建sp server node error:%v", err)
 		return

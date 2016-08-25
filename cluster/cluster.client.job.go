@@ -4,7 +4,7 @@ import "encoding/json"
 
 //WatchJobConfigChange 监控JOB配置变化
 func (client *ClusterClient) WatchJobConfigChange(callback func(config map[string]JobItem, err error)) {
-	client.WaitClusterPathExists(client.jobConfigPath, client.timeout, func(path string,exists bool) {
+	client.WaitClusterPathExists(client.jobConfigPath, client.timeout, func(path string, exists bool) {
 		if exists {
 			go func() {
 				defer client.recover()
@@ -24,7 +24,7 @@ func (client *ClusterClient) WatchJobConfigChange(callback func(config map[strin
 //GetJobTask 获取JOB配置信息
 func (client *ClusterClient) GetJobTask() (items map[string]JobItem, err error) {
 	path := client.jobConfigPath
-	if _,ok:=client.handler.Exists(path);!ok {
+	if _, ok := client.handler.Exists(path); !ok {
 		client.Log.Errorf("job config:%s未配置或不存在:", path)
 		return
 	}
@@ -91,5 +91,13 @@ func (client *ClusterClient) CreateJobConsumer(jobName string, value string) (st
 	data := client.dataMap.Copy()
 	data.Set("jobName", jobName)
 	path := data.Translate(p_jobConsumerClusterClientBase)
+	return client.handler.CreateSeqNode(path, value)
+}
+
+//CreateLocalJob 创建local job
+func (client *ClusterClient) CreateLocalJob(jobName string, value string) (string, error) {
+	data := client.dataMap.Copy()
+	data.Set("jobName", jobName)
+	path := data.Translate(p_localjobClusterClientBase)
 	return client.handler.CreateSeqNode(path, value)
 }

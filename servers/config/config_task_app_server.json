@@ -12,7 +12,7 @@
     },
     "tasks": [
         {
-            "name": "mq_consumer",
+            "name": "delivery_recv",
             "type": "mq",
             "method": "consume",
             "script": "./scripts/mq_recv.lua",
@@ -30,12 +30,14 @@
             "type": "job",
             "method": "consume",
             "script": "./scripts/mq_send.lua",
-            "params": "mq=stomp&queue=delivery"
+            "params": "mq=stomp&queue=delivery",
+	"disable":true
         }
     ],
     "api": {
         "type": "http",
         "address": "1016",
+        "disable":true,
         "routes": [
             {
                 "path": "/system/md5",

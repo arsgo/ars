@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/arsgo/ars/cluster"
+	"github.com/arsgo/ars/snap"
 )
 
 //BindRCServer 绑定RPC调用服务
@@ -39,33 +40,21 @@ func (a *AppServer) BindTask(config *cluster.AppServerTask, err error) (er error
 	if err != nil || config == nil {
 		return
 	}
-	a.snapRefresh = time.Second * time.Duration(config.Config.SnapRefresh)
+
+	a.snap.Refresh = config.Config.SnapRefresh
+	if a.snap.Refresh < 60 {
+		a.snap.Refresh = 60
+	}
+	if config.Config.SnapRefresh > 0 && config.Config.SnapRefresh < 60 {
+		a.Log.Error(" -> 快照刷新时间不能低于60秒")
+	}
+	snap.ResetTicker(time.Second * time.Duration(a.snap.Refresh))
 	a.disableRPC = config.Config.DisableRPC
 	a.scriptPool.SetPackages(config.Config.Libs...)
 	a.rpcClient.SetPoolSize(config.Config.RPC.MinSize, config.Config.RPC.MaxSize)
 	a.scriptPool.SetPoolSize(config.Config.RPC.MinSize, config.Config.RPC.MaxSize)
-	a.BindHttpServer(config.Server)
-//	a.BindLocalJobs(config.Tasks)
+	a.BindAPIServer(config.Server)
 	a.BindLocalTask(config.Tasks)
-	return
-}
 
-//OnJobCreate  创建JOB服务
-func (a *AppServer) OnJobCreate(task cluster.TaskItem) (path string) {
-	path, err := a.clusterClient.CreateJobConsumer(task.Name, a.snap.GetJobSnap(a.jobServer.Address))
-	if err != nil {
-		a.Log.Error("job consumer创建失败: ", err)
-		return
-	}
-	a.Log.Infof("::start job consumer:[%s] %s", task.Name, task.Script)
-	return
-}
-
-//OnJobClose 关闭JOB服务
-func (a *AppServer) OnJobClose(task cluster.TaskItem, path string) {
-	err := a.clusterClient.CloseNode(path)
-	if err != nil {
-		return
-	}
 	return
 }
