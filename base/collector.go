@@ -12,6 +12,9 @@ type ICollector interface {
 	Failed(...interface{})
 	Error(...interface{})
 	Juge(v bool, name ...interface{})
+	Customer(name string) ICollector
+	Get() map[string]interface{}
+	GetConsumerData() map[string]interface{}
 }
 type Execution struct {
 	Success int32 `json:"success"`
@@ -21,12 +24,14 @@ type Execution struct {
 
 //Collector 采集器
 type Collector struct {
-	data *concurrent.ConcurrentMap
+	data     *concurrent.ConcurrentMap
+	customer *concurrent.ConcurrentMap
 }
 
 func NewCollector() *Collector {
 	r := &Collector{}
 	r.data = concurrent.NewConcurrentMap()
+	r.customer = concurrent.NewConcurrentMap()
 	return r
 }
 func (r *Collector) getExecution(name ...interface{}) (d *Execution, err error) {
@@ -39,11 +44,34 @@ func (r *Collector) getExecution(name ...interface{}) (d *Execution, err error) 
 	d = exec.(*Execution)
 	return
 }
+
+//Customer 添加或获取自定义收集器
+func (r *Collector) Customer(name string) ICollector {
+	cl, _ := r.customer.GetOrAdd(name, func(p ...interface{}) (interface{}, error) {
+		return NewCollector(), nil
+	})
+	c := cl.(*Collector)
+	return c
+}
+
+//GetConsumerData 获取自定义数据
+func (r *Collector) GetConsumerData() map[string]interface{} {
+	all := make(map[string]interface{})
+	collectors := r.customer.GetAll()
+	for name := range collectors {
+		collector := r.Customer(name)
+		datas := collector.Get()
+		for i, v := range datas {
+			all[i] = v
+		}
+	}
+	return all
+}
+
 func (r *Collector) Success(name ...interface{}) {
 	if data, err := r.getExecution(name...); err == nil {
 		atomic.AddInt32(&data.Success, 1)
 	}
-
 }
 func (r *Collector) Failed(name ...interface{}) {
 	if data, err := r.getExecution(name...); err == nil {

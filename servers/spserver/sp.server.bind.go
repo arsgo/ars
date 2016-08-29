@@ -2,8 +2,11 @@ package main
 
 import (
 	"errors"
+	"time"
 
 	"github.com/arsgo/ars/cluster"
+	"github.com/arsgo/ars/snap"
+	"github.com/arsgo/lib4go/utility"
 )
 
 //BindRCServer 绑定RPC调用服务
@@ -29,13 +32,16 @@ func (sp *SPServer) BindRCServer(configs []*cluster.RCServerItem, err error) (er
 	return nil
 }
 
-//rebindService 重新绑定SP所有服务列表
-func (sp *SPServer) rebindService() {
-	task, err := sp.clusterClient.GetSPServerTask(sp.conf.IP)
+//bindServiceTask 重新绑定SP所有服务列表
+func (sp *SPServer) bindServiceTask(task cluster.SPServerTask, err error) {
 	if err != nil {
-		sp.Log.Error(err)
 		return
 	}
+	sp.snap.Refresh = utility.GetMax2(task.Config.SnapRefresh, 120, 60)
+	if task.Config.SnapRefresh > 0 && task.Config.SnapRefresh < 60 {
+		sp.Log.Error(" -> 快照刷新时间不能低于60秒")
+	}
+	snap.ResetTicker(time.Second * time.Duration(sp.snap.Refresh))
 	sp.scriptPool.SetPackages(task.Config.Libs...)
 	sp.rpcClient.SetPoolSize(task.Config.RPC.MinSize, task.Config.RPC.MaxSize)
 

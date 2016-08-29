@@ -73,14 +73,14 @@ func (s *ScriptPool) Sleep(r int) {
 //bindGlobalLibs 绑定lib
 func (s *ScriptPool) bindGlobalLibs(extlibs map[string]interface{}) (funs map[string]interface{}) {
 	funs = map[string]interface{}{
-		"NewGUID":            utility.GetGUID,
-		"NewRPC":             s.NewRPCClient,
-		"NewMQProducer":      s.NewMQProducer,
+		"NewGUID":            utility.GetGUID, //
+		"NewRPC":             s.NewRPCClient, //
+		"NewMQProducer":      s.NewMQProducer, //
 		"NewMemcached":       s.NewMemcached,
 		"NewXHttp":           s.NewHTTPClient,
 		"NewHTTPClientCert":  s.NewHTTPClientCert,
 		"NewHTTPClientProxy": s.NewHTTPClientProxy,
-		"NewSecurity":        s.NewBindSecurity,
+		"NewSecurity":        s.NewBindSecurity,//
 		"NewWechat":          s.NewWechat,
 	}
 	for i, v := range extlibs {

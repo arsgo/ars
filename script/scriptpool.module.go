@@ -32,6 +32,9 @@ func (s *ScriptPool) bindModules() (r map[string]map[string]lua.LGFunction) {
 		"sha1": map[string]lua.LGFunction{
 			"encrypt": s.moduleSha1Encrypt,
 		},
+		"memcached": map[string]lua.LGFunction{
+			"new": s.moduleCreateMem,
+		},
 		"report": map[string]lua.LGFunction{
 			"success": s.moduleReportSuccess,
 			"error":   s.moduleReportError,

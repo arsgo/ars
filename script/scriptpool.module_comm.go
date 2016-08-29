@@ -15,5 +15,4 @@ func (s *ScriptPool) moduleGetLocalIP(ls *lua.LState) int {
 		return pushValues(ls, "", err)
 	}
 	return pushValues(ls, ip.IP)
-
 }

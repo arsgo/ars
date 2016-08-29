@@ -19,7 +19,7 @@ func pushValues(ls *lua.LState, values ...interface{}) int {
 
 //Request RPC Reuqest调用
 func (s *ScriptPool) moduleRPCRequest(ls *lua.LState) int {
-	session := ls.GetGlobal("__session").String()
+	session := ls.GetGlobal("__session__").String()
 	cmd := ls.CheckString(1)
 	input := ls.CheckTable(2)
 	inputString, err := luaTable2Json(input)

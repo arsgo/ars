@@ -28,20 +28,21 @@ type AppServer struct {
 	jobServerCollector  *base.Collector
 	jobLocalCollector   *base.Collector
 	mqConsumerCollector *base.Collector
-	scriptCollector     *base.Collector
-	disableRPC          bool
-	scriptPorxy         *proxy.ScriptProxy //本地脚本处理
-	jobServer           *server.RPCServer  //接收JOB事件调用,改事件将触发脚本执行
-	rpcClient           *rpc.RPCClient     //RPC远程调用客户端,调用RC Server提供的RPC服务
-	scriptPool          *script.ScriptPool //脚本池,用于缓存JOB Consumer脚本和本地task任务执行脚本
-	apiServer           *server.HTTPScriptServer
-	apiServerCollector  *base.Collector
-	mqService           *mq.MQConsumerService
-	localJobPaths       *concurrent.ConcurrentMap
-	snap                AppSnap
-	loggerName          string
-	conf                *config.SysConfig
-	version             string
+	//	scriptCollector     *base.Collector
+	collectorMap       map[string]base.ICollector
+	disableRPC         bool
+	scriptPorxy        *proxy.ScriptProxy //本地脚本处理
+	jobServer          *server.RPCServer  //接收JOB事件调用,改事件将触发脚本执行
+	rpcClient          *rpc.RPCClient     //RPC远程调用客户端,调用RC Server提供的RPC服务
+	scriptPool         *script.ScriptPool //脚本池,用于缓存JOB Consumer脚本和本地task任务执行脚本
+	apiServer          *server.HTTPScriptServer
+	apiServerCollector *base.Collector
+	mqService          *mq.MQConsumerService
+	localJobPaths      *concurrent.ConcurrentMap
+	snap               AppSnap
+	loggerName         string
+	conf               *config.SysConfig
+	version            string
 }
 
 //NewAPPServer 创建APP Server服务器
@@ -53,7 +54,14 @@ func NewAPPServer(conf *config.SysConfig) (app *AppServer, err error) {
 	app.apiServerCollector = base.NewCollector()
 	app.jobLocalCollector = base.NewCollector()
 	app.mqConsumerCollector = base.NewCollector()
-	app.scriptCollector = base.NewCollector()
+
+	app.collectorMap = make(map[string]base.ICollector)
+	app.collectorMap[base.TN_JOB_CONSUMER] = app.jobServerCollector
+	app.collectorMap[base.TN_HTTP_API] = app.apiServerCollector
+	app.collectorMap[base.TN_JOB_LOCAL] = app.jobLocalCollector
+	app.collectorMap[base.TN_MQ_CONSUMER] = app.mqConsumerCollector
+
+	//app.scriptCollector = base.NewCollector()
 	app.startSync = base.NewSync(2)
 	app.JobAddress = make(map[string]string)
 	app.Log, err = logger.Get(app.loggerName)
@@ -78,11 +86,11 @@ func (app *AppServer) init() (err error) {
 	}
 	app.domain = app.conf.Domain
 	app.rpcClient = rpc.NewRPCClient(app.clusterClient, app.loggerName)
-	app.scriptPool, err = script.NewScriptPool(app.clusterClient, app.rpcClient, make(map[string]interface{}), app.loggerName, app.scriptCollector)
+	app.scriptPool, err = script.NewScriptPool(app.clusterClient, app.rpcClient, make(map[string]interface{}), app.loggerName, app.collectorMap)
 	if err != nil {
 		return
 	}
-	app.scriptPorxy = proxy.NewScriptProxy(app.clusterClient, app.scriptPool, app.loggerName)
+	app.scriptPorxy = proxy.NewScriptProxy(app.clusterClient, app.scriptPool, base.TN_JOB_CONSUMER, app.loggerName)
 	app.scriptPorxy.OnOpenTask = app.OnRemoteJobCreate
 	app.scriptPorxy.OnCloseTask = app.OnRemoteJobClose
 

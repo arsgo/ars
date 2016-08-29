@@ -8,7 +8,7 @@ import (
 )
 
 func (a *AppServer) clearMem() {
-	tk := time.NewTicker(time.Second * 120)
+	tk := time.NewTicker(time.Second * 301)
 	for {
 		select {
 		case <-tk.C:

@@ -8,6 +8,7 @@ import (
 
 	"github.com/arsgo/ars/snap"
 	"github.com/arsgo/lib4go/sysinfo"
+	"github.com/arsgo/lib4go/utility"
 )
 
 type ExtSnap struct {
@@ -141,33 +142,43 @@ func (app *AppServer) updateSnap(services map[string]interface{}) {
 	app.snapLogger.Info(" -> 更新 app server快照信息")
 	cache := make(map[string]interface{})
 	app.appendSystemSnap(services, cache)
-	app.snap.Snap = services
+
+	jobSnaps := utility.CloneMap(services)
+	app.snap.Snap = jobSnaps
 	if app.jobServer.Available {
 		jobPaths := app.jobServer.GetServicePath()
 		for name, path := range jobPaths {
-			services["job.consumer"] = app.jobServerCollector.GetByName(name)
+			jobSnaps[name] = app.jobServerCollector.GetByName(name)
+			utility.Merge(jobSnaps, app.jobServerCollector.Customer(name).Get())
 			app.clusterClient.SetNode(path, app.snap.getJobConsumerSnap(app.jobServer.Address))
 		}
 	}
-	delete(services, "job.consumer")
+
+	jobConsumerSnap := utility.CloneMap(services)
+	app.snap.Snap = jobConsumerSnap
 	if app.mqService.Available {
 		mqPaths := app.mqService.GetServices()
 		for name, path := range mqPaths {
-			services["mq.consumer"] = app.mqConsumerCollector.GetByName(name)
+			jobConsumerSnap[name] = app.mqConsumerCollector.GetByName(name)
+			utility.Merge(jobConsumerSnap, app.mqConsumerCollector.Customer(name).Get())
 			app.clusterClient.SetNode(path, app.snap.getMQSnap(name))
 		}
 	}
 
-	delete(services, "mq.consumer")
+	jobLocalSnap := utility.CloneMap(services)
+	app.snap.Snap = jobLocalSnap
 	locajobPath := app.localJobPaths.GetAll()
 	for name, p := range locajobPath {
-		services["job.local"] = app.jobLocalCollector.GetByName(name)
+		jobLocalSnap[name] = app.jobLocalCollector.GetByName(name)
+		utility.Merge(jobLocalSnap, app.jobLocalCollector.Customer(name).Get())
 		app.clusterClient.SetNode(p.(string), app.snap.getJobLocalSnap())
 	}
-	delete(services, "job.local")
+
+	apiSnap := utility.CloneMap(services)
+	app.snap.Snap = apiSnap
 	if app.apiServer != nil && app.apiServer.Available {
-		services["api.server"] = app.apiServerCollector.Get()
-		services["customer"] = app.scriptCollector.Get()
+		utility.Merge(apiSnap, app.apiServerCollector.Get())
+		utility.Merge(apiSnap, app.apiServerCollector.GetConsumerData())
 		cache["rpc"] = app.rpcClient.GetSnap()
 		if strings.EqualFold(app.snap.path, "") {
 			app.snap.path, _ = app.clusterClient.CreateAppServer(app.snap.port, app.snap.GetSnap())

@@ -12,7 +12,7 @@ import (
 	"github.com/arsgo/ars/rpc"
 	"github.com/arsgo/lib4go/concurrent"
 	"github.com/arsgo/lib4go/logger"
-	s "github.com/arsgo/lib4go/script"
+	spt "github.com/arsgo/lib4go/script"
 	"github.com/arsgo/lib4go/utility"
 )
 
@@ -45,23 +45,23 @@ func getScriptInputArgs(input string, params string) (r string) {
 
 //ScriptPool 创建ScriptPool
 type ScriptPool struct {
-	pool          *s.LuaPool
+	pool          *spt.LuaPool
 	Log           logger.ILogger
 	clusterClient cluster.IClusterClient
 	rpcclient     *rpc.RPCClient
 	snaps         *concurrent.ConcurrentMap
 	mqservices    *concurrent.ConcurrentMap
-	collector     base.ICollector
+	collectors    map[string]base.ICollector
 }
 
 //NewScriptPool 创建脚本POOl
 func NewScriptPool(clusterClient cluster.IClusterClient, rpcclient *rpc.RPCClient, extlibs map[string]interface{},
-	loggerName string, collector base.ICollector) (p *ScriptPool, err error) {
-	p = &ScriptPool{snaps: concurrent.NewConcurrentMap(), collector: collector}
+	loggerName string, collectors map[string]base.ICollector) (p *ScriptPool, err error) {
+	p = &ScriptPool{snaps: concurrent.NewConcurrentMap(), collectors: collectors}
 	p.mqservices = concurrent.NewConcurrentMap()
 	p.clusterClient = clusterClient
 	p.rpcclient = rpcclient
-	p.pool = s.NewLuaPool()
+	p.pool = spt.NewLuaPool()
 	p.Log, err = logger.Get(loggerName)
 	p.pool.Binder.RegisterLibs(p.bindGlobalLibs(extlibs))
 	p.pool.Binder.RegisterModules(p.bindModules())
@@ -105,7 +105,9 @@ func (s *ScriptPool) Call(name string, context base.InvokeContext) ([]string, ma
 	}
 	script := utility.GetExcPath(name, "bin")
 	defer s.setLifeTime(script, time.Now())
-	return s.pool.Call(script, context.Session, getScriptInputArgs(context.Input, context.Params), context.Body)
+	input := spt.InputArgs{Script: script, Session: context.Session, Body: context.Body, TaskType: context.TaskType, TaskName: context.TaskName}
+	input.Input = getScriptInputArgs(context.Input, context.Params)
+	return s.pool.Call(input)
 }
 
 //GetSnap 获取当前脚本

@@ -55,3 +55,10 @@ func (s *SPServer) NewDB(name string) (bind *db.DBScriptBind, err error) {
 	s.dbPool.Set(name, bind)
 	return
 }
+func (s *SPServer) CloseDB() {
+	dbs := s.dbPool.GetAll()
+	for _, d := range dbs {
+		cdb := d.(*db.DBScriptBind)
+		cdb.Close()
+	}
+}

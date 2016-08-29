@@ -82,7 +82,7 @@ type IClusterClient interface {
 
 	//sp server........
 	WatchSPServerChange(changed func(RPCServices, error)) (err error)
-	WatchSPTaskChange(callback func())
+	WatchSPTaskChange(callback func(SPServerTask, error))
 	GetAllSPServers() (lst map[string][]string, err error)
 	GetSPServerTask(ip string) (SPServerTask, error)
 	UpdateSPServerTask(task SPServerTask) (err error)

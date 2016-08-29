@@ -8,6 +8,7 @@ import (
 	"github.com/arsgo/ars/servers/config"
 	"github.com/arsgo/lib4go/forever"
 )
+// go tool pprof appserver /tmp/profile175976149/mem.pprof
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())

@@ -42,7 +42,7 @@ func (a *AppServer) bindLocalJobs(tasks []cluster.TaskItem) {
 		scheduler.AddTask(v.Trigger, scheduler.NewTask(v, func(job interface{}) {
 			defer a.recover()
 			item := job.(cluster.TaskItem)
-			context := base.NewInvokeContext(a.loggerName, utility.GetSessionID(), "{}", item.Params, "")
+			context := base.NewInvokeContext(item.Name, base.TN_JOB_LOCAL, a.loggerName, utility.GetSessionID(), "{}", item.Params, "")
 			context.Log.Infof("--> 运行JOB(%s)", item.Name)
 			results, _, err := a.scriptPool.Call(item.Script, context)
 

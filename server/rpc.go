@@ -197,25 +197,29 @@ func (r *RPCHandlerProxy) Request(name string, input string, session string) (re
 	start := time.Now()
 	log, _ := logger.NewSession(r.loggerName, session)
 	log.Info("--> rpc request(recv):", name, input)
-	defer log.Infof("--> rpc response(recv,%v):%s,%s", time.Now().Sub(start), name, result)
+
 	task, currentErr := r.getTaskItem(name)
 	if currentErr != nil {
 		result = base.GetErrorResult(base.ERR_NOT_FIND_SRVS, currentErr.Error())
 		r.Log.Error(currentErr)
 		r.collector.Error(name)
+		log.Infof("--> rpc response(recv,%v):%s,%s", time.Now().Sub(start), name, result)
 		return
 	}
 	result, currentErr = r.handler.Request(task, input, session)
 	if currentErr != nil {
 		r.Log.Error(currentErr)
 		r.collector.Failed(name)
+		log.Infof("--> rpc response(recv,%v):%s,%s", time.Now().Sub(start), name, result)
 		return
 	}
 	if base.GetResult(result).Code == base.ERR_NOT_FIND_SRVS {
 		r.collector.Error(name)
+		log.Infof("--> rpc response(recv,%v):%s,%s", time.Now().Sub(start), name, result)
 		return
 	}
 	r.collector.Success(name)
+	log.Infof("--> rpc response(recv,%v):%s,%s", time.Now().Sub(start), name, result)
 	return
 }
 

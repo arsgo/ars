@@ -29,7 +29,6 @@ func (rc *RCServer) BindRCServer() (err error) {
 				if err != nil {
 					return
 				}
-
 				rc.snap.Refresh = utility.GetMax2(task.SnapRefresh, 120, 60)
 				if task.SnapRefresh > 0 && task.SnapRefresh < 60 {
 					rc.Log.Error(" -> 快照刷新时间不能低于60秒", rc.snap.Refresh)

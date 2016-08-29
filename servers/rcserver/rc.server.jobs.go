@@ -24,16 +24,19 @@ func (rc *RCServer) getJobs(jobs []cluster.JobItem) (jobMap map[string]cluster.J
 
 //BindJobScheduler 绑定RC服务器的JOB任务
 func (rc *RCServer) BindJobScheduler(jobItems []cluster.JobItem, err error) {
+	oc := scheduler.Count()
 	scheduler.Stop()
 	if err != nil || len(jobItems) == 0 {
 		rc.Log.Info(" -> 未配置job或已删除")
 		return
 	}
+	if oc > 0 {
+		rc.Log.Infof(" -> 停止所有job")
+	}
 	jobs := rc.getJobs(jobItems)
 	var currentJobs int
 	for _, v := range jobs {
 		if v.Concurrency <= 0 || v.Disable {
-
 			continue
 		}
 		currentJobs++
@@ -47,7 +50,7 @@ func (rc *RCServer) BindJobScheduler(jobItems []cluster.JobItem, err error) {
 	if currentJobs > 0 {
 		scheduler.Start()
 	}
-	//	rc.Log.Infof("::当前已启动的job数:%d", currentJobs)
+
 }
 
 func (rc *RCServer) startJobFlow(task cluster.JobItem, consumers []string, session string) {

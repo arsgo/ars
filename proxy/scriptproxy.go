@@ -17,13 +17,14 @@ type ScriptProxy struct {
 	scriptPool    *script.ScriptPool
 	Log           logger.ILogger
 	loggerName    string
+	taskType      string
 	OnOpenTask    func(task cluster.TaskItem) string
 	OnCloseTask   func(task cluster.TaskItem, path string)
 }
 
 //NewScriptProxy 构建JOB consumer处理对象
-func NewScriptProxy(client cluster.IClusterClient, pool *script.ScriptPool, loggerName string) *ScriptProxy {
-	job := &ScriptProxy{loggerName: loggerName}
+func NewScriptProxy(client cluster.IClusterClient, pool *script.ScriptPool, taskType string, loggerName string) *ScriptProxy {
+	job := &ScriptProxy{loggerName: loggerName, taskType: taskType}
 	job.clusterClient = client
 	job.scriptPool = pool
 	//	job.tasks = concurrent.NewConcurrentMap()
@@ -50,7 +51,7 @@ func (h *ScriptProxy) CloseTask(ti cluster.TaskItem, path string) {
 //Request 执行Request请求
 func (h *ScriptProxy) Request(ti cluster.TaskItem, input string, session string) (result string, err error) {
 	defer h.recover()
-	sresult, smap, err := h.scriptPool.Call(ti.Script, base.NewInvokeContext(h.loggerName, session, input, ti.Params, ""))
+	sresult, smap, err := h.scriptPool.Call(ti.Script, base.NewInvokeContext(ti.Name, h.taskType, h.loggerName, session, input, ti.Params, ""))
 	result, _, er := h.getResult(sresult, smap, err)
 	if er != nil {
 		result = base.GetErrorResult(base.ERR_NOT_FIND_SRVS, er.Error())

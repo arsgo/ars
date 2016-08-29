@@ -156,7 +156,7 @@ func (r *HTTPScriptController) Handle(context *webserver.Context) {
 	}
 	input := string(data)
 	context.Log.Info("-->api.request:", context.Request.URL.Path, input, body)
-	result, output, err := r.server.call(r.config.Script, base.NewInvokeContext(r.loggerName, context.Session, input, r.config.Params, body))
+	result, output, err := r.server.call(r.config.Script, base.NewInvokeContext(context.Address, base.TN_HTTP_API, r.loggerName, context.Session, input, r.config.Params, body))
 	r.setHeader(context.Writer, output)
 	if err != nil {
 		r.setResponse(context, output, 500, err.Error())

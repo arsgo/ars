@@ -6,6 +6,7 @@ import (
 
 	"github.com/arsgo/ars/cluster"
 	"github.com/arsgo/ars/snap"
+	"github.com/arsgo/lib4go/utility"
 )
 
 //BindRCServer 绑定RPC调用服务
@@ -40,11 +41,7 @@ func (a *AppServer) BindTask(config *cluster.AppServerTask, err error) (er error
 	if err != nil || config == nil {
 		return
 	}
-
-	a.snap.Refresh = config.Config.SnapRefresh
-	if a.snap.Refresh < 60 {
-		a.snap.Refresh = 60
-	}
+	a.snap.Refresh = utility.GetMax2(config.Config.SnapRefresh, 120, 60)
 	if config.Config.SnapRefresh > 0 && config.Config.SnapRefresh < 60 {
 		a.Log.Error(" -> 快照刷新时间不能低于60秒")
 	}

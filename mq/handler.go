@@ -38,7 +38,7 @@ func (mq *MQScriptHandler) OnCloseTask(task cluster.TaskItem, path string) {
 
 //Handle 处理MQ消息
 func (mq *MQScriptHandler) Handle(task cluster.TaskItem, input string, session string) bool {
-	context := base.NewInvokeContext(mq.loggerName, utility.GetSessionID(), input, task.Params, "")
+	context := base.NewInvokeContext(task.Name, base.TN_MQ_CONSUMER, mq.loggerName, utility.GetSessionID(), input, task.Params, "")
 	context.Log.Infof("--> mq.request(%s):%s,%s", task.Name, task.Script, input)
 	result, _, err := mq.pool.Call(task.Script, context)
 	defer context.Log.Infof("--> mq.response(%s,%v):%v", task.Name, context.PassTime(), result)

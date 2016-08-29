@@ -7,14 +7,14 @@ import (
 import "encoding/json"
 
 //WatchSPTaskChange 监控SP Task任务变化
-func (client *ClusterClient) WatchSPTaskChange(callback func()) {
+func (client *ClusterClient) WatchSPTaskChange(callback func(task SPServerTask, err error)) {
 	client.WaitClusterPathExists(client.spConfigPath, client.timeout, func(path string, exists bool) {
 		if !exists {
 			client.Log.Errorf("sp config:%s未配置或不存在", client.spConfigPath)
 		} else {
 			go func() {
 				defer client.recover()
-				callback()
+				callback(client.GetSPServerTask(client.IP))
 			}()
 		}
 	})
@@ -23,7 +23,7 @@ func (client *ClusterClient) WatchSPTaskChange(callback func()) {
 		client.Log.Infof(" -> sp config:%s 值发生变化", client.spConfigPath)
 		go func() {
 			defer client.recover()
-			callback()
+			callback(client.GetSPServerTask(client.IP))
 		}()
 	})
 }
@@ -134,7 +134,7 @@ func (client *ClusterClient) GetSPServerTask(ip string) (task SPServerTask, err 
 	}
 	var items []TaskItem
 	for _, v := range task.Tasks {
-		if strings.EqualFold(ip, "*") || strings.EqualFold(v.IP, "*") || strings.Contains(","+v.IP+",", ip) {
+		if !v.Disable && (strings.EqualFold(v.IP, "*") || strings.Contains(","+v.IP+",", ip)) {
 			v.Name = client.GetServiceFullPath(v.Name)
 			items = append(items, v)
 		}
