@@ -55,7 +55,7 @@ type ScriptPool struct {
 }
 
 //NewScriptPool 创建脚本POOl
-func NewScriptPool(clusterClient cluster.IClusterClient, rpcclient *rpc.RPCClient, extlibs map[string]interface{},
+func NewScriptPool(clusterClient cluster.IClusterClient, rpcclient *rpc.RPCClient, types []spt.LuaTypesBinder,
 	loggerName string, collectors map[string]base.ICollector) (p *ScriptPool, err error) {
 	p = &ScriptPool{snaps: concurrent.NewConcurrentMap(), collectors: collectors}
 	p.mqservices = concurrent.NewConcurrentMap()
@@ -63,9 +63,10 @@ func NewScriptPool(clusterClient cluster.IClusterClient, rpcclient *rpc.RPCClien
 	p.rpcclient = rpcclient
 	p.pool = spt.NewLuaPool()
 	p.Log, err = logger.Get(loggerName)
-	p.pool.Binder.RegisterLibs(p.bindGlobalLibs(extlibs))
 	p.pool.Binder.RegisterModules(p.bindModules())
 	p.pool.Binder.RegisterGlobal(p.bindGlobal())
+	types = append(types, p.bindTypes()...)
+	p.pool.Binder.RegisterTypes(types...)
 	return
 }
 func (s *ScriptPool) SetPoolSize(minSize int, maxSize int) {

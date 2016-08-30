@@ -4,11 +4,12 @@ import (
 	"errors"
 	"time"
 
+	"github.com/arsgo/lib4go/elastic"
+	"github.com/arsgo/lib4go/influxdb"
 	"github.com/arsgo/lib4go/mem"
 	m "github.com/arsgo/lib4go/mq"
 	"github.com/arsgo/lib4go/net"
 	"github.com/arsgo/lib4go/security/weixin"
-	"github.com/arsgo/lib4go/utility"
 )
 
 //NewRPCClient 创建RPC client
@@ -45,6 +46,26 @@ func (s *ScriptPool) NewMQProducer(name string) (p *m.MQProducer, err error) {
 	return
 }
 
+//NewInfluxDB 创建InfluxDB操作对象
+func (s *ScriptPool) NewInfluxDB(name string) (p *influxdb.InfluxDB, err error) {
+	config, err := s.clusterClient.GetDBConfig(name)
+	if err != nil {
+		return
+	}
+	p, err = influxdb.New(config)
+	return
+}
+
+//NewElastic 创建Elastic对象
+func (s *ScriptPool) NewElastic(name string) (es *elastic.ElasticSearch, err error) {
+	config, err := s.clusterClient.GetElasticConfig(name)
+	if err != nil {
+		return
+	}
+	es, err = elastic.New(config)
+	return
+}
+
 //NewHTTPClient http client
 func (s *ScriptPool) NewHTTPClient() *net.HTTPClient {
 	return net.NewHTTPClient()
@@ -73,15 +94,15 @@ func (s *ScriptPool) Sleep(r int) {
 //bindGlobalLibs 绑定lib
 func (s *ScriptPool) bindGlobalLibs(extlibs map[string]interface{}) (funs map[string]interface{}) {
 	funs = map[string]interface{}{
-		"NewGUID":            utility.GetGUID, //
-		"NewRPC":             s.NewRPCClient, //
-		"NewMQProducer":      s.NewMQProducer, //
-		"NewMemcached":       s.NewMemcached,
-		"NewXHttp":           s.NewHTTPClient,
-		"NewHTTPClientCert":  s.NewHTTPClientCert,
-		"NewHTTPClientProxy": s.NewHTTPClientProxy,
-		"NewSecurity":        s.NewBindSecurity,//
-		"NewWechat":          s.NewWechat,
+	//"NewGUID":            utility.GetGUID,      //
+	//	"NewRPC":             s.NewRPCClient,       //
+	//	"NewMQProducer":      s.NewMQProducer,      //
+	//	"NewMemcached":       s.NewMemcached,       //
+	//	"NewXHttp":           s.NewHTTPClient,      //
+	//	"NewHTTPClientCert":  s.NewHTTPClientCert,  //
+	//	"NewHTTPClientProxy": s.NewHTTPClientProxy, //
+	//	"NewSecurity":        s.NewBindSecurity,    //
+	//	"NewWechat":          s.NewWechat,          //
 	}
 	for i, v := range extlibs {
 		funs[i] = v

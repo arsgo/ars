@@ -86,7 +86,7 @@ func (app *AppServer) init() (err error) {
 	}
 	app.domain = app.conf.Domain
 	app.rpcClient = rpc.NewRPCClient(app.clusterClient, app.loggerName)
-	app.scriptPool, err = script.NewScriptPool(app.clusterClient, app.rpcClient, make(map[string]interface{}), app.loggerName, app.collectorMap)
+	app.scriptPool, err = script.NewScriptPool(app.clusterClient, app.rpcClient, app.getTypesBinder(), app.loggerName, app.collectorMap)
 	if err != nil {
 		return
 	}
@@ -142,13 +142,9 @@ func (app *AppServer) Stop() error {
 	defer app.recover()
 	app.Log.Info(" -> 退出 app server...")
 	app.clusterClient.Close()
-	app.Log.Info("close rpc client")
 	app.rpcClient.Close()
-	app.Log.Info("close scriptpool ")
 	app.scriptPool.Close()
-	app.Log.Info("close job server")
 	app.jobServer.Stop()
-	app.Log.Info("close api server")
 	if app.apiServer != nil {
 		app.apiServer.Stop()
 	}

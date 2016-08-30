@@ -81,7 +81,7 @@ func (sp *SPServer) init() (err error) {
 	}
 	sp.snap = SPSnap{Version: sp.version, spserver: sp, Refresh: 60}
 	sp.rpcClient = rpc.NewRPCClient(sp.clusterClient, sp.loggerName)
-	sp.scriptPool, err = script.NewScriptPool(sp.clusterClient, sp.rpcClient, sp.GetScriptBinder(), sp.loggerName, sp.collectorMap)
+	sp.scriptPool, err = script.NewScriptPool(sp.clusterClient, sp.rpcClient, sp.getdbTypeBinder(), sp.loggerName, sp.collectorMap)
 	if err != nil {
 		return
 	}
