@@ -64,7 +64,6 @@ func (s *RPCServerPool) Register(svs map[string]string) {
 			go func(ip string) {
 				defer s.recover()
 				s.pool.UnRegister(ip)
-				removeWorker(ip)
 			}(ip)
 		}
 	}
@@ -96,20 +95,21 @@ func (p *RPCServerPool) Request(group string, svName string, input string, sessi
 START:
 	execute++
 	if execute > p.MaxRetry {
-		err = fmt.Errorf("cant connect to rpc server(%s@%s.rpc.pool):%s/%s,%s", p.loggerName, p.domain, group, svName, err)
+		err = fmt.Errorf("cant connect to rpc server(%s@%s.rpc.pool):%s/%s,%v", p.loggerName, p.domain, group, svName, err)
 		return
 	}
+
 	o, err := p.pool.Get(group)
 	if err != nil {
-		err = fmt.Errorf("not find rpc server(%s@%s.rpc.pool):%s/%s,%s", p.loggerName, p.domain, group, svName, err)
+		err = fmt.Errorf("not find rpc server(%s@%s.rpc.pool):%s/%s,%v", p.loggerName, p.domain, group, svName, err)
 		return
 	}
 	obj := o.(*RPCClient)
-	err = obj.Open()
-	defer obj.Close()
-	if err != nil {
+	//err = obj.Open()
+	//	defer obj.Close()
+	if obj.isFatal {
 		p.Log.Error("当前服务不可用:", p.loggerName, svName, err)
-		p.pool.Unusable(svName, obj)
+		p.pool.Unusable(group, obj)
 		goto START
 	}
 	defer p.pool.Recycle(group, o)

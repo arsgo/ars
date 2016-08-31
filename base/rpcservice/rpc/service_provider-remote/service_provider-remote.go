@@ -22,6 +22,7 @@ func Usage() {
 	fmt.Fprintln(os.Stderr, "\nFunctions:")
 	fmt.Fprintln(os.Stderr, "  string Request(string name, string input, string session)")
 	fmt.Fprintln(os.Stderr, "  string Send(string name, string input, string data)")
+	fmt.Fprintln(os.Stderr, "  string Heartbeat(string input)")
 	fmt.Fprintln(os.Stderr, "  string Get(string name, string input)")
 	fmt.Fprintln(os.Stderr)
 	os.Exit(0)
@@ -143,6 +144,16 @@ func main() {
 		argvalue2 := flag.Arg(3)
 		value2 := argvalue2
 		fmt.Print(client.Send(value0, value1, value2))
+		fmt.Print("\n")
+		break
+	case "Heartbeat":
+		if flag.NArg()-1 != 1 {
+			fmt.Fprintln(os.Stderr, "Heartbeat requires 1 args")
+			flag.Usage()
+		}
+		argvalue0 := flag.Arg(1)
+		value0 := argvalue0
+		fmt.Print(client.Heartbeat(value0))
 		fmt.Print("\n")
 		break
 	case "Get":

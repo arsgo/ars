@@ -9,6 +9,7 @@ func (s *ScriptPool) bindGlobal() (r map[string]lua.LGFunction) {
 		"error":  s.globalError,
 		"errorf": s.globalErrorf,
 		"sleep":  s.globalSleep,
+		"fmt":    s.globalFmt,
 	}
 	return
 }

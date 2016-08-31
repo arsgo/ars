@@ -17,6 +17,16 @@ func (n *RPCServer) recover() {
 		n.log.Fatal(r, string(debug.Stack()))
 	}
 }
+func NewRPCServer(address string, handler rpcHandler, loggerName string) *RPCServer {
+	var err error
+	rpcs := &RPCServer{Address: address, Handler: handler}
+	rpcs.log, err = logger.Get(loggerName)
+	if err != nil {
+		log.Println(err)
+	}
+	return rpcs
+}
+
 func (r *RPCServer) Serve() (er error) {
 	defer r.recover()
 	transportFactory := thrift.NewTFramedTransportFactory(thrift.NewTTransportFactory())
@@ -45,15 +55,6 @@ func (r *RPCServer) Stop() {
 	if r.server != nil {
 		r.server.Stop()
 	}
-}
-func NewRPCServer(address string, handler rpcHandler, loggerName string) *RPCServer {
-	var err error
-	rpcs := &RPCServer{Address: address, Handler: handler}
-	rpcs.log, err = logger.Get(loggerName)
-	if err != nil {
-		log.Println(err)
-	}
-	return rpcs
 }
 
 func GetLocalRandomAddress(start ...int) string {

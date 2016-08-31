@@ -225,8 +225,12 @@ func (r *RPCHandlerProxy) Request(name string, input string, session string) (re
 
 //Send 执行RPC Send服务
 func (r *RPCHandlerProxy) Send(name string, input string, data []byte) (result string, err error) {
-
 	return
+}
+
+//Heartbeat 返回心跳数据
+func (r *RPCHandlerProxy) Heartbeat(input string) (rs string, err error) {
+	return "success", nil
 }
 
 //Get 执行RPC Get服务

@@ -27,6 +27,12 @@ func (s *ScriptPool) globalGetLogger(ls *lua.LState) (lg logger.ILogger, err err
 	lg, err = logger.NewSession(loggerName, sessionID)
 	return
 }
+
+func (s *ScriptPool) globalFmt(ls *lua.LState) int {
+	params := s.globalGetParams(ls)
+	return pushValues(ls, params...)
+}
+
 func (s *ScriptPool) globalInfo(ls *lua.LState) int {
 	params := s.globalGetParams(ls)
 	if len(params) == 0 {

@@ -26,6 +26,9 @@ type ServiceProvider interface {
 	//  - Data
 	Send(name string, input string, data []byte) (r string, err error)
 	// Parameters:
+	//  - Input
+	Heartbeat(input string) (r string, err error)
+	// Parameters:
 	//  - Name
 	//  - Input
 	Get(name string, input string) (r []byte, err error)
@@ -184,25 +187,23 @@ func (p *ServiceProviderClient) recvSend() (value string, err error) {
 }
 
 // Parameters:
-//  - Name
 //  - Input
-func (p *ServiceProviderClient) Get(name string, input string) (r []byte, err error) {
-	if err = p.sendGet(name, input); err != nil {
+func (p *ServiceProviderClient) Heartbeat(input string) (r string, err error) {
+	if err = p.sendHeartbeat(input); err != nil {
 		return
 	}
-	return p.recvGet()
+	return p.recvHeartbeat()
 }
 
-func (p *ServiceProviderClient) sendGet(name string, input string) (err error) {
+func (p *ServiceProviderClient) sendHeartbeat(input string) (err error) {
 	oprot := p.OutputProtocol
 	if oprot == nil {
 		oprot = p.ProtocolFactory.GetProtocol(p.Transport)
 		p.OutputProtocol = oprot
 	}
 	p.SeqId++
-	oprot.WriteMessageBegin("Get", thrift.CALL, p.SeqId)
-	args8 := NewGetArgs()
-	args8.Name = name
+	oprot.WriteMessageBegin("Heartbeat", thrift.CALL, p.SeqId)
+	args8 := NewHeartbeatArgs()
 	args8.Input = input
 	err = args8.Write(oprot)
 	oprot.WriteMessageEnd()
@@ -210,7 +211,7 @@ func (p *ServiceProviderClient) sendGet(name string, input string) (err error) {
 	return
 }
 
-func (p *ServiceProviderClient) recvGet() (value []byte, err error) {
+func (p *ServiceProviderClient) recvHeartbeat() (value string, err error) {
 	iprot := p.InputProtocol
 	if iprot == nil {
 		iprot = p.ProtocolFactory.GetProtocol(p.Transport)
@@ -237,10 +238,71 @@ func (p *ServiceProviderClient) recvGet() (value []byte, err error) {
 		err = thrift.NewTApplicationException(thrift.BAD_SEQUENCE_ID, "ping failed: out of sequence response")
 		return
 	}
-	result9 := NewGetResult()
+	result9 := NewHeartbeatResult()
 	err = result9.Read(iprot)
 	iprot.ReadMessageEnd()
 	value = result9.Success
+	return
+}
+
+// Parameters:
+//  - Name
+//  - Input
+func (p *ServiceProviderClient) Get(name string, input string) (r []byte, err error) {
+	if err = p.sendGet(name, input); err != nil {
+		return
+	}
+	return p.recvGet()
+}
+
+func (p *ServiceProviderClient) sendGet(name string, input string) (err error) {
+	oprot := p.OutputProtocol
+	if oprot == nil {
+		oprot = p.ProtocolFactory.GetProtocol(p.Transport)
+		p.OutputProtocol = oprot
+	}
+	p.SeqId++
+	oprot.WriteMessageBegin("Get", thrift.CALL, p.SeqId)
+	args12 := NewGetArgs()
+	args12.Name = name
+	args12.Input = input
+	err = args12.Write(oprot)
+	oprot.WriteMessageEnd()
+	oprot.Flush()
+	return
+}
+
+func (p *ServiceProviderClient) recvGet() (value []byte, err error) {
+	iprot := p.InputProtocol
+	if iprot == nil {
+		iprot = p.ProtocolFactory.GetProtocol(p.Transport)
+		p.InputProtocol = iprot
+	}
+	_, mTypeId, seqId, err := iprot.ReadMessageBegin()
+	if err != nil {
+		return
+	}
+	if mTypeId == thrift.EXCEPTION {
+		error14 := thrift.NewTApplicationException(thrift.UNKNOWN_APPLICATION_EXCEPTION, "Unknown Exception")
+		var error15 error
+		error15, err = error14.Read(iprot)
+		if err != nil {
+			return
+		}
+		if err = iprot.ReadMessageEnd(); err != nil {
+			return
+		}
+		err = error15
+		return
+	}
+	if p.SeqId != seqId {
+		err = thrift.NewTApplicationException(thrift.BAD_SEQUENCE_ID, "ping failed: out of sequence response")
+		return
+	}
+	result13 := NewGetResult()
+	err = result13.Read(iprot)
+	iprot.ReadMessageEnd()
+	value = result13.Success
 	return
 }
 
@@ -264,11 +326,12 @@ func (p *ServiceProviderProcessor) ProcessorMap() map[string]thrift.TProcessorFu
 
 func NewServiceProviderProcessor(handler ServiceProvider) *ServiceProviderProcessor {
 
-	self12 := &ServiceProviderProcessor{handler: handler, processorMap: make(map[string]thrift.TProcessorFunction)}
-	self12.processorMap["Request"] = &serviceProviderProcessorRequest{handler: handler}
-	self12.processorMap["Send"] = &serviceProviderProcessorSend{handler: handler}
-	self12.processorMap["Get"] = &serviceProviderProcessorGet{handler: handler}
-	return self12
+	self16 := &ServiceProviderProcessor{handler: handler, processorMap: make(map[string]thrift.TProcessorFunction)}
+	self16.processorMap["Request"] = &serviceProviderProcessorRequest{handler: handler}
+	self16.processorMap["Send"] = &serviceProviderProcessorSend{handler: handler}
+	self16.processorMap["Heartbeat"] = &serviceProviderProcessorHeartbeat{handler: handler}
+	self16.processorMap["Get"] = &serviceProviderProcessorGet{handler: handler}
+	return self16
 }
 
 func (p *ServiceProviderProcessor) Process(iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
@@ -281,12 +344,12 @@ func (p *ServiceProviderProcessor) Process(iprot, oprot thrift.TProtocol) (succe
 	}
 	iprot.Skip(thrift.STRUCT)
 	iprot.ReadMessageEnd()
-	x13 := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, "Unknown function "+name)
+	x17 := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, "Unknown function "+name)
 	oprot.WriteMessageBegin(name, thrift.EXCEPTION, seqId)
-	x13.Write(oprot)
+	x17.Write(oprot)
 	oprot.WriteMessageEnd()
 	oprot.Flush()
-	return false, x13
+	return false, x17
 
 }
 
@@ -359,6 +422,49 @@ func (p *serviceProviderProcessorSend) Process(seqId int32, iprot, oprot thrift.
 		return
 	}
 	if err2 := oprot.WriteMessageBegin("Send", thrift.REPLY, seqId); err2 != nil {
+		err = err2
+	}
+	if err2 := result.Write(oprot); err == nil && err2 != nil {
+		err = err2
+	}
+	if err2 := oprot.WriteMessageEnd(); err == nil && err2 != nil {
+		err = err2
+	}
+	if err2 := oprot.Flush(); err == nil && err2 != nil {
+		err = err2
+	}
+	if err != nil {
+		return
+	}
+	return true, err
+}
+
+type serviceProviderProcessorHeartbeat struct {
+	handler ServiceProvider
+}
+
+func (p *serviceProviderProcessorHeartbeat) Process(seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+	args := NewHeartbeatArgs()
+	if err = args.Read(iprot); err != nil {
+		iprot.ReadMessageEnd()
+		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+		oprot.WriteMessageBegin("Heartbeat", thrift.EXCEPTION, seqId)
+		x.Write(oprot)
+		oprot.WriteMessageEnd()
+		oprot.Flush()
+		return
+	}
+	iprot.ReadMessageEnd()
+	result := NewHeartbeatResult()
+	if result.Success, err = p.handler.Heartbeat(args.Input); err != nil {
+		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Heartbeat: "+err.Error())
+		oprot.WriteMessageBegin("Heartbeat", thrift.EXCEPTION, seqId)
+		x.Write(oprot)
+		oprot.WriteMessageEnd()
+		oprot.Flush()
+		return
+	}
+	if err2 := oprot.WriteMessageBegin("Heartbeat", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
 	if err2 := result.Write(oprot); err == nil && err2 != nil {
@@ -887,6 +993,179 @@ func (p *SendResult) String() string {
 		return "<nil>"
 	}
 	return fmt.Sprintf("SendResult(%+v)", *p)
+}
+
+type HeartbeatArgs struct {
+	Input string `thrift:"input,1"`
+}
+
+func NewHeartbeatArgs() *HeartbeatArgs {
+	return &HeartbeatArgs{}
+}
+
+func (p *HeartbeatArgs) Read(iprot thrift.TProtocol) error {
+	if _, err := iprot.ReadStructBegin(); err != nil {
+		return fmt.Errorf("%T read error", p)
+	}
+	for {
+		_, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+		if err != nil {
+			return fmt.Errorf("%T field %d read error: %s", p, fieldId, err)
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+		switch fieldId {
+		case 1:
+			if err := p.readField1(iprot); err != nil {
+				return err
+			}
+		default:
+			if err := iprot.Skip(fieldTypeId); err != nil {
+				return err
+			}
+		}
+		if err := iprot.ReadFieldEnd(); err != nil {
+			return err
+		}
+	}
+	if err := iprot.ReadStructEnd(); err != nil {
+		return fmt.Errorf("%T read struct end error: %s", p, err)
+	}
+	return nil
+}
+
+func (p *HeartbeatArgs) readField1(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadString(); err != nil {
+		return fmt.Errorf("error reading field 1: %s")
+	} else {
+		p.Input = v
+	}
+	return nil
+}
+
+func (p *HeartbeatArgs) Write(oprot thrift.TProtocol) error {
+	if err := oprot.WriteStructBegin("Heartbeat_args"); err != nil {
+		return fmt.Errorf("%T write struct begin error: %s", p, err)
+	}
+	if err := p.writeField1(oprot); err != nil {
+		return err
+	}
+	if err := oprot.WriteFieldStop(); err != nil {
+		return fmt.Errorf("%T write field stop error: %s", err)
+	}
+	if err := oprot.WriteStructEnd(); err != nil {
+		return fmt.Errorf("%T write struct stop error: %s", err)
+	}
+	return nil
+}
+
+func (p *HeartbeatArgs) writeField1(oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin("input", thrift.STRING, 1); err != nil {
+		return fmt.Errorf("%T write field begin error 1:input: %s", p, err)
+	}
+	if err := oprot.WriteString(string(p.Input)); err != nil {
+		return fmt.Errorf("%T.input (1) field write error: %s", p)
+	}
+	if err := oprot.WriteFieldEnd(); err != nil {
+		return fmt.Errorf("%T write field end error 1:input: %s", p, err)
+	}
+	return err
+}
+
+func (p *HeartbeatArgs) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("HeartbeatArgs(%+v)", *p)
+}
+
+type HeartbeatResult struct {
+	Success string `thrift:"success,0"`
+}
+
+func NewHeartbeatResult() *HeartbeatResult {
+	return &HeartbeatResult{}
+}
+
+func (p *HeartbeatResult) Read(iprot thrift.TProtocol) error {
+	if _, err := iprot.ReadStructBegin(); err != nil {
+		return fmt.Errorf("%T read error", p)
+	}
+	for {
+		_, fieldTypeId, fieldId, err := iprot.ReadFieldBegin()
+		if err != nil {
+			return fmt.Errorf("%T field %d read error: %s", p, fieldId, err)
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+		switch fieldId {
+		case 0:
+			if err := p.readField0(iprot); err != nil {
+				return err
+			}
+		default:
+			if err := iprot.Skip(fieldTypeId); err != nil {
+				return err
+			}
+		}
+		if err := iprot.ReadFieldEnd(); err != nil {
+			return err
+		}
+	}
+	if err := iprot.ReadStructEnd(); err != nil {
+		return fmt.Errorf("%T read struct end error: %s", p, err)
+	}
+	return nil
+}
+
+func (p *HeartbeatResult) readField0(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadString(); err != nil {
+		return fmt.Errorf("error reading field 0: %s")
+	} else {
+		p.Success = v
+	}
+	return nil
+}
+
+func (p *HeartbeatResult) Write(oprot thrift.TProtocol) error {
+	if err := oprot.WriteStructBegin("Heartbeat_result"); err != nil {
+		return fmt.Errorf("%T write struct begin error: %s", p, err)
+	}
+	switch {
+	default:
+		if err := p.writeField0(oprot); err != nil {
+			return err
+		}
+	}
+	if err := oprot.WriteFieldStop(); err != nil {
+		return fmt.Errorf("%T write field stop error: %s", err)
+	}
+	if err := oprot.WriteStructEnd(); err != nil {
+		return fmt.Errorf("%T write struct stop error: %s", err)
+	}
+	return nil
+}
+
+func (p *HeartbeatResult) writeField0(oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin("success", thrift.STRING, 0); err != nil {
+		return fmt.Errorf("%T write field begin error 0:success: %s", p, err)
+	}
+	if err := oprot.WriteString(string(p.Success)); err != nil {
+		return fmt.Errorf("%T.success (0) field write error: %s", p)
+	}
+	if err := oprot.WriteFieldEnd(); err != nil {
+		return fmt.Errorf("%T write field end error 0:success: %s", p, err)
+	}
+	return err
+}
+
+func (p *HeartbeatResult) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("HeartbeatResult(%+v)", *p)
 }
 
 type GetArgs struct {

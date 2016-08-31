@@ -43,10 +43,11 @@ type HTTPScriptController struct {
 
 //NewHTTPScriptServer 创建基于LUA的HTTP服务器
 func NewHTTPScriptServer(Address string, routes []*cluster.ServerRouteConfig, call func(string, base.InvokeContext) ([]string, map[string]string, error), loggerName string, collector base.ICollector) (server *HTTPScriptServer, err error) {
-	server = &HTTPScriptServer{snap: &base.ServerSnap{}, collector: collector, Available: false}
+	server = &HTTPScriptServer{snap: &base.ServerSnap{}, collector: collector, Available: false, loggerName: loggerName}
 	server.routes = routes
 	server.Address = Address
 	server.call = call
+	server.loggerName = loggerName
 	server.Log, err = logger.Get(loggerName)
 	return
 }
