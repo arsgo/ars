@@ -35,7 +35,7 @@ func NewCollector() *Collector {
 	return r
 }
 func (r *Collector) getExecution(name ...interface{}) (d *Execution, err error) {
-	exec, err := r.data.GetOrAdd(fmt.Sprint(name...), func(p ...interface{}) (interface{}, error) {
+	_, exec, err := r.data.GetOrAdd(fmt.Sprint(name...), func(p ...interface{}) (interface{}, error) {
 		return &Execution{}, nil
 	})
 	if err != nil {
@@ -47,7 +47,7 @@ func (r *Collector) getExecution(name ...interface{}) (d *Execution, err error) 
 
 //Customer 添加或获取自定义收集器
 func (r *Collector) Customer(name string) ICollector {
-	cl, _ := r.customer.GetOrAdd(name, func(p ...interface{}) (interface{}, error) {
+	_, cl, _ := r.customer.GetOrAdd(name, func(p ...interface{}) (interface{}, error) {
 		return NewCollector(), nil
 	})
 	c := cl.(*Collector)
@@ -98,8 +98,8 @@ func (r *Collector) Get() map[string]interface{} {
 	return r.data.GetAllAndClear()
 }
 func (r *Collector) GetByName(name string) interface{} {
-	v := r.data.GetAndDel(name)
-	if v == nil {
+	v, ok := r.data.GetAndDel(name)
+	if !ok {
 		return struct{}{}
 	}
 	return v

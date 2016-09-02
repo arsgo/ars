@@ -148,8 +148,8 @@ func (r *RPCHandlerProxy) UpdateTasks(tasks []cluster.TaskItem) (int, bool) {
 	for i, v := range services {
 		if _, ok := tks[i]; !ok {
 			tk := v.(cluster.TaskItem)
-			value := r.server.servicesPath.Get(tk.Name)
-			if value != nil {
+			value, ok := r.server.servicesPath.Get(tk.Name)
+			if ok {
 				r.handler.CloseTask(tk, value.(string))
 			}
 			r.tasks.Services.Delete(i)
@@ -175,14 +175,14 @@ func (r *RPCHandlerProxy) getDomain(name string) string {
 
 //getTaskItem 根据名称获取一个分组
 func (r *RPCHandlerProxy) getTaskItem(name string) (item cluster.TaskItem, err error) {
-	group := r.tasks.Services.Get(name)
-	if group == nil {
-		group = r.tasks.Services.Get("*" + r.getDomain(name))
+	group, ok := r.tasks.Services.Get(name)
+	if !ok {
+		group, ok = r.tasks.Services.Get("*" + r.getDomain(name))
 	}
-	if group == nil {
-		group = r.tasks.Services.Get("*")
+	if !ok {
+		group, ok = r.tasks.Services.Get("*")
 	}
-	if group != nil {
+	if ok {
 		item = group.(cluster.TaskItem)
 		item.Name = name
 		return
@@ -195,6 +195,7 @@ func (r *RPCHandlerProxy) getTaskItem(name string) (item cluster.TaskItem, err e
 func (r *RPCHandlerProxy) Request(name string, input string, session string) (result string, err error) {
 	defer r.snap.Add(time.Now())
 	start := time.Now()
+	defer base.RunTime("rpc request once", time.Now())
 	log, _ := logger.NewSession(r.loggerName, session)
 	log.Info("--> rpc request(recv):", name, input)
 

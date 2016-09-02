@@ -34,7 +34,6 @@ func getScriptInputArgs(input string, params string) (r string) {
 		text = "{}"
 	}
 	args.Params = []byte(text)
-
 	buffer, err := json.Marshal(&args)
 	if err != nil {
 		fmt.Printf("get script args error:%v,%v\n", err, args)
@@ -92,7 +91,7 @@ func (s *ScriptPool) createSnap(p ...interface{}) (interface{}, error) {
 	return ss, nil
 }
 func (s *ScriptPool) setLifeTime(name string, start time.Time) {
-	_, snap, _ := s.snaps.Add(name, s.createSnap)
+	_, snap, _ := s.snaps.GetOrAdd(name, s.createSnap)
 	if snap == nil {
 		return
 	}
@@ -101,6 +100,7 @@ func (s *ScriptPool) setLifeTime(name string, start time.Time) {
 
 //Call 执行脚本
 func (s *ScriptPool) Call(name string, context base.InvokeContext) ([]string, map[string]string, error) {
+	defer base.RunTime("script poll call", time.Now())
 	if strings.EqualFold(name, "") {
 		return nil, nil, errors.New("script is nil")
 	}

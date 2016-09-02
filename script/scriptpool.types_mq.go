@@ -14,7 +14,7 @@ func (s *ScriptPool) getMQTypeBinder() script.LuaTypesBinder {
 	return script.LuaTypesBinder{
 		Name: "mq",
 		NewFunc: map[string]lua.LGFunction{
-			"new": typeWeixinType,
+			"new": s.typeMQType,
 		},
 		Methods: map[string]lua.LGFunction{
 			"send": typeMQSend,

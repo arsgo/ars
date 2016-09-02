@@ -72,6 +72,7 @@ func NewAPPServer(conf *config.SysConfig) (app *AppServer, err error) {
 	if err != nil {
 		return
 	}
+	logger.MainLoggerName = app.loggerName
 	//app.snapLogger.Show(false)
 	return
 }

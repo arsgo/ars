@@ -32,10 +32,10 @@ func (fac *rpcClientFactory) Create() (p pool.Object, err error) {
 		return
 	}
 	client := NewRPCClientTimeout(fac.ip, time.Second*5, fac.loggerName)
-	err = client.Open()
-	if err != nil {
-		return
-	}
+	//err = client.Open()
+	//if err != nil {
+	//	return
+	//	}
 	p = client
 	return
 }

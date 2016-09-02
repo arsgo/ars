@@ -113,34 +113,35 @@ func (r *RPCClient) ResetRPCServer(servers map[string][]string) (count int) {
 }
 
 //GetAsyncResult 获取异步请求结果
-func (r *RPCClient) GetAsyncResult(session string) (rt interface{}, err interface{}) {
-	queue := r.queues.Get(session)
-	if queue != nil {
-		ticker := time.NewTicker(time.Second * 4)
-		select {
-		case <-ticker.C:
-			err = fmt.Sprint("request timeout")
-			break
-		case result := <-queue.(chan []interface{}):
-			{
-				r.queues.Delete(session)
-				if len(result) != 2 {
-					return "", "rpc method result value len is error"
-				}
-				rt = result[0]
-				if result[1] != nil {
-					er := result[1].(string)
-					if strings.EqualFold(er, "") {
-						err = nil
-					} else {
-						err = er
-					}
+func (r *RPCClient) GetAsyncResult(session string, timeout int) (rt interface{}, err string) {
+	queue, ok := r.queues.Get(session)
+	if !ok {
+		err = fmt.Sprint("rpc get result not find session:", session)
+		return
+	}
+	ticker := time.NewTicker(time.Millisecond * time.Duration(timeout))
+	select {
+	case <-ticker.C:
+		err = fmt.Sprint("rpc async get result timeout")
+		break
+	case result := <-queue.(chan []interface{}):
+		{
+
+			if len(result) != 2 {
+				return "", "rpc async result error"
+			}
+			rt = result[0]
+			if result[1] != nil {
+				er := result[1].(string)
+				if strings.EqualFold(er, "") {
+					err = ""
+				} else {
+					err = er
 				}
 			}
 		}
-	} else {
-		err = fmt.Sprint("not find session:", session)
 	}
+	r.queues.Delete(session)
 	return
 }
 
@@ -156,14 +157,14 @@ func (r *RPCClient) getDomain(name string) string {
 //getGroup 根据名称获取一个分组
 func (r *RPCClient) getGroup(cmd string) (g *base.ServiceGroup, name string, err error) {
 	name = r.client.GetServiceFullPath(cmd)
-	group := r.services.Get(name)
-	if group == nil {
-		group = r.services.Get("*" + r.getDomain(name))
+	group, ok := r.services.Get(name)
+	if !ok {
+		group, ok = r.services.Get("*" + r.getDomain(name))
 	}
-	if group == nil {
-		group = r.services.Get("*")
+	if !ok {
+		group, ok = r.services.Get("*")
 	}
-	if group != nil {
+	if ok {
 		g = group.(*base.ServiceItem).GetGroup()
 	} else {
 		err = errors.New(fmt.Sprint("not find rpc server(", r.loggerName, "@", r.domain, ".rpc.client):", name, " in service list",
@@ -288,7 +289,7 @@ func (r *RPCClient) createSnap(p ...interface{}) (interface{}, error) {
 	return ss, nil
 }
 func (r *RPCClient) setLifeTime(name string, start time.Time) {
-	_, snap, _ := r.snaps.Add(name, r.createSnap)
+	_, snap, _ := r.snaps.GetOrAdd(name, r.createSnap)
 	if snap == nil {
 		return
 	}

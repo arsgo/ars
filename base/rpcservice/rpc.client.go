@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"git.apache.org/thrift.git/lib/go/thrift"
+	"github.com/arsgo/ars/base"
 	"github.com/arsgo/ars/base/rpcservice/rpc"
 	"github.com/arsgo/lib4go/logger"
 )
@@ -59,12 +60,13 @@ func (client *RPCClient) Open() (err error) {
 	if err := client.client.Transport.Open(); err != nil {
 		return errors.New(fmt.Sprint("open client error :", client.Address, ",", err.Error()))
 	}
-	go client.sendHeartbeat()
+//	go client.sendHeartbeat()
 	return nil
 }
 
 func (client *RPCClient) Request(name string, input string, session string) (r string, e error) {
 	defer client.recover()
+	defer base.RunTime("rpc request once", time.Now())
 	client.lastUseTime = time.Now()
 	client.isClose = true
 	r, er := client.client.Request(name, input, session)

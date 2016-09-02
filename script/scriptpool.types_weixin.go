@@ -19,9 +19,9 @@ func (s *ScriptPool) getWeixinTypeBinder() script.LuaTypesBinder {
 			"new": typeWeixinType,
 		},
 		Methods: map[string]lua.LGFunction{
-			"decrypt":  typeWeixinDecrypt,
-			"encrypt":  typeWeixinEncrypt,
-			"makeSign": typeWeixinMakeSign,
+			"decrypt":   typeWeixinDecrypt,
+			"encrypt":   typeWeixinEncrypt,
+			"make_sign": typeWeixinMakeSign,
 		},
 	}
 }
@@ -37,7 +37,7 @@ func typeWeixinType(L *lua.LState) int {
 	if err != nil {
 		return pushValues(L, "", err)
 	}
-	L.SetMetatable(ud, L.GetTypeMetatable("http"))
+	L.SetMetatable(ud, L.GetTypeMetatable("weixin"))
 	L.Push(ud)
 	return 1
 }

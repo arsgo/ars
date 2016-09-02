@@ -68,6 +68,7 @@ func NewSPServer(conf *config.SysConfig) (sp *SPServer, err error) {
 	}
 	//sp.snapLogger.Show(false)
 	sp.dbPool = concurrent.NewConcurrentMap()
+	logger.MainLoggerName = sp.loggerName
 	return
 }
 

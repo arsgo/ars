@@ -8,8 +8,8 @@ func (s *SPServer) NewDB(name string) (bind *db.DBScriptBind, err error) {
 	if err != nil {
 		return
 	}
-	p := s.dbPool.Get(name)
-	if p != nil {
+	p, ok := s.dbPool.Get(name)
+	if ok {
 		bind = p.(*db.DBScriptBind)
 		bind.ResetPoolSize(config)
 		return

@@ -127,8 +127,8 @@ func (rc *RCServer) IsMasterServer(items []*cluster.RCServerItem) bool {
 //MergeService 合并所有服务
 func (rc *RCServer) MergeService() (lst cluster.RPCServices) {
 	lst = make(map[string][]string)
-	services := rc.currentServices.Get("*")
-	if services != nil {
+	services, ok := rc.currentServices.Get("*")
+	if ok {
 		cservices := services.(cluster.RPCServices)
 		currentDomain := rc.clusterClient.GetDomainName()
 		for name, values := range cservices {

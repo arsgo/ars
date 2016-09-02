@@ -8,11 +8,13 @@ func (s *ScriptPool) bindModules() (r map[string]map[string]lua.LGFunction) {
 			"send": s.moduleMQProducerSend,
 		},
 		"common": map[string]lua.LGFunction{
-			"getGuid": s.moduleGetGUID,
-			"getIP":   s.moduleGetLocalIP,
+			"get_guid": s.moduleGetGUID,
+			"get_ip":   s.moduleGetLocalIP,
 		},
 		"rpc": map[string]lua.LGFunction{
-			"request": s.moduleRPCRequest,
+			"request":       s.moduleRPCRequest,
+			"async_request": s.moduleRPCAsyncRequest,
+			"get_result":    s.moduleRPCGetResult,
 		},
 		"md5": map[string]lua.LGFunction{
 			"encrypt": s.moduleMd5Encrypt,

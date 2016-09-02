@@ -25,7 +25,7 @@ func (rc *RCServer) startMonitor() {
 START:
 	if rc.clusterClient.WaitForConnected() {
 		if rc.IsMaster {
-			rc.Log.Info(" -> 已重新连接到集群，立即发布所有服务")		
+			rc.Log.Info(" -> 已重新连接到集群，立即发布所有服务")
 			rc.resetLoalService()
 			rc.timerPublishServices.Push("重新发布服务")
 		}

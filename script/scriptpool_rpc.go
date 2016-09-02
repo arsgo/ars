@@ -40,8 +40,8 @@ func (b *RPCBinder) AsyncRequest(name string, tb *lua.LTable) (s string, err err
 	return b.client.AsyncRequest(name, input, utility.GetSessionID())
 }
 
-func (b *RPCBinder) GetAsyncResult(session string) (s interface{}, err interface{}) {
-	return b.client.GetAsyncResult(session)
+func (b *RPCBinder) GetAsyncResult(session string, timeout int) (s interface{}, err string) {
+	return b.client.GetAsyncResult(session, timeout)
 }
 func (b *RPCBinder) Request(name string, tb *lua.LTable) (s string, err error) {
 	input, err := luaTable2Json(tb)

@@ -36,7 +36,7 @@ func (s *ScriptPool) NewMQProducer(name string) (p *m.MQProducer, err error) {
 	if err != nil {
 		return
 	}
-	pd, err := s.mqservices.GetOrAdd(name, func(p ...interface{}) (interface{}, error) {
+	_, pd, err := s.mqservices.GetOrAdd(name, func(p ...interface{}) (interface{}, error) {
 		return m.NewMQProducer(p[0].(string))
 	}, config)
 	if err != nil {

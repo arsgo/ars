@@ -100,10 +100,10 @@ type CrossDoaminAccessItem struct {
 }
 
 type RCServerTask struct {
-	SnapRefresh       int                              `json:"refresh"` //快照刷新时间，单位秒,不能低于60秒
+	SnapRefresh       int                                   `json:"refresh"` //快照刷新时间，单位秒,不能低于60秒
 	CrossDomainAccess map[string]CrossDoaminAccessItem `json:"cross-domain"`
-	RPCPoolSetting    RPCPoolSetting                   `json:"rpc"`
-	Jobs              []JobItem                        `json:"jobs"`
+	RPCPoolSetting    RPCPoolSetting                        `json:"rpc"`
+	Jobs              []JobItem                             `json:"jobs"`
 }
 
 func (c CrossDoaminAccessItem) GetServicesMap(domain string) RPCServices {

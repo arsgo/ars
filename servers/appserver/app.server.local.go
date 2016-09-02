@@ -77,8 +77,8 @@ func (a *AppServer) OnLocalJobCreate(task cluster.TaskItem) (path string) {
 
 //OnLocalJobClose close job
 func (a *AppServer) OnLocalJobClose(task cluster.TaskItem) {
-	p := a.localJobPaths.Get(task.Name)
-	if p != nil {
+	p, ok := a.localJobPaths.Get(task.Name)
+	if ok {
 		path := p.(string)
 		a.Log.Error(" -> 关闭本地job:", path)
 		err := a.clusterClient.CloseNode(path)

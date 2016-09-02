@@ -64,8 +64,8 @@ func (mq *MQConsumerService) UpdateTasks(tasks []cluster.TaskItem) (err error) {
 			mq.Log.Info(" -> 关闭 mq consumer:", k)
 			v.(*MQConsumer).Stop()
 			mq.consumers.Delete(k)
-			if mq.paths.Get(k) != nil {
-				mq.handler.OnCloseTask(tks, mq.paths.Get(k).(string))
+			if pp, ok := mq.paths.Get(k); ok {
+				mq.handler.OnCloseTask(tks, pp.(string))
 				mq.paths.Delete(k)
 			}
 		}
@@ -73,7 +73,7 @@ func (mq *MQConsumerService) UpdateTasks(tasks []cluster.TaskItem) (err error) {
 
 	//启动已添加的服务
 	for k, v := range consumers {
-		if ok, _, _ := mq.consumers.Add(k, mq.createConsumer, v); ok {
+		if ok, _, _ := mq.consumers.GetOrAdd(k, mq.createConsumer, v); ok {
 			path := mq.handler.OnOpenTask(v)
 			mq.paths.Set(v.Name, path)
 		}

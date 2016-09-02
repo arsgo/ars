@@ -58,6 +58,7 @@ func NewRCServer(conf *config.SysConfig) (rc *RCServer, err error) {
 	if err != nil {
 		return
 	}
+	logger.MainLoggerName = rc.loggerName
 	//rc.snapLogger.Show(false)
 	return
 }

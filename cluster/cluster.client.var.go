@@ -6,8 +6,8 @@ func (client *ClusterClient) GetSourceConfig(typeName string, name string) (conf
 	dataMap.Set("type", typeName)
 	dataMap.Set("name", name)
 	path := dataMap.Translate(p_varConfig)
-	cfg := client.configCache.Get(path)
-	if cfg != nil {
+	cfg,ok := client.configCache.Get(path)
+	if ok {
 		config = cfg.(string)
 		return
 	}

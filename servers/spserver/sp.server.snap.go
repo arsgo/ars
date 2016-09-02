@@ -56,7 +56,7 @@ func (sn SPSnap) getSnap(service string, snaps map[string]interface{}) string {
 	snap := sn
 	snap.Service = service
 	snap.Last = time.Now().Format("20060102150405")
-	snap.Snap = snaps
+	//	snap.Snap = snaps
 	snap.CPU = sysinfo.GetAvaliabeCPU().Used
 	snap.Mem = sysinfo.GetAvaliabeMem().Used
 	snap.Disk = sysinfo.GetAvaliabeDisk().Used

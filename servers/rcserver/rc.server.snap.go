@@ -46,7 +46,10 @@ func (rs RCSnap) GetServicesSnap(services map[string]interface{}) string {
 	snap.Cache = cache
 	snap.Snap = services
 
-	buffer, _ := json.Marshal(&snap)
+	buffer, err := json.Marshal(&snap)
+	if err != nil {
+		rs.rcServer.Log.Error("更新快照异常：", err)
+	}
 	return string(buffer)
 }
 
