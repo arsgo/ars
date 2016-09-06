@@ -28,8 +28,16 @@ func (s *ScriptPool) bindModules() (r map[string]map[string]lua.LGFunction) {
 			"decrypt": s.moduleAESDecrypt,
 		},
 		"base64": map[string]lua.LGFunction{
-			"encode": s.moduleBase64Encode,
-			"decode": s.moduleBase64Decode,
+			"encode":       s.moduleBase64Encode,
+			"decode":       s.moduleBase64Decode,
+			"encode_bytes": s.moduleBase64EncodeBytes,
+			"decode_bytes": s.moduleBase64DecodeBytes,
+		},
+		"rsa": map[string]lua.LGFunction{
+			"encrypt":   s.moduleRsaEncrypt,
+			"decrypt":   s.moduleRsaDecrypt,
+			"verfiy":    s.moduleRsaVerfy,
+			"make_sign": s.moduleRsaMakeSign,
 		},
 		"sha1": map[string]lua.LGFunction{
 			"encrypt": s.moduleSha1Encrypt,
