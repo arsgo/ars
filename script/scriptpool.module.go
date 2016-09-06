@@ -36,7 +36,7 @@ func (s *ScriptPool) bindModules() (r map[string]map[string]lua.LGFunction) {
 		"rsa": map[string]lua.LGFunction{
 			"encrypt":   s.moduleRsaEncrypt,
 			"decrypt":   s.moduleRsaDecrypt,
-			"verfiy":    s.moduleRsaVerfy,
+			"verify":    s.moduleRsaVerify,
 			"make_sign": s.moduleRsaMakeSign,
 		},
 		"sha1": map[string]lua.LGFunction{

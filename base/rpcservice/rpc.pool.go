@@ -6,9 +6,7 @@ import (
 	"log"
 	"runtime/debug"
 	"strings"
-	"time"
 
-	"github.com/arsgo/ars/base"
 	"github.com/arsgo/ars/servers/config"
 	"github.com/arsgo/lib4go/concurrent"
 	"github.com/arsgo/lib4go/logger"
@@ -89,7 +87,7 @@ func (s *RPCServerPool) Register(svs map[string]string) {
 //Request 发送request请求
 func (p *RPCServerPool) Request(group string, svName string, input string, session string) (result string, err error) {
 	defer p.recover()
-	defer base.RunTime("rpc request total", time.Now())
+	//defer base.RunTime("rpc request total", time.Now())
 	if strings.EqualFold(group, "") {
 		err = errors.New("not find rpc server and name cant be nil" + p.loggerName + "@" + p.domain + ".rpc.pool")
 		return
@@ -101,7 +99,6 @@ START:
 		err = fmt.Errorf("cant connect to rpc server(%s@%s.rpc.pool):%s/%s,%v", p.loggerName, p.domain, group, svName, err)
 		return
 	}
-
 	o, err := p.pool.Get(group)
 	if err != nil {
 		err = fmt.Errorf("not find rpc server(%s@%s.rpc.pool):%s/%s,%v", p.loggerName, p.domain, group, svName, err)
@@ -109,14 +106,19 @@ START:
 	}
 	obj := o.(*RPCClient)
 	err = obj.Open()
-   defer obj.Close()
+	if err != nil {
+		goto START
+	}
+	defer func() {
+		obj.Close()
+	}()
 	if obj.isFatal {
 		p.Log.Error("当前服务不可用:", p.loggerName, svName, err)
 		p.pool.Unusable(group, obj)
 		goto START
 	}
-	defer p.pool.Recycle(group, o)
 	result, err = obj.Request(svName, input, session)
+	p.pool.Recycle(group, o)
 	return
 }
 func (p *RPCServerPool) Send(group string, svName string, input string, data []byte) (result string, err error) {

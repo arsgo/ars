@@ -100,7 +100,7 @@ func (s *ScriptPool) setLifeTime(name string, start time.Time) {
 
 //Call 执行脚本
 func (s *ScriptPool) Call(name string, context base.InvokeContext) ([]string, map[string]string, error) {
-	defer base.RunTime("script poll call", time.Now())
+	//defer base.RunTime("script poll call", time.Now())
 	if strings.EqualFold(name, "") {
 		return nil, nil, errors.New("script is nil")
 	}

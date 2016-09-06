@@ -195,7 +195,7 @@ func (r *RPCHandlerProxy) getTaskItem(name string) (item cluster.TaskItem, err e
 func (r *RPCHandlerProxy) Request(name string, input string, session string) (result string, err error) {
 	defer r.snap.Add(time.Now())
 	start := time.Now()
-	defer base.RunTime("rpc request once", time.Now())
+	//	defer base.RunTime("rpc request once", time.Now())
 	log, _ := logger.NewSession(r.loggerName, session)
 	log.Info("--> rpc request(recv):", name, input)
 

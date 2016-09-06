@@ -80,7 +80,7 @@ func (s *ScriptPool) moduleRsaMakeSign(ls *lua.LState) int {
 	data, err := rsa.Sign(input, privateKey)
 	return pushValues(ls, data, err)
 }
-func (s *ScriptPool) moduleRsaVerfy(ls *lua.LState) int {
+func (s *ScriptPool) moduleRsaVerify(ls *lua.LState) int {
 	src := ls.CheckString(1)
 	sign := ls.CheckString(2)
 	pubkey := ls.CheckString(3)
