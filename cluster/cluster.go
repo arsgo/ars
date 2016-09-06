@@ -14,6 +14,8 @@ type IClusterHandler interface {
 	GetChildren(path string) ([]string, error)
 	WatchValue(path string, data chan string) error
 	WatchChildren(path string, data chan []string) error
+	RemoveWatchValue(path string)
+	RemoveWatchChildren(path string)
 	WaitForConnected() bool
 	WaitForDisconnected() bool
 	Delete(path string) error
