@@ -39,9 +39,9 @@ type Tasks struct {
 type IRPCHandler interface {
 	OpenTask(cluster.TaskItem) string
 	CloseTask(cluster.TaskItem, string)
-	Request(cluster.TaskItem, string, string) (string, error)
-	Send(cluster.TaskItem, string, []byte) (string, error)
-	Get(cluster.TaskItem, string) ([]byte, error)
+	Request(cluster.TaskItem, string, string, time.Duration) (string, error)
+	Send(cluster.TaskItem, string, []byte, time.Duration) (string, error)
+	Get(cluster.TaskItem, string, time.Duration) ([]byte, error)
 }
 
 //NewRPCServer 创建RPC服务器
@@ -192,7 +192,7 @@ func (r *RPCHandlerProxy) getTaskItem(name string) (item cluster.TaskItem, err e
 }
 
 //Request 执行RPC Request服务
-func (r *RPCHandlerProxy) Request(name string, input string, session string) (result string, err error) {
+func (r *RPCHandlerProxy) Request(name string, input string, session string, timeout int64) (result string, err error) {
 	defer r.snap.Add(time.Now())
 	start := time.Now()
 	//	defer base.RunTime("rpc request once", time.Now())
@@ -207,7 +207,7 @@ func (r *RPCHandlerProxy) Request(name string, input string, session string) (re
 		log.Infof("--> rpc response(recv,%v):%s,%s", time.Now().Sub(start), name, result)
 		return
 	}
-	result, currentErr = r.handler.Request(task, input, session)
+	result, currentErr = r.handler.Request(task, input, session, time.Duration(timeout))
 	if currentErr != nil {
 		r.Log.Error(currentErr)
 		r.collector.Failed(name)
@@ -225,17 +225,17 @@ func (r *RPCHandlerProxy) Request(name string, input string, session string) (re
 }
 
 //Send 执行RPC Send服务
-func (r *RPCHandlerProxy) Send(name string, input string, data []byte) (result string, err error) {
+func (r *RPCHandlerProxy) Send(name string, input string, data []byte, timeout int64) (result string, err error) {
 	return
 }
 
 //Heartbeat 返回心跳数据
-func (r *RPCHandlerProxy) Heartbeat(input string) (rs string, err error) {
+func (r *RPCHandlerProxy) Heartbeat(input string, timeout int64) (rs string, err error) {
 	return "success", nil
 }
 
 //Get 执行RPC Get服务
-func (r *RPCHandlerProxy) Get(name string, input string) (buffer []byte, err error) {
+func (r *RPCHandlerProxy) Get(name string, input string, timeout int64) (buffer []byte, err error) {
 
 	return
 }

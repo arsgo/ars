@@ -3,6 +3,7 @@ package proxy
 import (
 	"errors"
 	"runtime/debug"
+	"time"
 
 	"github.com/arsgo/ars/base"
 	"github.com/arsgo/ars/cluster"
@@ -49,7 +50,7 @@ func (h *ScriptProxy) CloseTask(ti cluster.TaskItem, path string) {
 }
 
 //Request 执行Request请求
-func (h *ScriptProxy) Request(ti cluster.TaskItem, input string, session string) (result string, err error) {
+func (h *ScriptProxy) Request(ti cluster.TaskItem, input string, session string, timeout time.Duration) (result string, err error) {
 	defer h.recover()
 	sresult, smap, err := h.scriptPool.Call(ti.Script, base.NewInvokeContext(ti.Name, h.taskType, h.loggerName, session, input, ti.Params, ""))
 	result, _, er := h.getResult(sresult, smap, err)
@@ -62,12 +63,12 @@ func (h *ScriptProxy) Request(ti cluster.TaskItem, input string, session string)
 }
 
 //Send 暂不支持
-func (h *ScriptProxy) Send(ti cluster.TaskItem, input string, data []byte) (string, error) {
+func (h *ScriptProxy) Send(ti cluster.TaskItem, input string, data []byte, timeout time.Duration) (string, error) {
 	return "", errors.New("job consumer not support send method")
 }
 
 //Get 暂不支持
-func (h *ScriptProxy) Get(ti cluster.TaskItem, input string) ([]byte, error) {
+func (h *ScriptProxy) Get(ti cluster.TaskItem, input string, timeout time.Duration) ([]byte, error) {
 	return nil, errors.New("job consumer not support get method")
 }
 func (h *ScriptProxy) getResult(result []string, params map[string]string, er error) (r string, p map[string]string, err error) {

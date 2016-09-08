@@ -19,19 +19,23 @@ type ServiceProvider interface {
 	//  - Name
 	//  - Input
 	//  - Session
-	Request(name string, input string, session string) (r string, err error)
+	//  - Timeout
+	Request(name string, input string, session string, timeout int64) (r string, err error)
 	// Parameters:
 	//  - Name
 	//  - Input
 	//  - Data
-	Send(name string, input string, data []byte) (r string, err error)
+	//  - Timeout
+	Send(name string, input string, data []byte, timeout int64) (r string, err error)
 	// Parameters:
 	//  - Input
-	Heartbeat(input string) (r string, err error)
+	//  - Timeout
+	Heartbeat(input string, timeout int64) (r string, err error)
 	// Parameters:
 	//  - Name
 	//  - Input
-	Get(name string, input string) (r []byte, err error)
+	//  - Timeout
+	Get(name string, input string, timeout int64) (r []byte, err error)
 }
 
 type ServiceProviderClient struct {
@@ -64,14 +68,15 @@ func NewServiceProviderClientProtocol(t thrift.TTransport, iprot thrift.TProtoco
 //  - Name
 //  - Input
 //  - Session
-func (p *ServiceProviderClient) Request(name string, input string, session string) (r string, err error) {
-	if err = p.sendRequest(name, input, session); err != nil {
+//  - Timeout
+func (p *ServiceProviderClient) Request(name string, input string, session string, timeout int64) (r string, err error) {
+	if err = p.sendRequest(name, input, session, timeout); err != nil {
 		return
 	}
 	return p.recvRequest()
 }
 
-func (p *ServiceProviderClient) sendRequest(name string, input string, session string) (err error) {
+func (p *ServiceProviderClient) sendRequest(name string, input string, session string, timeout int64) (err error) {
 	oprot := p.OutputProtocol
 	if oprot == nil {
 		oprot = p.ProtocolFactory.GetProtocol(p.Transport)
@@ -83,6 +88,7 @@ func (p *ServiceProviderClient) sendRequest(name string, input string, session s
 	args0.Name = name
 	args0.Input = input
 	args0.Session = session
+	args0.Timeout = timeout
 	err = args0.Write(oprot)
 	oprot.WriteMessageEnd()
 	oprot.Flush()
@@ -127,14 +133,15 @@ func (p *ServiceProviderClient) recvRequest() (value string, err error) {
 //  - Name
 //  - Input
 //  - Data
-func (p *ServiceProviderClient) Send(name string, input string, data []byte) (r string, err error) {
-	if err = p.sendSend(name, input, data); err != nil {
+//  - Timeout
+func (p *ServiceProviderClient) Send(name string, input string, data []byte, timeout int64) (r string, err error) {
+	if err = p.sendSend(name, input, data, timeout); err != nil {
 		return
 	}
 	return p.recvSend()
 }
 
-func (p *ServiceProviderClient) sendSend(name string, input string, data []byte) (err error) {
+func (p *ServiceProviderClient) sendSend(name string, input string, data []byte, timeout int64) (err error) {
 	oprot := p.OutputProtocol
 	if oprot == nil {
 		oprot = p.ProtocolFactory.GetProtocol(p.Transport)
@@ -146,6 +153,7 @@ func (p *ServiceProviderClient) sendSend(name string, input string, data []byte)
 	args4.Name = name
 	args4.Input = input
 	args4.Data = data
+	args4.Timeout = timeout
 	err = args4.Write(oprot)
 	oprot.WriteMessageEnd()
 	oprot.Flush()
@@ -188,14 +196,15 @@ func (p *ServiceProviderClient) recvSend() (value string, err error) {
 
 // Parameters:
 //  - Input
-func (p *ServiceProviderClient) Heartbeat(input string) (r string, err error) {
-	if err = p.sendHeartbeat(input); err != nil {
+//  - Timeout
+func (p *ServiceProviderClient) Heartbeat(input string, timeout int64) (r string, err error) {
+	if err = p.sendHeartbeat(input, timeout); err != nil {
 		return
 	}
 	return p.recvHeartbeat()
 }
 
-func (p *ServiceProviderClient) sendHeartbeat(input string) (err error) {
+func (p *ServiceProviderClient) sendHeartbeat(input string, timeout int64) (err error) {
 	oprot := p.OutputProtocol
 	if oprot == nil {
 		oprot = p.ProtocolFactory.GetProtocol(p.Transport)
@@ -205,6 +214,7 @@ func (p *ServiceProviderClient) sendHeartbeat(input string) (err error) {
 	oprot.WriteMessageBegin("Heartbeat", thrift.CALL, p.SeqId)
 	args8 := NewHeartbeatArgs()
 	args8.Input = input
+	args8.Timeout = timeout
 	err = args8.Write(oprot)
 	oprot.WriteMessageEnd()
 	oprot.Flush()
@@ -248,14 +258,15 @@ func (p *ServiceProviderClient) recvHeartbeat() (value string, err error) {
 // Parameters:
 //  - Name
 //  - Input
-func (p *ServiceProviderClient) Get(name string, input string) (r []byte, err error) {
-	if err = p.sendGet(name, input); err != nil {
+//  - Timeout
+func (p *ServiceProviderClient) Get(name string, input string, timeout int64) (r []byte, err error) {
+	if err = p.sendGet(name, input, timeout); err != nil {
 		return
 	}
 	return p.recvGet()
 }
 
-func (p *ServiceProviderClient) sendGet(name string, input string) (err error) {
+func (p *ServiceProviderClient) sendGet(name string, input string, timeout int64) (err error) {
 	oprot := p.OutputProtocol
 	if oprot == nil {
 		oprot = p.ProtocolFactory.GetProtocol(p.Transport)
@@ -266,6 +277,7 @@ func (p *ServiceProviderClient) sendGet(name string, input string) (err error) {
 	args12 := NewGetArgs()
 	args12.Name = name
 	args12.Input = input
+	args12.Timeout = timeout
 	err = args12.Write(oprot)
 	oprot.WriteMessageEnd()
 	oprot.Flush()
@@ -370,7 +382,7 @@ func (p *serviceProviderProcessorRequest) Process(seqId int32, iprot, oprot thri
 	}
 	iprot.ReadMessageEnd()
 	result := NewRequestResult()
-	if result.Success, err = p.handler.Request(args.Name, args.Input, args.Session); err != nil {
+	if result.Success, err = p.handler.Request(args.Name, args.Input, args.Session, args.Timeout); err != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Request: "+err.Error())
 		oprot.WriteMessageBegin("Request", thrift.EXCEPTION, seqId)
 		x.Write(oprot)
@@ -413,7 +425,7 @@ func (p *serviceProviderProcessorSend) Process(seqId int32, iprot, oprot thrift.
 	}
 	iprot.ReadMessageEnd()
 	result := NewSendResult()
-	if result.Success, err = p.handler.Send(args.Name, args.Input, args.Data); err != nil {
+	if result.Success, err = p.handler.Send(args.Name, args.Input, args.Data, args.Timeout); err != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Send: "+err.Error())
 		oprot.WriteMessageBegin("Send", thrift.EXCEPTION, seqId)
 		x.Write(oprot)
@@ -456,7 +468,7 @@ func (p *serviceProviderProcessorHeartbeat) Process(seqId int32, iprot, oprot th
 	}
 	iprot.ReadMessageEnd()
 	result := NewHeartbeatResult()
-	if result.Success, err = p.handler.Heartbeat(args.Input); err != nil {
+	if result.Success, err = p.handler.Heartbeat(args.Input, args.Timeout); err != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Heartbeat: "+err.Error())
 		oprot.WriteMessageBegin("Heartbeat", thrift.EXCEPTION, seqId)
 		x.Write(oprot)
@@ -499,7 +511,7 @@ func (p *serviceProviderProcessorGet) Process(seqId int32, iprot, oprot thrift.T
 	}
 	iprot.ReadMessageEnd()
 	result := NewGetResult()
-	if result.Success, err = p.handler.Get(args.Name, args.Input); err != nil {
+	if result.Success, err = p.handler.Get(args.Name, args.Input, args.Timeout); err != nil {
 		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Get: "+err.Error())
 		oprot.WriteMessageBegin("Get", thrift.EXCEPTION, seqId)
 		x.Write(oprot)
@@ -531,6 +543,7 @@ type RequestArgs struct {
 	Name    string `thrift:"name,1"`
 	Input   string `thrift:"input,2"`
 	Session string `thrift:"session,3"`
+	Timeout int64  `thrift:"timeout,4"`
 }
 
 func NewRequestArgs() *RequestArgs {
@@ -560,6 +573,10 @@ func (p *RequestArgs) Read(iprot thrift.TProtocol) error {
 			}
 		case 3:
 			if err := p.readField3(iprot); err != nil {
+				return err
+			}
+		case 4:
+			if err := p.readField4(iprot); err != nil {
 				return err
 			}
 		default:
@@ -604,6 +621,15 @@ func (p *RequestArgs) readField3(iprot thrift.TProtocol) error {
 	return nil
 }
 
+func (p *RequestArgs) readField4(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadI64(); err != nil {
+		return fmt.Errorf("error reading field 4: %s")
+	} else {
+		p.Timeout = v
+	}
+	return nil
+}
+
 func (p *RequestArgs) Write(oprot thrift.TProtocol) error {
 	if err := oprot.WriteStructBegin("Request_args"); err != nil {
 		return fmt.Errorf("%T write struct begin error: %s", p, err)
@@ -615,6 +641,9 @@ func (p *RequestArgs) Write(oprot thrift.TProtocol) error {
 		return err
 	}
 	if err := p.writeField3(oprot); err != nil {
+		return err
+	}
+	if err := p.writeField4(oprot); err != nil {
 		return err
 	}
 	if err := oprot.WriteFieldStop(); err != nil {
@@ -661,6 +690,19 @@ func (p *RequestArgs) writeField3(oprot thrift.TProtocol) (err error) {
 	}
 	if err := oprot.WriteFieldEnd(); err != nil {
 		return fmt.Errorf("%T write field end error 3:session: %s", p, err)
+	}
+	return err
+}
+
+func (p *RequestArgs) writeField4(oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin("timeout", thrift.I64, 4); err != nil {
+		return fmt.Errorf("%T write field begin error 4:timeout: %s", p, err)
+	}
+	if err := oprot.WriteI64(int64(p.Timeout)); err != nil {
+		return fmt.Errorf("%T.timeout (4) field write error: %s", p)
+	}
+	if err := oprot.WriteFieldEnd(); err != nil {
+		return fmt.Errorf("%T write field end error 4:timeout: %s", p, err)
 	}
 	return err
 }
@@ -761,9 +803,10 @@ func (p *RequestResult) String() string {
 }
 
 type SendArgs struct {
-	Name  string `thrift:"name,1"`
-	Input string `thrift:"input,2"`
-	Data  []byte `thrift:"data,3"`
+	Name    string `thrift:"name,1"`
+	Input   string `thrift:"input,2"`
+	Data    []byte `thrift:"data,3"`
+	Timeout int64  `thrift:"timeout,4"`
 }
 
 func NewSendArgs() *SendArgs {
@@ -793,6 +836,10 @@ func (p *SendArgs) Read(iprot thrift.TProtocol) error {
 			}
 		case 3:
 			if err := p.readField3(iprot); err != nil {
+				return err
+			}
+		case 4:
+			if err := p.readField4(iprot); err != nil {
 				return err
 			}
 		default:
@@ -837,6 +884,15 @@ func (p *SendArgs) readField3(iprot thrift.TProtocol) error {
 	return nil
 }
 
+func (p *SendArgs) readField4(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadI64(); err != nil {
+		return fmt.Errorf("error reading field 4: %s")
+	} else {
+		p.Timeout = v
+	}
+	return nil
+}
+
 func (p *SendArgs) Write(oprot thrift.TProtocol) error {
 	if err := oprot.WriteStructBegin("Send_args"); err != nil {
 		return fmt.Errorf("%T write struct begin error: %s", p, err)
@@ -848,6 +904,9 @@ func (p *SendArgs) Write(oprot thrift.TProtocol) error {
 		return err
 	}
 	if err := p.writeField3(oprot); err != nil {
+		return err
+	}
+	if err := p.writeField4(oprot); err != nil {
 		return err
 	}
 	if err := oprot.WriteFieldStop(); err != nil {
@@ -896,6 +955,19 @@ func (p *SendArgs) writeField3(oprot thrift.TProtocol) (err error) {
 		if err := oprot.WriteFieldEnd(); err != nil {
 			return fmt.Errorf("%T write field end error 3:data: %s", p, err)
 		}
+	}
+	return err
+}
+
+func (p *SendArgs) writeField4(oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin("timeout", thrift.I64, 4); err != nil {
+		return fmt.Errorf("%T write field begin error 4:timeout: %s", p, err)
+	}
+	if err := oprot.WriteI64(int64(p.Timeout)); err != nil {
+		return fmt.Errorf("%T.timeout (4) field write error: %s", p)
+	}
+	if err := oprot.WriteFieldEnd(); err != nil {
+		return fmt.Errorf("%T write field end error 4:timeout: %s", p, err)
 	}
 	return err
 }
@@ -996,7 +1068,8 @@ func (p *SendResult) String() string {
 }
 
 type HeartbeatArgs struct {
-	Input string `thrift:"input,1"`
+	Input   string `thrift:"input,1"`
+	Timeout int64  `thrift:"timeout,2"`
 }
 
 func NewHeartbeatArgs() *HeartbeatArgs {
@@ -1018,6 +1091,10 @@ func (p *HeartbeatArgs) Read(iprot thrift.TProtocol) error {
 		switch fieldId {
 		case 1:
 			if err := p.readField1(iprot); err != nil {
+				return err
+			}
+		case 2:
+			if err := p.readField2(iprot); err != nil {
 				return err
 			}
 		default:
@@ -1044,11 +1121,23 @@ func (p *HeartbeatArgs) readField1(iprot thrift.TProtocol) error {
 	return nil
 }
 
+func (p *HeartbeatArgs) readField2(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadI64(); err != nil {
+		return fmt.Errorf("error reading field 2: %s")
+	} else {
+		p.Timeout = v
+	}
+	return nil
+}
+
 func (p *HeartbeatArgs) Write(oprot thrift.TProtocol) error {
 	if err := oprot.WriteStructBegin("Heartbeat_args"); err != nil {
 		return fmt.Errorf("%T write struct begin error: %s", p, err)
 	}
 	if err := p.writeField1(oprot); err != nil {
+		return err
+	}
+	if err := p.writeField2(oprot); err != nil {
 		return err
 	}
 	if err := oprot.WriteFieldStop(); err != nil {
@@ -1069,6 +1158,19 @@ func (p *HeartbeatArgs) writeField1(oprot thrift.TProtocol) (err error) {
 	}
 	if err := oprot.WriteFieldEnd(); err != nil {
 		return fmt.Errorf("%T write field end error 1:input: %s", p, err)
+	}
+	return err
+}
+
+func (p *HeartbeatArgs) writeField2(oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin("timeout", thrift.I64, 2); err != nil {
+		return fmt.Errorf("%T write field begin error 2:timeout: %s", p, err)
+	}
+	if err := oprot.WriteI64(int64(p.Timeout)); err != nil {
+		return fmt.Errorf("%T.timeout (2) field write error: %s", p)
+	}
+	if err := oprot.WriteFieldEnd(); err != nil {
+		return fmt.Errorf("%T write field end error 2:timeout: %s", p, err)
 	}
 	return err
 }
@@ -1169,8 +1271,9 @@ func (p *HeartbeatResult) String() string {
 }
 
 type GetArgs struct {
-	Name  string `thrift:"name,1"`
-	Input string `thrift:"input,2"`
+	Name    string `thrift:"name,1"`
+	Input   string `thrift:"input,2"`
+	Timeout int64  `thrift:"timeout,3"`
 }
 
 func NewGetArgs() *GetArgs {
@@ -1196,6 +1299,10 @@ func (p *GetArgs) Read(iprot thrift.TProtocol) error {
 			}
 		case 2:
 			if err := p.readField2(iprot); err != nil {
+				return err
+			}
+		case 3:
+			if err := p.readField3(iprot); err != nil {
 				return err
 			}
 		default:
@@ -1231,6 +1338,15 @@ func (p *GetArgs) readField2(iprot thrift.TProtocol) error {
 	return nil
 }
 
+func (p *GetArgs) readField3(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadI64(); err != nil {
+		return fmt.Errorf("error reading field 3: %s")
+	} else {
+		p.Timeout = v
+	}
+	return nil
+}
+
 func (p *GetArgs) Write(oprot thrift.TProtocol) error {
 	if err := oprot.WriteStructBegin("Get_args"); err != nil {
 		return fmt.Errorf("%T write struct begin error: %s", p, err)
@@ -1239,6 +1355,9 @@ func (p *GetArgs) Write(oprot thrift.TProtocol) error {
 		return err
 	}
 	if err := p.writeField2(oprot); err != nil {
+		return err
+	}
+	if err := p.writeField3(oprot); err != nil {
 		return err
 	}
 	if err := oprot.WriteFieldStop(); err != nil {
@@ -1272,6 +1391,19 @@ func (p *GetArgs) writeField2(oprot thrift.TProtocol) (err error) {
 	}
 	if err := oprot.WriteFieldEnd(); err != nil {
 		return fmt.Errorf("%T write field end error 2:input: %s", p, err)
+	}
+	return err
+}
+
+func (p *GetArgs) writeField3(oprot thrift.TProtocol) (err error) {
+	if err := oprot.WriteFieldBegin("timeout", thrift.I64, 3); err != nil {
+		return fmt.Errorf("%T write field begin error 3:timeout: %s", p, err)
+	}
+	if err := oprot.WriteI64(int64(p.Timeout)); err != nil {
+		return fmt.Errorf("%T.timeout (3) field write error: %s", p)
+	}
+	if err := oprot.WriteFieldEnd(); err != nil {
+		return fmt.Errorf("%T write field end error 3:timeout: %s", p, err)
 	}
 	return err
 }

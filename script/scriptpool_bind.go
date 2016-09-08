@@ -1,7 +1,6 @@
 package script
 
 import (
-	"errors"
 	"time"
 
 	"github.com/arsgo/lib4go/elastic"
@@ -12,6 +11,7 @@ import (
 	"github.com/arsgo/lib4go/security/weixin"
 )
 
+/*
 //NewRPCClient 创建RPC client
 func (s *ScriptPool) NewRPCClient() (*RPCBinder, error) {
 	if s.rpcclient == nil {
@@ -19,7 +19,7 @@ func (s *ScriptPool) NewRPCClient() (*RPCBinder, error) {
 	}
 	return NewRPCBind(s.rpcclient), nil
 }
-
+*/
 //NewMemcached 创建Memcached对象
 func (s *ScriptPool) NewMemcached(name string) (p *mem.MemcacheClient, err error) {
 	config, err := s.clusterClient.GetDBConfig(name)

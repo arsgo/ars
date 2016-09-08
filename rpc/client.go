@@ -174,7 +174,7 @@ func (r *RPCClient) getGroup(cmd string) (g *base.ServiceGroup, name string, err
 }
 
 //Request 发送Request请求
-func (r *RPCClient) Request(cmd string, input string, session string) (result string, err error) {
+func (r *RPCClient) Request(cmd string, input string, session string, timeout time.Duration) (result string, err error) {
 	defer r.recover()
 	start := time.Now()
 	clogger, _ := logger.NewSession(r.loggerName, session)
@@ -200,7 +200,7 @@ START:
 		err = errors.New(result)
 		return
 	}
-	result, err = r.pool.Request(groupName, name, input, session)
+	result, err = r.pool.Request(groupName, name, input, session, timeout)
 	if err != nil {
 		result = base.GetErrorResult(base.ERR_NOT_FIND_SRVS, err.Error())
 	} else {
@@ -224,13 +224,13 @@ func (r *RPCClient) Get(cmd string, input string) (result string, err error) {
 }
 
 //AsyncRequest 发送异步Request请求
-func (r *RPCClient) AsyncRequest(name string, input string, contextSession string) (session string, err error) {
+func (r *RPCClient) AsyncRequest(name string, input string, contextSession string, timeout time.Duration) (session string, err error) {
 	session = utility.GetGUID()
 	queueChan := make(chan []interface{}, 1)
 	r.queues.Set(session, queueChan)
 	go func(queueChan chan []interface{}, r *RPCClient, name string, input string, csession string) {
 		defer r.recover()
-		result, err := r.Request(name, input, csession)
+		result, err := r.Request(name, input, csession, timeout)
 		if err != nil {
 			queueChan <- []interface{}{result, err.Error()}
 		} else {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/arsgo/ars/base"
 	"github.com/arsgo/ars/base/rpcservice"
@@ -111,7 +112,7 @@ func (rc *RCServer) runJob(task cluster.JobItem, consumer string, session string
 		err = fmt.Errorf("执行失败job(%s)失败,无法连接到服务器: %s", task.Name, consumer)
 		return
 	}
-	result, err := client.Request(task.Name, "{}", session)
+	result, err := client.Request(task.Name, "{}", session, time.Second*time.Duration(utility.GetMax(task.Timeout, 5)))
 	client.Close()
 	if err != nil {
 		err = fmt.Errorf("调用job(%s)失败,%v", task.Name, err)

@@ -22,6 +22,7 @@ type AppSnap struct {
 	Address   string      `json:"address"`
 	Server    string      `json:"server"`
 	Refresh   int         `json:"refresh"`
+	AppMem    string      `json:"am"`
 	Version   string      `json:"version"`
 	CPU       interface{} `json:"cpu"`
 	Mem       interface{} `json:"mem"`
@@ -38,6 +39,7 @@ type MQSnap struct {
 	Address string      `json:"address"`
 	Name    string      `json:"name"`
 	Refresh int         `json:"refresh"`
+	AppMem  string      `json:"am"`
 	Version string      `json:"version"`
 	CPU     interface{} `json:"cpu"`
 	Mem     interface{} `json:"mem"`
@@ -50,6 +52,7 @@ type JobConsumerSnap struct {
 	Address string      `json:"address"`
 	Server  string      `json:"server"`
 	Refresh int         `json:"refresh"`
+	AppMem  string      `json:"am"`
 	Version string      `json:"version"`
 	CPU     interface{} `json:"cpu"`
 	Mem     interface{} `json:"mem"`
@@ -61,6 +64,7 @@ type JobConsumerSnap struct {
 type JobLocalSnap struct {
 	Address string      `json:"address"`
 	Refresh int         `json:"refresh"`
+	AppMem  string      `json:"am"`
 	Version string      `json:"version"`
 	CPU     interface{} `json:"cpu"`
 	Mem     interface{} `json:"mem"`
@@ -84,6 +88,7 @@ func (as AppSnap) getJobConsumerSnap(server string) string {
 	snap.Address = as.Address
 	snap.Refresh = as.Refresh
 	snap.Version = as.Version
+	snap.AppMem = as.AppMem
 	snap.CPU = as.CPU
 	snap.Mem = as.Mem
 	snap.Disk = as.Disk
@@ -99,6 +104,7 @@ func (as AppSnap) getJobLocalSnap() string {
 	var snap JobLocalSnap
 	snap.Address = as.Address
 	snap.Refresh = as.Refresh
+	snap.AppMem = as.AppMem
 	snap.Version = as.Version
 	snap.CPU = as.CPU
 	snap.Mem = as.Mem
@@ -115,6 +121,7 @@ func (as AppSnap) getMQSnap(name string) string {
 	snap.Name = name
 	snap.Address = as.Address
 	snap.Refresh = as.Refresh
+	snap.AppMem = as.AppMem
 	snap.Version = as.Version
 	snap.CPU = as.CPU
 	snap.Mem = as.Mem
@@ -142,7 +149,7 @@ func (app *AppServer) updateSnap(services map[string]interface{}) {
 	app.snapLogger.Info(" -> 更新 app server快照信息")
 	cache := make(map[string]interface{})
 	app.appendSystemSnap(services, cache)
-
+	app.snap.AppMem = fmt.Sprintf("%dm", sysinfo.GetAPPMemory())
 	jobSnaps := utility.CloneMap(services)
 	app.snap.Snap = jobSnaps
 	if app.jobServer.Available {

@@ -6,6 +6,7 @@ import (
 	"log"
 	"runtime/debug"
 	"strings"
+	"time"
 
 	"github.com/arsgo/ars/servers/config"
 	"github.com/arsgo/lib4go/concurrent"
@@ -33,7 +34,7 @@ type RPCServerPool struct {
 func NewRPCServerPool(minSize int, maxSize int, loggerName string) *RPCServerPool {
 	var err error
 	conf, _ := config.Get()
-	pl := &RPCServerPool{MinSize: minSize, MaxSize: maxSize, MaxRetry: 1, loggerName: loggerName, domain: conf.Domain}
+	pl := &RPCServerPool{MinSize: minSize, MaxSize: maxSize, MaxRetry: 3, loggerName: loggerName, domain: conf.Domain}
 	pl.pool = pool.New()
 	pl.servers = concurrent.NewConcurrentMap()
 	pl.Log, err = logger.Get(loggerName)
@@ -85,7 +86,7 @@ func (s *RPCServerPool) Register(svs map[string]string) {
 }
 
 //Request 发送request请求
-func (p *RPCServerPool) Request(group string, svName string, input string, session string) (result string, err error) {
+func (p *RPCServerPool) Request(group string, svName string, input string, session string, timeout time.Duration) (result string, err error) {
 	defer p.recover()
 	//defer base.RunTime("rpc request total", time.Now())
 	if strings.EqualFold(group, "") {
@@ -101,23 +102,53 @@ START:
 	}
 	o, err := p.pool.Get(group)
 	if err != nil {
-		err = fmt.Errorf("not find rpc server(%s@%s.rpc.pool):%s/%s,%v", p.loggerName, p.domain, group, svName, err)
+		err = fmt.Errorf("not find rpc server(%s@%s.rpc.pool):%s/%s,[%v]", p.loggerName, p.domain, group, svName, err)
 		return
 	}
 	obj := o.(*RPCClient)
-	err = obj.Open()
+	err = obj.OpenTimeout(time.Second)
 	if err != nil {
-		goto START
-	}
-	defer func() {
-		obj.Close()
-	}()
-	if obj.isFatal {
 		p.Log.Error("当前服务不可用:", p.loggerName, svName, err)
 		p.pool.Unusable(group, obj)
 		goto START
 	}
-	result, err = obj.Request(svName, input, session)
+	obj.SetRWTimeout(timeout)
+	result, err = obj.Request(svName, input, session, timeout)
+	p.pool.Recycle(group, o)
+	obj.Close()
+	return
+}
+
+//Request 发送request请求
+func (p *RPCServerPool) Request2(group string, svName string, input string, session string, timeout time.Duration) (result string, err error) {
+	defer p.recover()
+	//defer base.RunTime("rpc request total", time.Now())
+	if strings.EqualFold(group, "") {
+		err = errors.New("not find rpc server and name cant be nil" + p.loggerName + "@" + p.domain + ".rpc.pool")
+		return
+	}
+	execute := 0
+START:
+	execute++
+	if execute > p.MaxRetry {
+		err = fmt.Errorf("cant connect to rpc server(%s@%s.rpc.pool):%s/%s,%v", p.loggerName, p.domain, group, svName, err)
+		return
+	}
+	o, err := p.pool.Get(group)
+	if err != nil {
+		err = fmt.Errorf("not find rpc server(%s@%s.rpc.pool):%s/%s,[%v]", p.loggerName, p.domain, group, svName, err)
+		return
+	}
+	obj := o.(*RPCClient)
+	//open,close
+	if !obj.Available() {
+		p.Log.Error("当前服务不可用:", p.loggerName, svName, err)
+		//p.pool.Unusable(group, obj)
+		p.pool.Recycle(group, o)
+		goto START
+	}
+	obj.SetRWTimeout(timeout)
+	result, err = obj.Request(svName, input, session, timeout)
 	p.pool.Recycle(group, o)
 	return
 }

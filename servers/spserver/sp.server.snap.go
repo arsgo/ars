@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/arsgo/ars/snap"
@@ -15,6 +16,7 @@ type SPSnap struct {
 	Address  string      `json:"address"`
 	Service  string      `json:"service"`
 	Refresh  int         `json:"refresh"`
+	AppMem   string      `json:"am"`
 	Version  string      `json:"version"`
 	CPU      string      `json:"cpu"`
 	Mem      string      `json:"mem"`
@@ -26,6 +28,11 @@ type SPSnap struct {
 //ResetSPSnap 重置SP server 快照
 func (sp *SPServer) updateSnap(snaps map[string]interface{}) {
 	sp.snapLogger.Info(" - >更新 sp server 快照信息")
+	sp.snap.AppMem = fmt.Sprintf("%dm", sysinfo.GetAPPMemory())
+	sp.snap.CPU = sysinfo.GetAvaliabeCPU().Used
+	sp.snap.Mem = sysinfo.GetAvaliabeMem().Used
+	sp.snap.Disk = sysinfo.GetAvaliabeDisk().Used
+
 	services := sp.rpcServer.GetServicePath()
 	for k, v := range services {
 		nsnap := utility.CloneMap(snaps)
@@ -57,9 +64,6 @@ func (sn SPSnap) getSnap(service string, snaps map[string]interface{}) string {
 	snap.Service = service
 	snap.Last = time.Now().Format("20060102150405")
 	//	snap.Snap = snaps
-	snap.CPU = sysinfo.GetAvaliabeCPU().Used
-	snap.Mem = sysinfo.GetAvaliabeMem().Used
-	snap.Disk = sysinfo.GetAvaliabeDisk().Used
 	buffer, err := json.Marshal(&snap)
 	if err != nil {
 		sn.spserver.Log.Error("get snap:", err)
@@ -68,7 +72,11 @@ func (sn SPSnap) getSnap(service string, snaps map[string]interface{}) string {
 }
 
 func (sn SPSnap) getDefSnap(service string) string {
-	cache := make(map[string]interface{})
-	cache["rpc"] = sn.spserver.rpcClient.GetSnap()
+	//cache := make(map[string]interface{})
+	//cache["rpc"] = sn.spserver.rpcClient.GetSnap()
+	sn.AppMem = fmt.Sprintf("%dm", sysinfo.GetAPPMemory())
+	sn.CPU = sysinfo.GetAvaliabeCPU().Used
+	sn.Mem = sysinfo.GetAvaliabeMem().Used
+	sn.Disk = sysinfo.GetAvaliabeDisk().Used
 	return sn.getSnap(service, snap.GetData())
 }

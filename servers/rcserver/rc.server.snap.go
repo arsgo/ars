@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/arsgo/ars/snap"
@@ -16,6 +17,7 @@ type RCSnap struct {
 	Address  string      `json:"address"`
 	Server   string      `json:"server"`
 	Refresh  int         `json:"refresh"`
+	AppMem   string      `json:"am"`
 	Version  string      `json:"version"`
 	CPU      string      `json:"cpu"`
 	Mem      string      `json:"mem"`
@@ -29,6 +31,7 @@ type RCSnap struct {
 func (rs RCSnap) GetServicesSnap(services map[string]interface{}) string {
 	snap := rs
 	snap.Last = time.Now().Format("20060102150405")
+	snap.AppMem = fmt.Sprintf("%dm", sysinfo.GetAPPMemory())
 	snap.CPU = sysinfo.GetAvaliabeCPU().Used
 	snap.Mem = sysinfo.GetAvaliabeMem().Used
 	snap.Disk = sysinfo.GetAvaliabeDisk().Used

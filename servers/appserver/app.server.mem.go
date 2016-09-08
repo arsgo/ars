@@ -1,19 +1,14 @@
 package main
 
-import (
-	"runtime/debug"
-	"time"
-
-	"github.com/arsgo/lib4go/sysinfo"
-)
+import "time"
 
 func (a *AppServer) clearMem() {
 	tk := time.NewTicker(time.Second * 201)
 	for {
 		select {
 		case <-tk.C:
-			a.snapLogger.Infof(" -> 清理内存...%dM", sysinfo.GetAPPMemory())
-			debug.FreeOSMemory()
+			//	a.snapLogger.Infof(" -> 清理内存...%dM", sysinfo.GetAPPMemory())
+			//debug.FreeOSMemory()
 		}
 	}
 }

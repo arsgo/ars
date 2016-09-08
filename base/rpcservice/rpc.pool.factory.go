@@ -31,9 +31,10 @@ func (fac *rpcClientFactory) Create() (p pool.Object, err error) {
 		err = errors.New("factory is closed")
 		return
 	}
-	client := NewRPCClientTimeout(fac.ip, time.Second*5, fac.loggerName)
-	//err = client.Open()
-	//if err != nil {
+	client := NewRPCClientTimeout(fac.ip, time.Second*3, fac.loggerName)
+	//err = client.OpenTimeout(time.Second)
+	//	if err != nil {
+	//	client.Close()
 	//	return
 	//	}
 	p = client

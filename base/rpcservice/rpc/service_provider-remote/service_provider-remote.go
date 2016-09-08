@@ -20,10 +20,10 @@ func Usage() {
 	fmt.Fprintln(os.Stderr, "Usage of ", os.Args[0], " [-h host:port] [-u url] [-f[ramed]] function [arg1 [arg2...]]:")
 	flag.PrintDefaults()
 	fmt.Fprintln(os.Stderr, "\nFunctions:")
-	fmt.Fprintln(os.Stderr, "  string Request(string name, string input, string session)")
-	fmt.Fprintln(os.Stderr, "  string Send(string name, string input, string data)")
-	fmt.Fprintln(os.Stderr, "  string Heartbeat(string input)")
-	fmt.Fprintln(os.Stderr, "  string Get(string name, string input)")
+	fmt.Fprintln(os.Stderr, "  string Request(string name, string input, string session, i64 timeout)")
+	fmt.Fprintln(os.Stderr, "  string Send(string name, string input, string data, i64 timeout)")
+	fmt.Fprintln(os.Stderr, "  string Heartbeat(string input, i64 timeout)")
+	fmt.Fprintln(os.Stderr, "  string Get(string name, string input, i64 timeout)")
 	fmt.Fprintln(os.Stderr)
 	os.Exit(0)
 }
@@ -119,8 +119,8 @@ func main() {
 
 	switch cmd {
 	case "Request":
-		if flag.NArg()-1 != 3 {
-			fmt.Fprintln(os.Stderr, "Request requires 3 args")
+		if flag.NArg()-1 != 4 {
+			fmt.Fprintln(os.Stderr, "Request requires 4 args")
 			flag.Usage()
 		}
 		argvalue0 := flag.Arg(1)
@@ -129,12 +129,18 @@ func main() {
 		value1 := argvalue1
 		argvalue2 := flag.Arg(3)
 		value2 := argvalue2
-		fmt.Print(client.Request(value0, value1, value2))
+		argvalue3, err21 := (strconv.ParseInt(flag.Arg(4), 10, 64))
+		if err21 != nil {
+			Usage()
+			return
+		}
+		value3 := argvalue3
+		fmt.Print(client.Request(value0, value1, value2, value3))
 		fmt.Print("\n")
 		break
 	case "Send":
-		if flag.NArg()-1 != 3 {
-			fmt.Fprintln(os.Stderr, "Send requires 3 args")
+		if flag.NArg()-1 != 4 {
+			fmt.Fprintln(os.Stderr, "Send requires 4 args")
 			flag.Usage()
 		}
 		argvalue0 := flag.Arg(1)
@@ -143,29 +149,47 @@ func main() {
 		value1 := argvalue1
 		argvalue2 := flag.Arg(3)
 		value2 := argvalue2
-		fmt.Print(client.Send(value0, value1, value2))
+		argvalue3, err25 := (strconv.ParseInt(flag.Arg(4), 10, 64))
+		if err25 != nil {
+			Usage()
+			return
+		}
+		value3 := argvalue3
+		fmt.Print(client.Send(value0, value1, value2, value3))
 		fmt.Print("\n")
 		break
 	case "Heartbeat":
-		if flag.NArg()-1 != 1 {
-			fmt.Fprintln(os.Stderr, "Heartbeat requires 1 args")
+		if flag.NArg()-1 != 2 {
+			fmt.Fprintln(os.Stderr, "Heartbeat requires 2 args")
 			flag.Usage()
 		}
 		argvalue0 := flag.Arg(1)
 		value0 := argvalue0
-		fmt.Print(client.Heartbeat(value0))
+		argvalue1, err27 := (strconv.ParseInt(flag.Arg(2), 10, 64))
+		if err27 != nil {
+			Usage()
+			return
+		}
+		value1 := argvalue1
+		fmt.Print(client.Heartbeat(value0, value1))
 		fmt.Print("\n")
 		break
 	case "Get":
-		if flag.NArg()-1 != 2 {
-			fmt.Fprintln(os.Stderr, "Get requires 2 args")
+		if flag.NArg()-1 != 3 {
+			fmt.Fprintln(os.Stderr, "Get requires 3 args")
 			flag.Usage()
 		}
 		argvalue0 := flag.Arg(1)
 		value0 := argvalue0
 		argvalue1 := flag.Arg(2)
 		value1 := argvalue1
-		fmt.Print(client.Get(value0, value1))
+		argvalue2, err30 := (strconv.ParseInt(flag.Arg(3), 10, 64))
+		if err30 != nil {
+			Usage()
+			return
+		}
+		value2 := argvalue2
+		fmt.Print(client.Get(value0, value1, value2))
 		fmt.Print("\n")
 		break
 	case "":

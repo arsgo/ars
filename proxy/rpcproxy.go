@@ -3,6 +3,7 @@ package proxy
 import (
 	"runtime/debug"
 	"sync"
+	"time"
 
 	"github.com/arsgo/ars/cluster"
 	"github.com/arsgo/ars/rpc"
@@ -58,9 +59,9 @@ func (h *RPCClientProxy) CloseTask(ti cluster.TaskItem, path string) {
 }
 
 //Request 执行Request请求
-func (h *RPCClientProxy) Request(ti cluster.TaskItem, input string, session string) (r string, err error) {
+func (h *RPCClientProxy) Request(ti cluster.TaskItem, input string, session string, timeout time.Duration) (r string, err error) {
 	defer h.recover()
-	r, er := h.client.Request(ti.Name, input, session)
+	r, er := h.client.Request(ti.Name, input, session, timeout)
 	if er != nil {
 		r = er.Error()
 	}
@@ -68,12 +69,12 @@ func (h *RPCClientProxy) Request(ti cluster.TaskItem, input string, session stri
 }
 
 //Send 暂不支持
-func (h *RPCClientProxy) Send(ti cluster.TaskItem, input string, data []byte) (string, error) {
+func (h *RPCClientProxy) Send(ti cluster.TaskItem, input string, data []byte,timeout time.Duration) (string, error) {
 	return h.client.Send(ti.Name, input, string(data))
 }
 
 //Get 暂不支持
-func (h *RPCClientProxy) Get(ti cluster.TaskItem, input string) ([]byte, error) {
+func (h *RPCClientProxy) Get(ti cluster.TaskItem, input string, timeout time.Duration) ([]byte, error) {
 	data, err := h.client.Get(ti.Name, input)
 	if err != nil {
 		return nil, err
