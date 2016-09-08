@@ -119,6 +119,7 @@ func (sp *SPServer) Start() (err error) {
 	sp.startSync.Wait()
 	go sp.startRefreshSnap()
 	go sp.startMonitor()
+	go sp.clearMem()
 	sp.Log.Info(" -> sp server 启动完成...")
 	return nil
 }

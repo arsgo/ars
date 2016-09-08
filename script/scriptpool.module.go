@@ -16,6 +16,13 @@ func (s *ScriptPool) bindModules() (r map[string]map[string]lua.LGFunction) {
 			"async_request": s.moduleRPCAsyncRequest,
 			"get_result":    s.moduleRPCGetResult,
 		},
+		"encoding": map[string]lua.LGFunction{
+			"convert": s.moduleEncodingConvert,
+		},
+		"unicode": map[string]lua.LGFunction{
+			"encode": s.moduleUnicodeEncode,
+			"decode": s.moduleUnicodeDecode,
+		},
 		"md5": map[string]lua.LGFunction{
 			"encrypt": s.moduleMd5Encrypt,
 		},
