@@ -15,7 +15,9 @@ func (rc *RCServer) startMonitor() {
 		for {
 			select {
 			case <-tk.C:
+				rc.Log.Info("check rebind")
 				if rc.needBindRPCService() {
+					rc.Log.Info("services 数量小于配置数")
 					rc.timerRebindServices.Push("services 数量小于配置数")
 				}
 			}
@@ -58,7 +60,7 @@ func (rc *RCServer) needBindRPCService() bool {
 
 //rebindLocalServices 重新绑定本地服务
 func (rc *RCServer) rebindLocalServices(p ...interface{}) {
-	//	rc.Log.Infof("rebindLocalServices:%v", p)
+	rc.Log.Infof("rebindLocalServices:%v", p)
 	lst, err := rc.clusterClient.GetSPServerServices()
 	if err != nil {
 		rc.Log.Error(err)
@@ -71,6 +73,9 @@ func (rc *RCServer) rebindLocalServices(p ...interface{}) {
 	}
 	services := rc.MergeService()
 	rc.BindServices(services, nil)
+	if rc.IsMaster {
+		rc.PublishNow(p...)
+	}
 	return
 }
 

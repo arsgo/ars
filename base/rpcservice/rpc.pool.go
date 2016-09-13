@@ -91,6 +91,7 @@ func (p *RPCServerPool) Request(group string, svName string, input string, sessi
 	//defer base.RunTime("rpc request total", time.Now())
 	if strings.EqualFold(group, "") {
 		err = errors.New("not find rpc server and name cant be nil" + p.loggerName + "@" + p.domain + ".rpc.pool")
+		result = err.Error()
 		return
 	}
 	execute := 0
@@ -98,11 +99,13 @@ START:
 	execute++
 	if execute > p.MaxRetry {
 		err = fmt.Errorf("cant connect to rpc server(%s@%s.rpc.pool):%s/%s,%v", p.loggerName, p.domain, group, svName, err)
+		result = err.Error()
 		return
 	}
 	o, err := p.pool.Get(group)
 	if err != nil {
 		err = fmt.Errorf("not find rpc server(%s@%s.rpc.pool):%s/%s,[%v]", p.loggerName, p.domain, group, svName, err)
+		result = err.Error()
 		return
 	}
 	obj := o.(*RPCClient)
@@ -116,6 +119,9 @@ START:
 	result, err = obj.Request(svName, input, session, timeout)
 	p.pool.Recycle(group, o)
 	obj.Close()
+	if err != nil {
+		goto START
+	}
 	return
 }
 

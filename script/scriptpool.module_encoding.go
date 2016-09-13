@@ -21,3 +21,24 @@ func (s *ScriptPool) moduleUnicodeDecode(ls *lua.LState) int {
 	result := encoding.UnicodeDecode(input)
 	return pushValues(ls, result)
 }
+
+func (s *ScriptPool) moduleURLEncode(ls *lua.LState) int {
+	input := ls.CheckString(1)
+	result := encoding.URLEncode(input)
+	return pushValues(ls, result)
+}
+func (s *ScriptPool) moduleURLDecode(ls *lua.LState) int {
+	input := ls.CheckString(1)
+	result, err := encoding.URLDecode(input)
+	return pushValues(ls, result, err)
+}
+func (s *ScriptPool) moduleHTMLEncode(ls *lua.LState) int {
+	input := ls.CheckString(1)
+	result := encoding.HTMLEncode(input)
+	return pushValues(ls, result)
+}
+func (s *ScriptPool) moduleHTMLDecode(ls *lua.LState) int {
+	input := ls.CheckString(1)
+	result := encoding.HTMLDecode(input)
+	return pushValues(ls, result)
+}

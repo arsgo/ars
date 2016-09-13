@@ -18,13 +18,19 @@ func (s *ScriptPool) moduleDESEncrypt(ls *lua.LState) int {
 	input := ls.CheckString(1)
 	key := ls.CheckString(2)
 	r, e := des.Encrypt(input, key)
-	return pushValues(ls, r, e)
+	if e != nil {
+		return pushValues(ls, r, e)
+	}
+	return pushValues(ls, r)
 }
 func (s *ScriptPool) moduleDESDecrypt(ls *lua.LState) int {
 	input := ls.CheckString(1)
 	key := ls.CheckString(2)
 	r, e := des.Decrypt(input, key)
-	return pushValues(ls, r, e)
+	if e != nil {
+		return pushValues(ls, r, e)
+	}
+	return pushValues(ls, r)
 }
 func (s *ScriptPool) moduleAESEncrypt(ls *lua.LState) int {
 	input := ls.CheckString(1)

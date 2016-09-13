@@ -113,30 +113,29 @@ func (r *RPCClient) ResetRPCServer(servers map[string][]string) (count int) {
 }
 
 //GetAsyncResult 获取异步请求结果
-func (r *RPCClient) GetAsyncResult(session string, timeout int) (rt interface{}, err string) {
+func (r *RPCClient) GetAsyncResult(session string, timeout int) (rt interface{}, err error) {
 	queue, ok := r.queues.Get(session)
 	if !ok {
-		err = fmt.Sprint("rpc get result not find session:", session)
+		err = errors.New(fmt.Sprint("rpc get result not find session:", session))
 		return
 	}
 	ticker := time.NewTicker(time.Millisecond * time.Duration(timeout))
 	select {
 	case <-ticker.C:
-		err = fmt.Sprint("rpc async get result timeout")
+		err = errors.New(fmt.Sprint("rpc async get result timeout"))
 		break
 	case result := <-queue.(chan []interface{}):
 		{
 
 			if len(result) != 2 {
-				return "", "rpc async result error"
+				return "", errors.New("rpc async result error")
 			}
 			rt = result[0]
 			if result[1] != nil {
 				er := result[1].(string)
 				if strings.EqualFold(er, "") {
-					err = ""
 				} else {
-					err = er
+					err = errors.New(er)
 				}
 			}
 		}

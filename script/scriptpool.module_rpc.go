@@ -22,8 +22,11 @@ func (s *ScriptPool) moduleRPCGetResult(ls *lua.LState) int {
 	if ls.GetTop() == 2 {
 		timeout = ls.CheckInt(2)
 	}
-	r, e := s.rpcclient.GetAsyncResult(asyncSessionID, timeout)
-	return pushValues(ls, r, e)
+	r, err := s.rpcclient.GetAsyncResult(asyncSessionID, timeout)
+	if err != nil {
+		return pushValues(ls, r, err.Error())
+	}
+	return pushValues(ls, r)
 }
 
 //Request RPC Reuqest调用
@@ -37,7 +40,7 @@ func (s *ScriptPool) moduleRPCAsyncRequest(ls *lua.LState) int {
 	}
 	timeout := time.Second * 5
 	if ls.GetTop() >= 3 {
-		timeout = time.Duration(utility.GetMax(ls.CheckInt(3), 5))
+		timeout = time.Second * time.Duration(utility.GetMax(ls.CheckInt(3), 5))
 	}
 	r, e := s.rpcclient.AsyncRequest(cmd, inputString, session, timeout)
 	if e != nil {

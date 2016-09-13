@@ -57,7 +57,7 @@ func (rc *RCServer) ResetCrossDomainServices(task cluster.RCServerTask) {
 		}
 
 		//检查本地服务是否与远程服务一致
-		currentServices := svs.(cluster.RPCServices)                                              //本地服务
+		currentServices := svs.(cluster.RPCServices)                            //本地服务
 		remoteServices := task.CrossDomainAccess[domain].GetServicesMap(domain) //远程服务
 		//删除更新服务
 		for name := range currentServices {
@@ -101,7 +101,6 @@ func (rc *RCServer) WatchCrossDomain(task cluster.RCServerTask) {
 			if rc.isInServerList(v.Servers) {
 				rc.Log.Info(" -> 启动外部域:", domain)
 				clusterClient, err = cluster.NewDomainClusterClientHandler(domain, rc.conf.IP, rc.loggerName, rc.clusterClient.GetHandler())
-
 			} else {
 				rc.Log.Info(" -> 启动外部域:", domain)
 				clusterClient, err = cluster.NewDomainClusterClient(domain, rc.conf.IP, rc.loggerName, v.Servers...)
