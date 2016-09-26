@@ -15,7 +15,6 @@ func (rc *RCServer) startMonitor() {
 		for {
 			select {
 			case <-tk.C:
-				rc.Log.Info("check rebind")
 				if rc.needBindRPCService() {
 					rc.Log.Info("services 数量小于配置数")
 					rc.timerRebindServices.Push("services 数量小于配置数")

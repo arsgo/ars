@@ -27,13 +27,12 @@ type SPSnap struct {
 
 //ResetSPSnap 重置SP server 快照
 func (sp *SPServer) updateSnap(snaps map[string]interface{}) {
-	sp.snapLogger.Info(" - >更新 sp server 快照信息")
+	services := sp.rpcServer.GetServicePath()
+	sp.Log.Infof(" - >更新 sp server 快照信息:svs(%d), 内存...%dM", len(services), sysinfo.GetAPPMemory())
 	sp.snap.AppMem = fmt.Sprintf("%dm", sysinfo.GetAPPMemory())
 	sp.snap.CPU = sysinfo.GetAvaliabeCPU().Used
 	sp.snap.Mem = sysinfo.GetAvaliabeMem().Used
 	sp.snap.Disk = sysinfo.GetAvaliabeDisk().Used
-
-	services := sp.rpcServer.GetServicePath()
 	for k, v := range services {
 		nsnap := utility.CloneMap(snaps)
 		utility.Merge(nsnap, sp.rpcServerCollector.Customer(k).Get())

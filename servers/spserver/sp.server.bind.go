@@ -66,7 +66,7 @@ func (sp *SPServer) OnSPServiceCreate(task cluster.TaskItem) (path string) {
 		sp.Log.Errorf("创建sp server node error:%v", err)
 		return
 	}
-	sp.Log.Info("::start service:", task.Name)
+	sp.snapLogger.Info("::start service:", task.Name)
 	return
 }
 

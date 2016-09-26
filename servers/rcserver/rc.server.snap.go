@@ -67,6 +67,6 @@ func (rc *RCServer) setDefSnap() {
 }
 
 func (rc *RCServer) updateSnap(services map[string]interface{}) {
-	rc.snapLogger.Info(" -> 更新 rc server快照信息")
+	rc.Log.Infof(" -> 更新 rc server快照信息, 内存...%dM", sysinfo.GetAPPMemory())
 	rc.clusterClient.SetNode(rc.snap.path, rc.snap.GetServicesSnap(services))
 }

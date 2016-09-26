@@ -47,7 +47,7 @@ type AppServer struct {
 
 //NewAPPServer 创建APP Server服务器
 func NewAPPServer(conf *config.SysConfig) (app *AppServer, err error) {
-	app = &AppServer{loggerName: "app.server", version: "0.1.10", conf: conf}
+	app = &AppServer{loggerName: "app.server", version: "0.2.0", conf: conf}
 	app.timerReloadRCServer = base.NewTimerCall(time.Second*5, time.Microsecond, app.reloadRCServer)
 	app.localJobPaths = concurrent.NewConcurrentMap()
 	app.jobServerCollector = base.NewCollector()
@@ -73,7 +73,7 @@ func NewAPPServer(conf *config.SysConfig) (app *AppServer, err error) {
 		return
 	}
 	logger.MainLoggerName = app.loggerName
-	//app.snapLogger.Show(false)
+	app.snapLogger.Show(false)
 	return
 }
 
@@ -132,7 +132,6 @@ func (app *AppServer) Start() (err error) {
 	app.startSync.Wait()
 	go app.startMonitor()
 	go app.startRefreshSnap()
-	go app.clearMem()
 
 	app.Log.Info(" -> app server 启动完成...")
 	return nil

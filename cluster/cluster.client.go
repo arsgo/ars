@@ -51,7 +51,6 @@ type ClusterClient struct {
 	rpcPublishPath      string
 	rpcProviderRootPath string
 	spServerTaskPath    string
-	closeChans          *concurrent.ConcurrentMap
 	lastRPCServices     RPCServices
 	publishLock         sync.Mutex
 	configCache         *concurrent.ConcurrentMap
@@ -64,13 +63,12 @@ type ClusterClient struct {
 
 func NewClusterClient(domain string, ip string, handler IClusterHandler, loggerName string) (client *ClusterClient, err error) {
 	client = &ClusterClient{configCache: concurrent.NewConcurrentMap()}
-	client.domain = "/" + strings.Trim(strings.Replace(domain, ".", "/", -1), "/")
-	client.domainName = "@" + strings.Replace(strings.Trim(client.domain, "/"), "/", ".", -1)
+	client.domain = client.getDomain(domain)
+	client.domainName = client.getDomainName(client.domain)
 	client.IP = ip
 	client.dataMap = utility.NewDataMap()
 	client.dataMap.Set("domain", client.domain)
 	client.dataMap.Set("ip", client.IP)
-	client.closeChans = concurrent.NewConcurrentMap()
 	client.appServerTaskPath = client.dataMap.Translate(p_appTaskConfig)
 	client.rcServerRoot = client.dataMap.Translate(p_rcServerRoot)
 	client.appTaskRoot = client.dataMap.Translate(p_appTaskRoot)
@@ -86,11 +84,13 @@ func NewClusterClient(domain string, ip string, handler IClusterHandler, loggerN
 	client.handler.Open()
 	return
 }
-func (client *ClusterClient) makeCloseChan() chan int {
-	closeChan := make(chan int, 1)
-	client.closeChans.Set(utility.GetGUID(), closeChan)
-	return closeChan
+func (client *ClusterClient) getDomain(domain string) string {
+	return "/" + strings.Trim(strings.Replace(domain, ".", "/", -1), "/")
 }
+func (client *ClusterClient) getDomainName(domain string) string {
+	return "@" + strings.Replace(strings.Trim(domain, "/"), "/", ".", -1)
+}
+
 func (client *ClusterClient) GetDomainName() string {
 	return client.domainName
 }
@@ -115,11 +115,6 @@ func (client *ClusterClient) Reconnect() error {
 
 //Close 关闭当前集群客户端
 func (client *ClusterClient) Close() {
-	all := client.closeChans.GetAll()
-	for _, v := range all {
-		ch := v.(chan int)
-		ch <- 1
-	}
 	client.handler.Close()
 }
 

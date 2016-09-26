@@ -1,12 +1,6 @@
 package main
 
-import (
-	"runtime/debug"
-	"time"
-
-	"github.com/arsgo/lib4go/sysinfo"
-)
-
+/*
 func (rc *RCServer) clearMem() {
 	tk := time.NewTicker(time.Second * 301)
 	for {
@@ -17,3 +11,4 @@ func (rc *RCServer) clearMem() {
 		}
 	}
 }
+*/

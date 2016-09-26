@@ -7,6 +7,16 @@ func (s *ScriptPool) bindModules() (r map[string]map[string]lua.LGFunction) {
 		"mq": map[string]lua.LGFunction{
 			"send": s.moduleMQProducerSend,
 		},
+		"context": map[string]lua.LGFunction{
+			"set_cookie":       s.moduleContextSetCookie,
+			"get_cookie":       s.moduleContextGetCookie,
+			"set_charset":      s.moduleContexSetCharset,
+			"set_header":       s.moduleContexSetHeader,
+			"set_content_type": s.moduleContextSetContentType,
+			"set_raw":          s.moduleContexSetRaw,
+			"get_guid":         s.moduleGetGUID,
+			"get_ip":           s.moduleGetLocalIP,
+		},
 		"common": map[string]lua.LGFunction{
 			"get_guid": s.moduleGetGUID,
 			"get_ip":   s.moduleGetLocalIP,

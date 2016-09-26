@@ -83,13 +83,21 @@ func (s *ScriptPool) moduleRsaDecrypt(ls *lua.LState) int {
 func (s *ScriptPool) moduleRsaMakeSign(ls *lua.LState) int {
 	input := ls.CheckString(1)
 	privateKey := ls.CheckString(2)
-	data, err := rsa.Sign(input, privateKey)
+	mode := "sha1"
+	if ls.GetTop() > 2 {
+		mode = ls.CheckString(3)
+	}
+	data, err := rsa.Sign(input, privateKey, mode)
 	return pushValues(ls, data, err)
 }
 func (s *ScriptPool) moduleRsaVerify(ls *lua.LState) int {
 	src := ls.CheckString(1)
 	sign := ls.CheckString(2)
 	pubkey := ls.CheckString(3)
-	data, err := rsa.Verify(src, sign, pubkey)
+	mode := "sha1"
+	if ls.GetTop() > 3 {
+		mode = ls.CheckString(4)
+	}
+	data, err := rsa.Verify(src, sign, pubkey, mode)
 	return pushValues(ls, data, err)
 }

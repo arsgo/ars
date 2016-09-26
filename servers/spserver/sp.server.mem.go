@@ -1,12 +1,6 @@
 package main
 
-import (
-	"runtime/debug"
-	"time"
-
-	"github.com/arsgo/lib4go/sysinfo"
-)
-
+/*
 func (a *SPServer) clearMem() {
 	tk := time.NewTicker(time.Second * 201)
 	for {
@@ -17,3 +11,4 @@ func (a *SPServer) clearMem() {
 		}
 	}
 }
+*/

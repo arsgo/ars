@@ -10,19 +10,20 @@ const (
 	TN_MQ_CONSUMER      = "mq.consumer"
 	TN_JOB_CONSUMER     = "job.consumer"
 	TN_JOB_LOCAL        = "job.local"
-	TN_HTTP_API     = "http.api"
+	TN_HTTP_API         = "http.api"
 	TN_SERVICE_PROVIDER = "service.provider"
 )
 
 type InvokeContext struct {
-	Session   string
-	Input     string
-	Params    string
-	Body      string
-	Log       logger.ILogger
-	TaskName  string
-	TaskType  string
-	StartTime time.Time
+	Session      string
+	Input        string
+	Params       string
+	Body         string
+	Log          logger.ILogger
+	TaskName     string
+	TaskType     string
+	StartTime    time.Time
+	HTTPContext  interface{}
 }
 
 func NewInvokeContext(taskName string, taskType string, loggerName string, session string, input string, params string, body string) InvokeContext {

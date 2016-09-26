@@ -146,14 +146,18 @@ func (app *AppServer) resetAppServer() {
 
 //updateSnap 重置JOB快照信息
 func (app *AppServer) updateSnap(services map[string]interface{}) {
-	app.snapLogger.Info(" -> 更新 app server快照信息")
+	jobPaths := make(map[string]string)
+	mqPaths := make(map[string]string)
+	locajobPath := make(map[string]interface{})
+	apiServerAvaliable := app.apiServer != nil && app.apiServer.Available
+
 	cache := make(map[string]interface{})
 	app.appendSystemSnap(services, cache)
 	app.snap.AppMem = fmt.Sprintf("%dm", sysinfo.GetAPPMemory())
 	jobSnaps := utility.CloneMap(services)
 	app.snap.Snap = jobSnaps
 	if app.jobServer.Available {
-		jobPaths := app.jobServer.GetServicePath()
+		jobPaths = app.jobServer.GetServicePath()
 		for name, path := range jobPaths {
 			jobSnaps[name] = app.jobServerCollector.GetByName(name)
 			utility.Merge(jobSnaps, app.jobServerCollector.Customer(name).Get())
@@ -164,7 +168,7 @@ func (app *AppServer) updateSnap(services map[string]interface{}) {
 	jobConsumerSnap := utility.CloneMap(services)
 	app.snap.Snap = jobConsumerSnap
 	if app.mqService.Available {
-		mqPaths := app.mqService.GetServices()
+		mqPaths = app.mqService.GetServices()
 		for name, path := range mqPaths {
 			jobConsumerSnap[name] = app.mqConsumerCollector.GetByName(name)
 			utility.Merge(jobConsumerSnap, app.mqConsumerCollector.Customer(name).Get())
@@ -174,7 +178,7 @@ func (app *AppServer) updateSnap(services map[string]interface{}) {
 
 	jobLocalSnap := utility.CloneMap(services)
 	app.snap.Snap = jobLocalSnap
-	locajobPath := app.localJobPaths.GetAll()
+	locajobPath = app.localJobPaths.GetAll()
 	for name, p := range locajobPath {
 		jobLocalSnap[name] = app.jobLocalCollector.GetByName(name)
 		utility.Merge(jobLocalSnap, app.jobLocalCollector.Customer(name).Get())
@@ -183,7 +187,7 @@ func (app *AppServer) updateSnap(services map[string]interface{}) {
 
 	apiSnap := utility.CloneMap(services)
 	app.snap.Snap = apiSnap
-	if app.apiServer != nil && app.apiServer.Available {
+	if apiServerAvaliable {
 		utility.Merge(apiSnap, app.apiServerCollector.Get())
 		utility.Merge(apiSnap, app.apiServerCollector.GetConsumerData())
 		cache["rpc"] = app.rpcClient.GetSnap()
@@ -193,6 +197,8 @@ func (app *AppServer) updateSnap(services map[string]interface{}) {
 			app.clusterClient.SetNode(app.snap.path, app.snap.GetSnap())
 		}
 	}
+	app.Log.Infof(" -> 更新 app server快照信息, 内存...%dM", sysinfo.GetAPPMemory())
+
 }
 
 func (app *AppServer) closeSnap() {

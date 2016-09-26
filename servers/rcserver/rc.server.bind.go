@@ -98,8 +98,13 @@ func (rc *RCServer) BindServices(services map[string][]string, err error) {
 	}
 	if c := rc.rcRPCServer.UpdateTasks(tasks); c > 0 {
 		rc.Log.Info(" -> 本地服务已更新")
-		rc.snapLogger.Infof("--------------------services-----------------\n\t\t\t\t\t  %+v\n\t\t\t\t\t  ----------------------------------------------%+v\n\t\t\t\t\t  ----------------------------------------------",
-			rc.rcRPCServer.GetServices(), services)
+		rc.snapLogger.Infof(`--------------------services-----------------
+	  				%+v
+	  				 ----------------------------------------------
+	  				%+v
+	   				 ----------------------------------------------
+	  `, rc.rcRPCServer.GetServices(), services)
+
 	}
 	//else {
 	//rc.Log.Infof(" -> 本地无更新:%v, %v", services, rc.rcRPCServer.GetServices())

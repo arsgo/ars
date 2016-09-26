@@ -48,7 +48,7 @@ type SPServer struct {
 
 //NewSPServer 创建SP server服务器
 func NewSPServer(conf *config.SysConfig) (sp *SPServer, err error) {
-	sp = &SPServer{loggerName: "sp.server", version: "0.1.10", conf: conf}
+	sp = &SPServer{loggerName: "sp.server", version: "0.2.0", conf: conf}
 	sp.rpcServerCollector = base.NewCollector()
 	sp.mqConsumerCollector = base.NewCollector()
 	sp.startSync = base.NewSync(2)
@@ -66,7 +66,7 @@ func NewSPServer(conf *config.SysConfig) (sp *SPServer, err error) {
 	if err != nil {
 		return
 	}
-	//sp.snapLogger.Show(false)
+	sp.snapLogger.Show(false)
 	sp.dbPool = concurrent.NewConcurrentMap()
 	logger.MainLoggerName = sp.loggerName
 	return
@@ -119,7 +119,6 @@ func (sp *SPServer) Start() (err error) {
 	sp.startSync.Wait()
 	go sp.startRefreshSnap()
 	go sp.startMonitor()
-	go sp.clearMem()
 	sp.Log.Info(" -> sp server 启动完成...")
 	return nil
 }

@@ -108,6 +108,8 @@ func (s *ScriptPool) Call(name string, context base.InvokeContext) ([]string, ma
 	defer s.setLifeTime(script, time.Now())
 	input := spt.InputArgs{Script: script, Session: context.Session, Body: context.Body, TaskType: context.TaskType, TaskName: context.TaskName}
 	input.Input = getScriptInputArgs(context.Input, context.Params)
+	input.HTTPContext = context.HTTPContext
+	input.MainLogger = context.Log
 	return s.pool.Call(input)
 }
 

@@ -41,7 +41,7 @@ type RCServer struct {
 
 //NewRCServer 创建RC Server服务器
 func NewRCServer(conf *config.SysConfig) (rc *RCServer, err error) {
-	rc = &RCServer{loggerName: "rc.server", version: "0.1.15", conf: conf}
+	rc = &RCServer{loggerName: "rc.server", version: "0.2.0", conf: conf}
 	rc.currentServices = concurrent.NewConcurrentMap()
 	rc.crossDomain = concurrent.NewConcurrentMap()
 	rc.crossServices = concurrent.NewConcurrentMap()
@@ -59,7 +59,7 @@ func NewRCServer(conf *config.SysConfig) (rc *RCServer, err error) {
 		return
 	}
 	logger.MainLoggerName = rc.loggerName
-	//rc.snapLogger.Show(false)
+	rc.snapLogger.Show(false)
 	return
 }
 
@@ -101,7 +101,6 @@ func (rc *RCServer) Start() (err error) {
 	rc.startSync.Wait()
 	go rc.startRefreshSnap()
 	go rc.startMonitor()
-	go rc.clearMem()
 	rc.Log.Info(" -> rc server 启动完成...")
 	return
 }

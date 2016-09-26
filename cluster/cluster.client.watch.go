@@ -11,7 +11,6 @@ func (client *ClusterClient) WaitClusterPathExists(path string, timeout time.Dur
 	callback("", false)
 	timePiker := time.NewTicker(time.Second * 2)
 	timeoutPiker := time.NewTicker(timeout)
-	closeChan := client.makeCloseChan()
 	exists := false
 	npath := ""
 CHECKER:
@@ -25,8 +24,6 @@ CHECKER:
 				npath = v
 				break CHECKER
 			}
-		case <-closeChan:
-			break CHECKER
 		}
 	}
 	callback(npath, exists)
@@ -39,15 +36,11 @@ func (client *ClusterClient) WatchClusterValueChange(path string, callback func(
 		defer client.recover()
 		client.handler.WatchValue(path, changes)
 	}()
-	closeChan := client.makeCloseChan()
 	go func() {
-	START:
 		for {
 			select {
 			case <-changes:
 				callback()
-			case <-closeChan:
-				break START
 			}
 		}
 	}()
@@ -61,15 +54,11 @@ func (client *ClusterClient) WatchClusterChildrenChange(path string, callback fu
 		defer client.recover()
 		client.handler.WatchChildren(path, changes)
 	}()
-	closeChan := client.makeCloseChan()
 	go func() {
-	START:
 		for {
 			select {
 			case <-changes:
 				callback()
-			case <-closeChan:
-				break START
 			}
 		}
 	}()

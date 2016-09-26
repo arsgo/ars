@@ -156,8 +156,10 @@ func (r *HTTPScriptController) Handle(context *webserver.Context) {
 		return
 	}
 	input := string(data)
-	context.Log.Info("-->api.request:", context.Request.URL.Path, input, body)
-	result, output, err := r.server.call(r.config.Script, base.NewInvokeContext(context.Address, base.TN_HTTP_API, r.loggerName, context.Session, input, r.config.Params, body))
+	context.Log.Infof("-->api.request:%s [%s]", context.Request.URL.RequestURI(), body)
+	ivkContext := base.NewInvokeContext(context.Address, base.TN_HTTP_API, r.loggerName, context.Session, input, r.config.Params, body)
+	ivkContext.HTTPContext = context
+	result, output, err := r.server.call(r.config.Script, ivkContext)
 	r.setHeader(context.Writer, output)
 	if err != nil {
 		r.setResponse(context, output, 500, err.Error())
@@ -191,6 +193,9 @@ func (r *HTTPScriptController) setHeader(ctx http.ResponseWriter, input map[stri
 }
 func (r *HTTPScriptController) setResponse(context *webserver.Context, config map[string]string, code int, msg string) {
 	responseContent := ""
+	if ck, ok := config["_cookies"]; ok {
+		context.Writer.Header().Add("Set-Cookie", ck)
+	}
 	switch code {
 	case 200:
 		{
