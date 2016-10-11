@@ -9,6 +9,7 @@ func (s *ScriptPool) bindTypes() (r []script.LuaTypesBinder) {
 	r = append(r, s.getElasticTypeBinder())
 	r = append(r, s.getinfluxTypeBinder())
 	r = append(r, s.getMQTypeBinder())
+	r = append(r, s.getImageDrawTypeBinder())
 	return
 
 }

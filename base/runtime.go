@@ -5,6 +5,7 @@ import (
 
 	"github.com/arsgo/lib4go/logger"
 )
+//wc -l $(find /home/golang/src/github.com/arsgo/ars -name "*.go")
 
 var runtimeLogger logger.ILogger
 func RunTime(msg string, start time.Time) {
