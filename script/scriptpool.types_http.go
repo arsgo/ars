@@ -24,9 +24,11 @@ func (s *ScriptPool) getHttpTypeBinder() script.LuaTypesBinder {
 			"new": typeNewHTTP,
 		},
 		Methods: map[string]lua.LGFunction{
-			"get":     typeDoHttpGet,
-			"post":    typeDoHttpPost,
-			"request": typeDoHttpRequest,
+			"get":      typeDoHttpGet,
+			"post":     typeDoHttpPost,
+			"request":  typeDoHttpRequest,
+			"download": typeDoHttpDownload,
+			"save":     typeDoHttpSave,
 		},
 	}
 }
@@ -79,6 +81,27 @@ func typeDoHttpRequest(L *lua.LState) int {
 	header := L.CheckTable(6)
 	a, b, c := p.Request(method, url, params, encoding, getMapParams(header))
 	return pushValues(L, a, b, c)
+}
+
+func typeDoHttpDownload(L *lua.LState) int {
+	p := checkHTTP(L)
+	method := L.CheckString(2)
+	url := L.CheckString(3)
+	params := L.CheckString(4)
+	header := L.CheckTable(5)
+	a, b, c := p.Download(method, url, params, getMapParams(header))
+	return pushValues(L, a, b, c)
+}
+
+func typeDoHttpSave(L *lua.LState) int {
+	p := checkHTTP(L)
+	method := L.CheckString(2)
+	url := L.CheckString(3)
+	params := L.CheckString(4)
+	header := L.CheckTable(5)
+	path := L.CheckString(6)
+	a, b := p.Save(method, url, params, getMapParams(header), path)
+	return pushValues(L, a, b)
 }
 
 func typeDoHttpGet(L *lua.LState) int {
