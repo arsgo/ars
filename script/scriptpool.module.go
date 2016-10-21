@@ -41,8 +41,10 @@ func (s *ScriptPool) bindModules() (r map[string]map[string]lua.LGFunction) {
 			"encrypt": s.moduleMd5Encrypt,
 		},
 		"des": map[string]lua.LGFunction{
-			"encrypt": s.moduleDESEncrypt,
-			"decrypt": s.moduleDESDecrypt,
+			"encrypt":    s.moduleDESEncrypt,
+			"decrypt":    s.moduleDESDecrypt,
+			"qx_encrypt": s.moduleQXDESEncrypt,
+			"qx_decrypt": s.moduleQXDESDecrypt,
 		},
 		"aes": map[string]lua.LGFunction{
 			"encrypt": s.moduleAESEncrypt,

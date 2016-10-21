@@ -23,10 +23,30 @@ func (s *ScriptPool) moduleDESEncrypt(ls *lua.LState) int {
 	}
 	return pushValues(ls, r)
 }
+
 func (s *ScriptPool) moduleDESDecrypt(ls *lua.LState) int {
 	input := ls.CheckString(1)
 	key := ls.CheckString(2)
 	r, e := des.Decrypt(input, key)
+	if e != nil {
+		return pushValues(ls, r, e)
+	}
+	return pushValues(ls, r)
+}
+
+func (s *ScriptPool) moduleQXDESEncrypt(ls *lua.LState) int {
+	input := ls.CheckString(1)
+	key := md5.Encrypt("_QX_ARS_KEY_&" + ls.CheckString(2))
+	r, e := des.Encrypt(input, key[0:8])
+	if e != nil {
+		return pushValues(ls, r, e)
+	}
+	return pushValues(ls, r)
+}
+func (s *ScriptPool) moduleQXDESDecrypt(ls *lua.LState) int {
+	input := ls.CheckString(1)
+	key := md5.Encrypt("_QX_ARS_KEY_&" + ls.CheckString(2))
+	r, e := des.Decrypt(input, key[0:8])
 	if e != nil {
 		return pushValues(ls, r, e)
 	}
